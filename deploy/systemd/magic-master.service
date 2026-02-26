@@ -1,0 +1,26 @@
+# Шаблон systemd-сервиса для Magic Master.
+# Скопируйте в /etc/systemd/system/ и отредактируйте пути и пользователя.
+#
+# Установка:
+#   sudo cp magic-master.service /etc/systemd/system/
+#   sudo sed -i 's|/path/to/audio-mastering-web|/реальный/путь/к/audio-mastering-web|g' /etc/systemd/system/magic-master.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable magic-master
+#   sudo systemctl start magic-master
+
+[Unit]
+Description=Magic Master — веб-мастеринг
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/path/to/audio-mastering-web/backend
+Environment="PATH=/path/to/audio-mastering-web/backend/venv/bin"
+ExecStart=/path/to/audio-mastering-web/backend/venv/bin/python run_production.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

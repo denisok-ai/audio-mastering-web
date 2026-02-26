@@ -1,0 +1,14 @@
+Magic Master — как открыть по ссылке
+=====================================
+
+1. Откройте терминал (Ctrl+Alt+T).
+
+2. Выполните одну команду (при первом запуске попросит пароль для установки ffmpeg и libatomic1):
+
+   cd /home/imya_polzovatelya/Projects/Testproject/audio-mastering-web && ./start.sh
+
+3. В браузере откройте ссылку:
+
+   http://localhost:8000
+
+Остановка сервера: в терминале нажмите Ctrl+C.

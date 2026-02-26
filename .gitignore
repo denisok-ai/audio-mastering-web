@@ -1,0 +1,42 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Temp / mastering output
+/tmp/
+*.tmp
+test_*.wav
+test_*.mp3
+test_*.flac
+test_output/
+
+# Archives
+*.tar.gz
+*.zip
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Zone identifiers (Windows/WSL artefacts)
+*:Zone.Identifier
