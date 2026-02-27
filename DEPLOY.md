@@ -196,13 +196,13 @@ sudo ufw reload
 |------------|----------|--------------|
 | `MAGIC_MASTER_HOST` | Адрес прослушивания | 0.0.0.0 |
 | `MAGIC_MASTER_PORT` | Порт | 8000 |
-| `MASTERFLOW_MAX_UPLOAD_MB` | Макс. размер загрузки (МБ) | 100 |
-| `MASTERFLOW_TEMP_DIR` | Каталог временных файлов | /tmp/masterflow |
+| `MAGIC_MASTER_MAX_UPLOAD_MB` | Макс. размер загрузки (МБ) | 100 |
+| `MAGIC_MASTER_TEMP_DIR` | Каталог временных файлов | /tmp/masterflow |
 
 Пример в `magic-master.service`:
 ```ini
 Environment="MAGIC_MASTER_PORT=8000"
-Environment="MASTERFLOW_MAX_UPLOAD_MB=100"
+Environment="MAGIC_MASTER_MAX_UPLOAD_MB=100"
 ```
 
 ---

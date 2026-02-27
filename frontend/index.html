@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
   <style>
     /* ═══════════════════════ DESIGN TOKENS ═══════════════════════ */
     :root {
@@ -258,6 +259,12 @@
     .vu-s.r { background:var(--red);   box-shadow:0 0 5px var(--red-glow) }
     .vu-scale { display:flex;justify-content:space-between;margin-top:.28rem }
     .vu-scale span { font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text-dim) }
+    .meter-correlation { display:none; margin-top:.4rem; font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--text-dim) }
+    .meter-correlation.visible { display:block }
+    .lufs-timeline-wrap { display:none; margin-top:.75rem; }
+    .lufs-timeline-wrap.visible { display:block; animation:fadeIn .35s ease }
+    .lufs-timeline-lbl { font-size:.65rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-dim); margin-bottom:.35rem }
+    .lufs-timeline-canvas { width:100%; height:56px; border-radius:var(--r-sm); background:rgba(0,0,0,0.25); display:block }
 
     /* ═══════════════════════ SETTINGS ═══════════════════════ */
     .settings { display:grid; gap:.7rem }
@@ -294,6 +301,8 @@
     .pb-c { background:rgba(251,191,36,.1); color:var(--amber); border:1px solid rgba(251,191,36,.2) }
 
     .two-col { display:grid;grid-template-columns:1fr 1fr;gap:.7rem }
+    .export-opts .export-opt { display:flex;flex-direction:column;gap:.25rem }
+    .export-opts .export-opt-lbl { font-size:.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em }
 
     /* ═══════════════════════ PIPELINE STEPS ═══════════════════════ */
     .pipeline {
@@ -505,6 +514,75 @@
     .spec-v { font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:600;color:var(--text-soft) }
     .spec-k { font-size:.62rem;color:var(--text-dim);letter-spacing:.07em;text-transform:uppercase }
     .foot-txt { font-size:.73rem;color:var(--text-dim);line-height:1.6 }
+    .foot-link { color:var(--accent); text-decoration:none }
+    .foot-link:hover { text-decoration:underline }
+
+    /* ═══════════════════════ STYLE CARDS ═══════════════════════ */
+    .style-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: .55rem;
+      margin-bottom: .7rem;
+    }
+    /* House badge — Ozone 5 Exciter + Imager активны */
+    .sc-ozone-badge {
+      display: inline-block; font-size: .52rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase;
+      padding: 1px 5px; border-radius: 3px; margin-top: .18rem;
+      background: rgba(251,146,60,.12); color: #fb923c;
+      border: 1px solid rgba(251,146,60,.3);
+    }
+    .style-card {
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: .6rem .5rem .55rem; cursor: pointer; text-align: center;
+      background: rgba(0,0,0,0.2); transition: all .18s; user-select: none;
+      position: relative; overflow: hidden;
+    }
+    .style-card::before {
+      content:''; position:absolute; inset:0;
+      background: var(--sc-color, rgba(108,75,255,.08));
+      opacity:0; transition:opacity .18s;
+    }
+    .style-card:hover::before { opacity:1 }
+    .style-card.active {
+      border-color: var(--sc-active-border, var(--accent));
+      background: var(--sc-bg, rgba(108,75,255,.1));
+      box-shadow: 0 0 0 2px var(--sc-glow, var(--accent-glow));
+    }
+    .style-card.active::before { opacity:1 }
+    .sc-icon { font-size:1.3rem; line-height:1; margin-bottom:.22rem }
+    .sc-name {
+      font-size:.72rem; font-weight:700; letter-spacing:.02em; color:var(--text);
+      white-space:nowrap;
+    }
+    .sc-lufs {
+      font-family:'JetBrains Mono',monospace; font-size:.62rem;
+      color:var(--text-dim); margin-top:.18rem; white-space:nowrap;
+    }
+    .style-card.active .sc-lufs { color:var(--sc-active-border, var(--accent)) }
+
+    /* ═══════════════════════ A/B TOGGLE ═══════════════════════ */
+    .ab-wrap {
+      display:none; gap:.3rem; margin-left:.2rem;
+    }
+    .ab-wrap.visible { display:flex }
+    .btn-ab {
+      width:26px; height:26px; border-radius:6px; border:1px solid var(--border);
+      background:rgba(255,255,255,0.05); cursor:pointer;
+      font-family:'JetBrains Mono',monospace; font-size:.72rem; font-weight:700;
+      color:var(--text-dim); transition:all .15s; display:flex;
+      align-items:center; justify-content:center;
+    }
+    .btn-ab.active {
+      background:var(--ab-bg, rgba(52,211,153,.15));
+      border-color:var(--ab-border, rgba(52,211,153,.4));
+      color:var(--ab-color, var(--green));
+      box-shadow:0 0 8px var(--ab-glow, var(--green-glow));
+    }
+    #btnAB-a { --ab-bg:rgba(108,75,255,.15);--ab-border:rgba(108,75,255,.4);--ab-color:var(--accent);--ab-glow:var(--accent-glow) }
+    #btnAB-b { --ab-bg:rgba(52,211,153,.15);--ab-border:rgba(52,211,153,.4);--ab-color:var(--green);--ab-glow:var(--green-glow) }
+    .ab-label {
+      font-size:.62rem; color:var(--text-dim); align-self:center;
+      white-space:nowrap; padding-left:.15rem;
+    }
 
     /* ═══════════════════════ TOASTS ═══════════════════════ */
     .toast-wrap {
@@ -598,6 +676,188 @@
     }
     .hist-clear:hover { color:var(--red) }
 
+    /* ═══════════════════════ DAW COMPARISON CARD ═══════════════════════ */
+    .daw-card {
+      display:none; width:100%; margin-top:1.1rem;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--r-lg); overflow:hidden;
+      box-shadow:var(--shadow); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    }
+    .daw-card.visible { display:block; animation:fadeIn .4s ease }
+    .daw-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.7rem 1rem; border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,0.25);
+    }
+    .daw-ttl {
+      font-size:.7rem; font-weight:700; letter-spacing:.09em;
+      text-transform:uppercase; color:var(--text-dim);
+      display:flex; align-items:center; gap:.45rem;
+    }
+    .daw-ttl svg { width:14px;height:14px;color:var(--accent) }
+    .daw-ruler-wrap {
+      position:relative; height:20px; background:rgba(0,0,0,0.4);
+      border-bottom:1px solid var(--border);
+      overflow:hidden;
+    }
+    .daw-ruler {
+      position:absolute; left:0; top:0; right:0; bottom:0;
+      font-family:'JetBrains Mono',monospace; font-size:.58rem;
+      color:var(--text-dim); pointer-events:none;
+    }
+    .daw-tracks {
+      display:flex; flex-direction:column; gap:0;
+    }
+    .daw-track {
+      position:relative; height:52px; background:rgba(0,0,0,0.35);
+      border-bottom:1px solid var(--border); overflow:hidden;
+    }
+    .daw-track:last-of-type { border-bottom:none }
+    .daw-track-label {
+      position:absolute; left:6px; top:50%; transform:translateY(-50%);
+      font-size:.6rem; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--text-dim);
+      z-index:2; pointer-events:none;
+    }
+    .daw-track.a .daw-track-label { color:rgba(108,75,255,0.9) }
+    .daw-track.b .daw-track-label { color:rgba(52,211,153,0.9) }
+    .daw-track-canvas {
+      display:block; width:100%; height:100%;
+      position:absolute; left:0; top:0; cursor:crosshair;
+    }
+    .daw-stats-row {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:0; border-top:1px solid var(--border);
+      background:rgba(0,0,0,0.2);
+    }
+    .daw-stat {
+      padding:.5rem .75rem; border-right:1px solid var(--border);
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .daw-stat:last-child { border-right:none }
+    .daw-stat-lbl {
+      font-size:.58rem; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--text-dim);
+    }
+    .daw-stat-val {
+      font-family:'JetBrains Mono',monospace; font-size:.78rem;
+      font-weight:600; color:var(--text-soft);
+    }
+    .daw-stat.a .daw-stat-val { color:var(--accent) }
+    .daw-stat.b .daw-stat-val { color:var(--green) }
+
+    /* ═══════════════════════ SPECTRUM CARD ═══════════════════════ */
+    .spectrum-card {
+      display:none; width:100%; margin-top:1.1rem;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--r-lg); overflow:hidden;
+      box-shadow:var(--shadow); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    }
+    .spectrum-card.visible { display:block; animation:fadeIn .4s ease }
+    .spectrum-head {
+      padding:.7rem 1rem; border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,0.25);
+    }
+    .spectrum-ttl {
+      font-size:.7rem; font-weight:700; letter-spacing:.09em;
+      text-transform:uppercase; color:var(--text-dim);
+      display:inline-flex; align-items:center; gap:.45rem;
+    }
+    .spectrum-ttl svg { width:14px; height:14px; color:var(--cyan) }
+    .spectrum-ruler {
+      display:flex; justify-content:space-between; padding:2px 8px 0;
+      font-family:'JetBrains Mono',monospace; font-size:.58rem; color:var(--text-dim);
+    }
+    .spectrum-canvas {
+      display:block; width:100%; height:80px; background:rgba(0,0,0,0.4);
+    }
+
+    /* ═══════════════════════ VECTORSCOPE CARD ═══════════════════════ */
+    .vectorscope-card {
+      display:none; width:100%; margin-top:1.1rem;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--r-lg); overflow:hidden;
+      box-shadow:var(--shadow); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    }
+    .vectorscope-card.visible { display:block; animation:fadeIn .4s ease }
+    .vectorscope-head {
+      padding:.7rem 1rem; border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,0.25);
+    }
+    .vectorscope-ttl {
+      font-size:.7rem; font-weight:700; letter-spacing:.09em;
+      text-transform:uppercase; color:var(--text-dim);
+      display:inline-flex; align-items:center; gap:.45rem;
+    }
+    .vectorscope-ttl svg { width:14px; height:14px; color:var(--accent-2) }
+    .vectorscope-canvas {
+      display:block; width:200px; height:200px; margin:0 auto .75rem;
+      background:rgba(0,0,0,0.4); border-radius:50%;
+    }
+
+    /* ═══════════════════════ CHAIN MODULES CARD ═══════════════════════ */
+    .chain-modules-card {
+      width:100%; margin-top:.9rem; margin-bottom:.5rem;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--r); overflow:hidden;
+      box-shadow:0 2px 16px rgba(0,0,0,0.25);
+    }
+    .chain-modules-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.55rem .85rem; cursor:pointer; user-select:none;
+      transition:background .15s;
+    }
+    .chain-modules-head:hover { background:rgba(255,255,255,0.03) }
+    .chain-modules-ttl {
+      font-size:.68rem; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--text-dim);
+    }
+    .chain-modules-chevron { color:var(--text-dim); transition:transform .2s }
+    .chain-modules-chevron.open { transform:rotate(180deg) }
+    .chain-modules-chevron svg { width:14px; height:14px }
+    .chain-modules-body { max-height:0; overflow:hidden; transition:max-height .25s ease }
+    .chain-modules-body.open { max-height:320px }
+    .chain-modules-list {
+      padding:.5rem .85rem .75rem; display:flex; flex-direction:column; gap:.35rem;
+    }
+    .chain-mod-item {
+      display:flex; align-items:center; gap:.5rem;
+      padding:.4rem .55rem; border-radius:var(--r-sm);
+      background:rgba(0,0,0,0.25); border:1px solid var(--border);
+      font-size:.78rem; color:var(--text-soft);
+    }
+    .chain-mod-item.enabled { border-color:rgba(108,75,255,0.25); color:var(--text) }
+    .chain-mod-item.draggable { cursor:grab }
+    .chain-mod-item:active { cursor:grabbing }
+    .chain-mod-item.chain-mod-drag-over { border-color:var(--accent); background:rgba(108,75,255,0.12) }
+    .chain-mod-item .cm-num { font-family:'JetBrains Mono',monospace; font-size:.65rem; color:var(--text-dim); min-width:1.2rem }
+    .chain-mod-item .cm-label { flex:1 }
+    .chain-mod-item .cm-amount-wrap { display:flex; align-items:center; gap:.4rem; flex-shrink:0 }
+    .chain-mod-item .cm-amount { width:52px; height:4px; accent-color:var(--accent); cursor:pointer }
+    .chain-mod-item .cm-amount-val { font-family:'JetBrains Mono',monospace; font-size:.62rem; color:var(--text-dim); min-width:2rem }
+    .chain-mod-item .cm-phase-mode {
+      font-size:.65rem; padding:2px 6px; border-radius:4px; max-width:5.5rem;
+      background:rgba(0,0,0,0.35); border:1px solid var(--border); color:var(--text-soft);
+      cursor:pointer; flex-shrink:0;
+    }
+    .chain-mod-item .cm-phase-mode:focus { outline:none; border-color:var(--accent) }
+    .chain-mod-item .cm-eq-ms-wrap { display:inline-flex; align-items:center; gap:4px; font-size:.6rem; color:var(--text-dim); cursor:pointer; user-select:none }
+    .chain-mod-item .cm-eq-ms { width:12px; height:12px; accent-color:var(--accent) }
+    .chain-mod-item .cm-reverb-type {
+      font-size:.65rem; padding:2px 6px; border-radius:4px; max-width:5rem;
+      background:rgba(0,0,0,0.35); border:1px solid var(--border); color:var(--text-soft);
+      cursor:pointer; flex-shrink:0;
+    }
+    .chain-mod-item .cm-reverb-type:focus { outline:none; border-color:var(--accent) }
+    .chain-mod-item .cm-ms-wrap { display:inline-flex; align-items:center; gap:2px; font-size:.6rem; color:var(--text-dim) }
+    .chain-mod-item .cm-ms-wrap input { width:2.2rem; font-size:.65rem; padding:1px 4px; border-radius:4px; background:rgba(0,0,0,0.35); border:1px solid var(--border); color:var(--text-soft) }
+    .chain-mod-item .cm-oversample {
+      font-size:.65rem; padding:2px 6px; border-radius:4px; max-width:3.5rem;
+      background:rgba(0,0,0,0.35); border:1px solid var(--border); color:var(--text-soft);
+      cursor:pointer; flex-shrink:0;
+    }
+    .chain-mod-item .cm-oversample:focus { outline:none; border-color:var(--accent) }
+
     /* ═══════════════════════ RESPONSIVE ═══════════════════════ */
     @media(max-width:480px) {
       .header { padding:2rem 0 1.5rem }
@@ -688,6 +948,11 @@
         <span class="t-elapsed" id="tElapsed">0:00</span>
         <div class="t-scrub" id="tScrub"><div class="t-scrub-fill" id="tFill"></div></div>
         <span class="t-total"  id="tTotal">0:00</span>
+        <!-- A/B comparison buttons -->
+        <div class="ab-wrap" id="abWrap">
+          <button class="btn-ab active" id="btnAB-a" title="Оригинал">A</button>
+          <button class="btn-ab"        id="btnAB-b" title="После мастеринга">B</button>
+        </div>
       </div>
       <div class="audio-meta" id="audioMeta">
         <div class="am-item"><span class="am-val" id="amDur">—</span><span class="am-key">Duration</span></div>
@@ -708,6 +973,11 @@
       <div class="vu" id="vu"></div>
       <div class="vu-scale">
         <span>−60</span><span>−48</span><span>−36</span><span>−24</span><span>−14</span><span>−9</span><span>0</span>
+      </div>
+      <div class="meter-correlation" id="meterCorrelation" aria-hidden="true"></div>
+      <div class="lufs-timeline-wrap" id="lufsTimelineWrap" aria-hidden="true">
+        <div class="lufs-timeline-lbl">LUFS по времени</div>
+        <canvas id="lufsTimelineCanvas" class="lufs-timeline-canvas"></canvas>
       </div>
     </div>
 
@@ -735,36 +1005,103 @@
     </div>
 
     <div class="settings">
+      <!-- Style Cards -->
       <div class="field">
-        <span class="f-lbl">Целевой стандарт</span>
-        <select id="preset">
-          <option value="-14">Spotify / YouTube  ·  −14 LUFS</option>
-          <option value="-16">Apple Music  ·  −16 LUFS</option>
-          <option value="-9">Клубы / DJ  ·  −9 LUFS</option>
-          <option value="-24">Эфирное вещание  ·  −24 LUFS</option>
-          <option value="custom">Свой уровень…</option>
-        </select>
-        <div class="preset-badges">
-          <span class="pbadge pb-s on" id="pb-s">Spotify</span>
-          <span class="pbadge pb-a"    id="pb-a">Apple</span>
-          <span class="pbadge pb-c"    id="pb-c">Club</span>
+        <span class="f-lbl">Жанр / Стиль</span>
+        <div class="style-grid" id="styleGrid">
+          <div class="style-card active" data-style="standard" data-lufs="-14"
+               style="--sc-color:rgba(108,75,255,.1);--sc-active-border:#6c4bff;--sc-bg:rgba(108,75,255,.12);--sc-glow:rgba(108,75,255,.3)">
+            <div class="sc-icon">🎵</div>
+            <div class="sc-name">Stream</div>
+            <div class="sc-lufs">−14 LUFS</div>
+          </div>
+          <div class="style-card" data-style="edm" data-lufs="-9"
+               style="--sc-color:rgba(34,211,238,.08);--sc-active-border:#22d3ee;--sc-bg:rgba(34,211,238,.1);--sc-glow:rgba(34,211,238,.25)">
+            <div class="sc-icon">⚡</div>
+            <div class="sc-name">EDM</div>
+            <div class="sc-lufs">−9 LUFS</div>
+          </div>
+          <div class="style-card" data-style="hiphop" data-lufs="-13"
+               style="--sc-color:rgba(251,191,36,.08);--sc-active-border:#fbbf24;--sc-bg:rgba(251,191,36,.1);--sc-glow:rgba(251,191,36,.25)">
+            <div class="sc-icon">🎤</div>
+            <div class="sc-name">Hip-Hop</div>
+            <div class="sc-lufs">−13 LUFS</div>
+          </div>
+          <div class="style-card" data-style="classical" data-lufs="-18"
+               style="--sc-color:rgba(167,139,250,.08);--sc-active-border:#a78bfa;--sc-bg:rgba(167,139,250,.1);--sc-glow:rgba(167,139,250,.25)">
+            <div class="sc-icon">🎻</div>
+            <div class="sc-name">Classical</div>
+            <div class="sc-lufs">−18 LUFS</div>
+          </div>
+          <div class="style-card" data-style="podcast" data-lufs="-16"
+               style="--sc-color:rgba(52,211,153,.08);--sc-active-border:#34d399;--sc-bg:rgba(52,211,153,.1);--sc-glow:rgba(52,211,153,.25)">
+            <div class="sc-icon">🎙</div>
+            <div class="sc-name">Podcast</div>
+            <div class="sc-lufs">−16 LUFS</div>
+          </div>
+          <div class="style-card" data-style="lofi" data-lufs="-18"
+               style="--sc-color:rgba(248,113,113,.07);--sc-active-border:#f87171;--sc-bg:rgba(248,113,113,.09);--sc-glow:rgba(248,113,113,.22)">
+            <div class="sc-icon">🌙</div>
+            <div class="sc-name">Lo-fi</div>
+            <div class="sc-lufs">−18 LUFS</div>
+          </div>
+          <div class="style-card" data-style="house_basic" data-lufs="-10"
+               style="--sc-color:rgba(251,146,60,.08);--sc-active-border:#fb923c;--sc-bg:rgba(251,146,60,.1);--sc-glow:rgba(251,146,60,.28)">
+            <div class="sc-icon">🏠</div>
+            <div class="sc-name">House</div>
+            <div class="sc-lufs">−10 LUFS</div>
+            <div class="sc-ozone-badge">Ozone 5</div>
+          </div>
         </div>
       </div>
 
-      <div class="field custom-field" id="customField">
-        <span class="f-lbl">Целевое значение LUFS</span>
-        <input type="number" id="customLufs" value="-14" min="-60" max="-1" step="0.5">
-      </div>
-
+      <!-- Target LUFS + custom override -->
       <div class="field">
-        <span class="f-lbl">Формат экспорта</span>
+        <span class="f-lbl">Целевой LUFS</span>
         <div class="two-col">
+          <input type="number" id="targetLufsInput" value="-14" min="-60" max="-1" step="0.5"
+                 title="Задаётся автоматически по стилю. Можно изменить вручную.">
           <select id="outFormat">
             <option value="wav">WAV — без потерь</option>
             <option value="mp3">MP3 — 320 kbps</option>
             <option value="flac">FLAC — без потерь</option>
           </select>
         </div>
+      </div>
+      <!-- Export: dither (WAV/16-bit), auto-blank -->
+      <div class="field export-opts">
+        <span class="f-lbl">Экспорт (WAV/16-bit)</span>
+        <div class="two-col">
+          <label class="export-opt">
+            <span class="export-opt-lbl">Дизеринг</span>
+            <select id="ditherType" title="TPDF — стандарт, Noise-shaped / ITU — шейпинг шума">
+              <option value="tpdf">TPDF</option>
+              <option value="ns_e">Noise-shaped (E)</option>
+              <option value="ns_itu">Noise-shaped (ITU)</option>
+            </select>
+          </label>
+          <label class="export-opt">
+            <span class="export-opt-lbl">Обрезка тишины (сек)</span>
+            <select id="autoBlankSec" title="Обрезать тишину в конце файла">
+              <option value="0">0</option>
+              <option value="0.5">0.5</option>
+              <option value="1">1</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модули цепочки (по стилю и target LUFS) -->
+    <div class="chain-modules-card" id="chainModulesCard">
+      <div class="chain-modules-head" id="chainModulesHead">
+        <span class="chain-modules-ttl">Цепочка модулей</span>
+        <span class="chain-modules-chevron" id="chainModulesChevron">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </div>
+      <div class="chain-modules-body" id="chainModulesBody">
+        <div class="chain-modules-list" id="chainModulesList"></div>
       </div>
     </div>
 
@@ -784,12 +1121,12 @@
       </div>
       <div class="pipe-step" data-step="eq">
         <div class="pipe-step-dot"></div>
-        <span class="pipe-step-label">Студийный EQ</span>
+        <span class="pipe-step-label">Студийный EQ (Ozone 5 Equalizer)</span>
         <span class="pipe-step-check">✓</span>
       </div>
       <div class="pipe-step" data-step="dyn">
         <div class="pipe-step-dot"></div>
-        <span class="pipe-step-label">Многополосная динамика</span>
+        <span class="pipe-step-label">Многополосная динамика (Ozone 5 Dynamics)</span>
         <span class="pipe-step-check">✓</span>
       </div>
       <div class="pipe-step" data-step="lufs">
@@ -800,6 +1137,16 @@
       <div class="pipe-step" data-step="final">
         <div class="pipe-step-dot"></div>
         <span class="pipe-step-label">Финальная частотная коррекция</span>
+        <span class="pipe-step-check">✓</span>
+      </div>
+      <div class="pipe-step" id="pipeExciter" data-step="exciter" style="display:none">
+        <div class="pipe-step-dot"></div>
+        <span class="pipe-step-label">Гармонический эксайтер (Ozone 5 Exciter)</span>
+        <span class="pipe-step-check">✓</span>
+      </div>
+      <div class="pipe-step" id="pipeImager" data-step="imager" style="display:none">
+        <div class="pipe-step-dot"></div>
+        <span class="pipe-step-label">Стерео-расширение (Ozone 5 Imager)</span>
         <span class="pipe-step-check">✓</span>
       </div>
     </div>
@@ -839,6 +1186,65 @@
       <div class="result-delta" id="rDelta"></div>
     </div>
 
+    <!-- DAW-style waveform comparison (Original vs Mastered) -->
+    <div class="daw-card" id="dawCard">
+      <div class="daw-head">
+        <span class="daw-ttl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          Сравнение до / после
+        </span>
+      </div>
+      <div class="daw-ruler-wrap">
+        <canvas class="daw-ruler" id="dawRuler" width="400" height="20"></canvas>
+      </div>
+      <div class="daw-tracks">
+        <div class="daw-track a">
+          <span class="daw-track-label">A — оригинал</span>
+          <canvas class="daw-track-canvas" id="dawCanvasA" width="400" height="52"></canvas>
+        </div>
+        <div class="daw-track b">
+          <span class="daw-track-label">B — мастер</span>
+          <canvas class="daw-track-canvas" id="dawCanvasB" width="400" height="52"></canvas>
+        </div>
+      </div>
+      <div class="daw-stats-row">
+        <div class="daw-stat a">
+          <span class="daw-stat-lbl">A · LUFS</span>
+          <span class="daw-stat-val" id="dawStatLufsA">—</span>
+        </div>
+        <div class="daw-stat b">
+          <span class="daw-stat-lbl">B · LUFS</span>
+          <span class="daw-stat-val" id="dawStatLufsB">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spectrum analyzer (log scale 20 Hz – 20 kHz) -->
+    <div class="spectrum-card" id="spectrumCard">
+      <div class="spectrum-head">
+        <span class="spectrum-ttl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Спектр
+        </span>
+      </div>
+      <div class="spectrum-ruler">
+        <span>20 Hz</span>
+        <span>20 kHz</span>
+      </div>
+      <canvas class="spectrum-canvas" id="spectrumCanvas" width="400" height="80"></canvas>
+    </div>
+
+    <!-- Vectorscope (Lissajous L vs R) -->
+    <div class="vectorscope-card" id="vectorscopeCard">
+      <div class="vectorscope-head">
+        <span class="vectorscope-ttl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Векторскоп
+        </span>
+      </div>
+      <canvas class="vectorscope-canvas" id="vectorscopeCanvas" width="200" height="200"></canvas>
+    </div>
+
     <div class="status" id="stMaster"></div>
   </div>
 
@@ -871,7 +1277,7 @@
       <div class="spec"><span class="spec-v">Studio EQ</span><span class="spec-k">Pipeline</span></div>
       <div class="spec"><span class="spec-v">Sony/Warner</span><span class="spec-k">Standard</span></div>
     </div>
-    <p class="foot-txt">Magic Master · Профессиональный аудиомастеринг в браузере</p>
+    <p class="foot-txt">Magic Master · Профессиональный аудиомастеринг в браузере · <a href="/api/progress" target="_blank" rel="noopener" class="foot-link">Статус плана</a></p>
   </footer>
 
 </div><!-- /page -->
@@ -890,6 +1296,8 @@
   </div>
 </div>
 
+<script src="app.js"></script>
+<!-- Inline script extracted to app.js; uncomment below if app.js is missing
 <script>
 /* ═══════ DOM ═══════ */
 const API         = '';
@@ -919,12 +1327,18 @@ const vu          = document.getElementById('vu');
 const meterVal    = document.getElementById('meterVal');
 const btnMeasure  = document.getElementById('btnMeasure');
 const stMeasure   = document.getElementById('stMeasure');
-const preset      = document.getElementById('preset');
-const customField = document.getElementById('customField');
-const customLufs  = document.getElementById('customLufs');
 const outFormat   = document.getElementById('outFormat');
-const btnMaster   = document.getElementById('btnMaster');
-const btnMasterTxt= document.getElementById('btnMasterTxt');
+const styleGrid     = document.getElementById('styleGrid');
+const targetLufsInput= document.getElementById('targetLufsInput');
+const abWrap        = document.getElementById('abWrap');
+const btnABa        = document.getElementById('btnAB-a');
+const btnABb        = document.getElementById('btnAB-b');
+const btnMaster     = document.getElementById('btnMaster');
+const btnMasterTxt  = document.getElementById('btnMasterTxt');
+
+let selectedStyle   = 'standard';
+let masteredBuffer  = null;  // decoded AudioBuffer of mastered file
+let abMode          = 'a';   // 'a' = original, 'b' = mastered
 const pipeline    = document.getElementById('pipeline');
 const progWrap    = document.getElementById('progWrap');
 const progFill    = document.getElementById('progFill');
@@ -935,14 +1349,24 @@ const rBefore     = document.getElementById('rBefore');
 const rAfter      = document.getElementById('rAfter');
 const rDelta      = document.getElementById('rDelta');
 const stMaster    = document.getElementById('stMaster');
+const dawCard     = document.getElementById('dawCard');
+const dawRuler    = document.getElementById('dawRuler');
+const dawCanvasA  = document.getElementById('dawCanvasA');
+const dawCanvasB  = document.getElementById('dawCanvasB');
+const dawStatLufsA= document.getElementById('dawStatLufsA');
+const dawStatLufsB= document.getElementById('dawStatLufsB');
 
 let currentFile = null;
 
 /* ═══════ CANVAS RESIZE OBSERVER ═══════ */
 const canvasRO = new ResizeObserver(() => {
   if (audioBuffer) drawWaveform(getCurrentFrac());
+  if (dawCard.classList.contains('visible') && lastDawState) {
+    showDawComparison(lastDawState.origBuf, lastDawState.masteredBuf, lastDawState.lufsA, lastDawState.lufsB);
+  }
 });
 canvasRO.observe(waveCanvas);
+if (dawCard) canvasRO.observe(dawCard);
 
 function getCurrentFrac() {
   if (!audioBuffer) return 0;
@@ -952,6 +1376,20 @@ function getCurrentFrac() {
 
 /* ═══════ TOASTS ═══════ */
 const toastWrap = document.getElementById('toastWrap');
+
+/**
+ * Преобразует техническое сообщение об ошибке в читаемый текст.
+ * Для ошибок ffprobe/ffmpeg добавляет инструкцию по установке.
+ */
+function friendlyError(msg) {
+  if (!msg) return msg;
+  if (msg.includes('ffprobe') || msg.includes('ffmpeg') || msg.includes('ffmpeg')) {
+    const base = msg.replace(/\[Errno \d+\][^.]*\.\s*/g, '').trim();
+    return base + ' → <code style="font-family:\'JetBrains Mono\',monospace;font-size:.85em;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">sudo apt-get install -y ffmpeg</code>';
+  }
+  return msg;
+}
+
 function toast(msg, type = 'inf', dur = 3000) {
   const icons = {
     ok:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
@@ -1159,6 +1597,85 @@ function drawWaveform(playPosFrac) {
   }
 }
 
+/* ─── DAW comparison (ruler, waveforms, stats) ─── */
+let lastDawState = null;
+
+function dawDrawWaveform(ctx, buffer, w, h, rgb) {
+  if (!buffer || buffer.length === 0) return;
+  const [r, g, b] = rgb;
+  const n = buffer.numberOfChannels;
+  const len = buffer.length;
+  const spp = Math.max(1, Math.floor(len / w));
+  const mid = h / 2;
+  for (let x = 0; x < w; x++) {
+    const s0 = x * spp;
+    let maxAmp = 0;
+    for (let i = 0; i < spp; i++) {
+      let sum = 0;
+      for (let c = 0; c < n; c++) sum += Math.abs(buffer.getChannelData(c)[s0 + i] || 0);
+      maxAmp = Math.max(maxAmp, sum / n);
+    }
+    const barH = Math.max(1, maxAmp * mid * 0.92);
+    ctx.fillStyle = `rgba(${r},${g},${b},${0.2 + maxAmp * 0.6})`;
+    ctx.fillRect(x, mid - barH, 1, barH * 2);
+  }
+}
+
+function dawDrawRuler(canvas, duration) {
+  if (!duration || duration <= 0) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.textBaseline = 'top';
+  const step = duration <= 30 ? 5 : duration <= 120 ? 15 : 30;
+  for (let t = 0; t <= duration; t += step) {
+    const x = (t / duration) * w;
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    const label = m + ':' + String(s).padStart(2, '0');
+    ctx.fillText(label, x + 3, 2);
+  }
+}
+
+function dawComputeStats(lufsA, lufsB) {
+  dawStatLufsA.textContent = lufsA != null ? lufsA.toFixed(1) + ' LUFS' : '—';
+  dawStatLufsB.textContent = lufsB != null ? lufsB.toFixed(1) + ' LUFS' : '—';
+}
+
+function showDawComparison(origBuf, masteredBuf, lufsA, lufsB) {
+  if (!origBuf || !masteredBuf) return;
+  lastDawState = { origBuf, masteredBuf, lufsA, lufsB };
+  const wrap = dawRuler.parentElement;
+  const width = wrap.getBoundingClientRect().width;
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.floor(width * dpr) || 400;
+  const trackH = 52;
+  const rulerH = 20;
+  dawRuler.width = W;
+  dawRuler.height = Math.floor(rulerH * dpr);
+  dawCanvasA.width = W;
+  dawCanvasA.height = Math.floor(trackH * dpr);
+  dawCanvasB.width = W;
+  dawCanvasB.height = Math.floor(trackH * dpr);
+
+  const duration = Math.max(origBuf.duration, masteredBuf.duration);
+  dawDrawRuler(dawRuler, duration);
+
+  const ctxA = dawCanvasA.getContext('2d');
+  ctxA.clearRect(0, 0, W, Math.floor(trackH * dpr));
+  dawDrawWaveform(ctxA, origBuf, W, Math.floor(trackH * dpr), [108, 75, 255]);
+
+  const ctxB = dawCanvasB.getContext('2d');
+  ctxB.clearRect(0, 0, W, Math.floor(trackH * dpr));
+  dawDrawWaveform(ctxB, masteredBuf, W, Math.floor(trackH * dpr), [52, 211, 153]);
+
+  dawComputeStats(lufsA, lufsB);
+  dawCard.classList.add('visible');
+}
+
 /* ─── Time formatting ─── */
 function fmtTime(sec) {
   const s = Math.floor(sec);
@@ -1306,11 +1823,13 @@ function setProgress(pct,msg){
 
 /* ═══════ Pipeline step visualiser ═══════ */
 const PIPE_MAP = [
-  {step:'dc',   from:5,  to:20,  keys:['dc','смещени']},
-  {step:'eq',   from:20, to:35,  keys:['eq','частот','eq']},
-  {step:'dyn',  from:35, to:70,  keys:['динамик','максимайз','полос']},
-  {step:'lufs', from:70, to:82,  keys:['lufs','нормализ']},
-  {step:'final',from:82, to:98,  keys:['финальн','спектр']},
+  {step:'dc',      from:5,  to:20,  keys:['dc','смещени']},
+  {step:'eq',      from:20, to:35,  keys:['eq','частот','equalizer']},
+  {step:'dyn',     from:35, to:70,  keys:['динамик','максимайз','полос','dynamics']},
+  {step:'lufs',    from:70, to:78,  keys:['lufs','нормализ']},
+  {step:'final',   from:78, to:88,  keys:['финальн','спектр','жанр']},
+  {step:'exciter', from:88, to:91,  keys:['эксайтер','exciter']},
+  {step:'imager',  from:91, to:95,  keys:['стерео','imager','расширен']},
 ];
 function updatePipelineSteps(pct,msg){
   const msgL=(msg||'').toLowerCase();
@@ -1328,6 +1847,13 @@ function resetPipelineSteps(){
   pipeline.querySelectorAll('.pipe-step').forEach(el=>{
     el.classList.remove('active','done');
   });
+}
+function updateOzoneSteps(style){
+  const isHouse = style === 'house_basic';
+  const exciterEl = document.getElementById('pipeExciter');
+  const imagerEl  = document.getElementById('pipeImager');
+  if(exciterEl) exciterEl.style.display = isHouse ? '' : 'none';
+  if(imagerEl)  imagerEl.style.display  = isHouse ? '' : 'none';
 }
 
 /* ═══════ Dropzone ═══════ */
@@ -1366,9 +1892,16 @@ function setFile(f){
   pipeline.classList.remove('visible');
   resultPanel.classList.remove('visible');
   resetPipelineSteps();
+  updateOzoneSteps(selectedStyle);
   // reset audio state
   stopAll();
   audioBuffer=null;
+  masteredBuffer=null;
+  abMode='a';
+  abWrap.classList.remove('visible');
+  dawCard.classList.remove('visible');
+  lastDawState = null;
+  btnABa.classList.add('active'); btnABb.classList.remove('active');
   audioMeta.classList.remove('visible');
   tTotal.textContent='0:00';
   playerEl.classList.add('visible');
@@ -1392,9 +1925,16 @@ function resetAll(){
   pipeline.classList.remove('visible');
   resultPanel.classList.remove('visible');
   resetPipelineSteps();
+  updateOzoneSteps(selectedStyle);
   // reset player
   stopAll();
   audioBuffer=null;
+  masteredBuffer=null;
+  abMode='a';
+  abWrap.classList.remove('visible');
+  dawCard.classList.remove('visible');
+  lastDawState = null;
+  btnABa.classList.add('active'); btnABb.classList.remove('active');
   playerEl.classList.remove('visible');
   audioMeta.classList.remove('visible');
   // clear canvas
@@ -1402,14 +1942,39 @@ function resetAll(){
   ctx2.clearRect(0,0,waveCanvas.width,waveCanvas.height);
 }
 
-/* ═══════ Preset badges ═══════ */
-preset.addEventListener('change',()=>{
-  const v=preset.value;
-  customField.classList.toggle('on', v==='custom');
-  document.getElementById('pb-s').classList.toggle('on', v==='-14');
-  document.getElementById('pb-a').classList.toggle('on', v==='-16');
-  document.getElementById('pb-c').classList.toggle('on', v==='-9');
+/* ═══════ Style cards ═══════ */
+styleGrid.addEventListener('click', e => {
+  const card = e.target.closest('.style-card');
+  if (!card) return;
+  styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  selectedStyle = card.dataset.style;
+  targetLufsInput.value = card.dataset.lufs;
+  updateOzoneSteps(selectedStyle);
 });
+
+/* ═══════ A/B comparison ═══════ */
+function setAB(mode) {
+  abMode = mode;
+  btnABa.classList.toggle('active', mode === 'a');
+  btnABb.classList.toggle('active', mode === 'b');
+  const buf = mode === 'b' && masteredBuffer ? masteredBuffer : audioBuffer;
+  if (!buf) return;
+  const wasPlaying = isPlaying;
+  const pos = wasPlaying ? (getCtx().currentTime - startedAt) : pauseOffset;
+  stopAll();
+  // swap buffer reference temporarily for drawing
+  const orig = audioBuffer;
+  audioBuffer = buf;
+  drawWaveform(buf.duration > 0 ? Math.min(pos / buf.duration, 1) : 0);
+  pauseOffset = Math.min(pos, buf.duration);
+  if (wasPlaying) playFrom(pauseOffset);
+  else audioBuffer = orig; // restore; playFrom will use correct buf
+  // keep the swapped buffer active for playback
+  audioBuffer = buf;
+}
+btnABa.addEventListener('click', () => setAB('a'));
+btnABb.addEventListener('click', () => setAB('b'));
 
 /* ═══════ Measure ═══════ */
 btnMeasure.addEventListener('click', async()=>{
@@ -1432,9 +1997,9 @@ btnMeasure.addEventListener('click', async()=>{
     const peakTxt = d.peak_dbfs!=null ? `  ·  Peak ${d.peak_dbfs.toFixed(1)} dB` : '';
     setStatus(stMeasure, 'Измерение завершено'+peakTxt, 'ok');
   }catch(e){
-    const msg = e.message||'Ошибка измерения';
-    setStatus(stMeasure,msg,'err');
-    toast(msg,'err');
+    const msg = friendlyError(e.message||'Ошибка измерения');
+    setStatus(stMeasure, msg, 'err');
+    toast(msg, 'err', msg.includes('ffmpeg') ? 8000 : 3000);
     setMeter(null);
   }
   btnMeasure.disabled=false;
@@ -1444,9 +2009,7 @@ btnMeasure.addEventListener('click', async()=>{
 /* ═══════ Master ═══════ */
 btnMaster.addEventListener('click', async()=>{
   if(!currentFile) return;
-  let targetLufs = preset.value==='custom'
-    ? parseFloat(customLufs.value)
-    : parseFloat(preset.value);
+  let targetLufs = parseFloat(targetLufsInput.value);
   if(isNaN(targetLufs)) targetLufs=-14;
 
   btnMaster.disabled=true;
@@ -1458,12 +2021,14 @@ btnMaster.addEventListener('click', async()=>{
   progWrap.classList.add('on');
   pipeline.classList.add('visible');
   resetPipelineSteps();
+  updateOzoneSteps(selectedStyle);
   setProgress(0,'Инициализация…');
 
   const form=new FormData();
   form.append('file',currentFile);
   form.append('target_lufs',targetLufs);
   form.append('out_format',outFormat.value);
+  form.append('style',selectedStyle);
 
   try{
     const startRes=await fetch(API+'/api/master',{method:'POST',body:form});
@@ -1489,9 +2054,24 @@ btnMaster.addEventListener('click', async()=>{
     if(!r.ok) throw new Error('Не удалось скачать результат');
     const blob=await r.blob();
     const name=(currentFile.name.replace(/\.[^.]+$/,'')||'master')+'_mastered.'+outFormat.value;
+    // Download
+    const dlUrl=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download=name; a.click();
-    URL.revokeObjectURL(a.href);
+    a.href=dlUrl; a.download=name; a.click();
+    // Decode mastered for A/B player
+    try {
+      const mastAB = await blob.arrayBuffer();
+      masteredBuffer = await getCtx().decodeAudioData(mastAB);
+      abWrap.classList.add('visible');
+      // Switch to B (mastered) automatically
+      const origBuf = audioBuffer;
+      audioBuffer = masteredBuffer;
+      await new Promise(rr=>requestAnimationFrame(()=>requestAnimationFrame(rr)));
+      drawWaveform(0);
+      audioBuffer = origBuf;
+      abMode='b'; btnABa.classList.remove('active'); btnABb.classList.add('active');
+    } catch(e) { console.warn('A/B decode failed', e); }
+    URL.revokeObjectURL(dlUrl);
 
     // Mark all pipeline steps done
     pipeline.querySelectorAll('.pipe-step').forEach(el=>{ el.classList.remove('active'); el.classList.add('done'); });
@@ -1505,8 +2085,8 @@ btnMaster.addEventListener('click', async()=>{
       const sign  = delta>0?'+':'';
       rDelta.innerHTML = `Изменение: <strong>${sign}${delta.toFixed(1)} dB</strong> · Цель: <strong>${targetLufs} LUFS</strong>`;
       resultPanel.classList.add('visible');
-      // Update VU meter with the after value
       setMeter(data.after_lufs);
+      if (audioBuffer && masteredBuffer) showDawComparison(audioBuffer, masteredBuffer, data.before_lufs, data.after_lufs);
     }
 
     setStatus(stMaster,'Скачано: '+name,'ok');
@@ -1525,9 +2105,9 @@ btnMaster.addEventListener('click', async()=>{
     setTimeout(()=>progWrap.classList.remove('on'), 2500);
 
   }catch(e){
-    const msg = e.message||'Ошибка мастеринга';
-    setStatus(stMaster,msg,'err');
-    toast(msg,'err');
+    const msg = friendlyError(e.message||'Ошибка мастеринга');
+    setStatus(stMaster, msg, 'err');
+    toast(msg, 'err', msg.includes('ffmpeg') ? 10000 : 3000);
     setProgress(0,'');
     progWrap.classList.remove('on');
     pipeline.classList.remove('visible');
@@ -1539,6 +2119,6 @@ btnMaster.addEventListener('click', async()=>{
   btnMasterTxt.textContent='Запустить мастеринг';
   wdeco.classList.remove('active');
 });
-</script>
+</script> -->
 </body>
 </html>

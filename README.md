@@ -108,6 +108,23 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - Интерфейс: **http://localhost:8000**
 - API документация: **http://localhost:8000/docs**
 
+## Разделение фронтенда (CSS и JS в отдельные файлы)
+
+Сейчас интерфейс использует **внешний** `app.js` и **встроенные** стили в `index.html`. Чтобы вынести стили в `styles.css`:
+
+1. **Из Ubuntu или WSL** выполните в корне проекта:
+   ```bash
+   cd frontend && python3 extract_assets.py
+   ```
+   Будут созданы `styles.css` и обновлён `app.js`.
+
+2. В `index.html` замените блок `<style>...</style>` на:
+   ```html
+   <link rel="stylesheet" href="styles.css">
+   ```
+
+Если не запускать скрипт, страница работает со встроенными стилями и внешним `app.js`.
+
 ## Структура проекта
 
 ```
@@ -121,7 +138,10 @@ audio-mastering-web/
 │   ├── requirements.txt
 │   └── run.py             # запуск uvicorn
 ├── frontend/
-│   └── index.html         # одностраничный интерфейс
+│   ├── index.html         # одностраничный интерфейс
+│   ├── app.js             # логика (вынесен из index.html)
+│   ├── styles.css         # стили (создаётся скриптом, см. ниже)
+│   └── extract_assets.py  # скрипт выноса CSS/JS в отдельные файлы
 └── README.md
 ```
 
@@ -129,15 +149,20 @@ audio-mastering-web/
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| `MASTERFLOW_MAX_UPLOAD_MB` | Максимальный размер загружаемого файла (МБ) | 100 |
-| `MASTERFLOW_TEMP_DIR` | Каталог для временных файлов | /tmp/masterflow |
-| `MASTERFLOW_DEFAULT_LUFS` | Целевая громкость по умолчанию | -14.0 |
+| `MAGIC_MASTER_MAX_UPLOAD_MB` | Максимальный размер загружаемого файла (МБ) | 100 |
+| `MAGIC_MASTER_TEMP_DIR` | Каталог для временных файлов | /tmp/masterflow |
+| `MAGIC_MASTER_DEFAULT_TARGET_LUFS` | Целевая громкость по умолчанию (LUFS) | -14.0 |
 
 ## API (кратко)
 
+- `GET /api/health` — проверка живости сервиса (для деплоя/мониторинга).
+- `GET /api/progress` — содержимое PROGRESS.md (статус выполнения плана разработки).
 - `GET /api/presets` — список пресетов LUFS.
 - `POST /api/measure` — загрузка файла, ответ: текущая громкость в LUFS.
-- `POST /api/master` — загрузка файла + параметры `target_lufs`, `out_format` (и опционально `preset`); ответ — файл с мастерингом.
+- `POST /api/master` — загрузка файла + параметры `target_lufs`, `out_format` (и опционально `preset`); ответ — job_id, далее статус и скачивание результата.
+- `POST /api/v2/master` — мастеринг по цепочке модулей: форма с `file`, опционально `config` (JSON-цепочка), `target_lufs`, `style`, `out_format`; без `config` используется цепочка по умолчанию. Результат — тот же job_id и те же эндпоинты статуса/результата.
+- `GET /api/v2/chain/default` — список модулей цепочки по умолчанию (style, target_lufs); для UI «Модули цепочки» и будущего drag-and-drop.
+- `POST /api/v2/analyze` — анализ загруженного файла: LUFS, peak_dbfs, duration_sec, sample_rate, channels; для стерео — stereo_correlation. При `extended=true`: дополнительно `spectrum_bars`, `lufs_timeline`, `timeline_step_sec`; для стерео — `vectorscope_points` (до 1000 точек [l, r] для векторскопа).
 
 Подробнее: **http://localhost:8000/docs**.
 
