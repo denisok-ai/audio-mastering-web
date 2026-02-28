@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 try:
-    from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, Float, Index
+    from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, Float
     from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
     DB_AVAILABLE = True
 except ImportError:
@@ -43,10 +43,6 @@ if DB_AVAILABLE:
         created_at: float = Column(Float, nullable=False, default=time.time)
         last_login_at: Optional[float] = Column(Float, nullable=True)
 
-        __table_args__ = (
-            Index("ix_users_email", "email"),
-        )
-
     class MasteringRecord(Base):  # type: ignore[misc]
         """История мастерингов для залогиненных пользователей."""
         __tablename__ = "mastering_records"
@@ -84,7 +80,13 @@ def create_tables() -> None:
     """Создать таблицы если не существуют. Вызывается при старте FastAPI."""
     if not DB_AVAILABLE:
         return
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:  # noqa: BLE001
+        # SQLite: индекс/таблица уже есть (миграции или повторный старт) — не падать
+        msg = str(e).lower()
+        if "already exists" not in msg and "duplicate" not in msg:
+            raise
 
 
 def get_db():
