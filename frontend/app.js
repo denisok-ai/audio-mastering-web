@@ -57,6 +57,8 @@ const dawCanvasA  = document.getElementById('dawCanvasA');
 const dawCanvasB  = document.getElementById('dawCanvasB');
 const dawStatLufsA= document.getElementById('dawStatLufsA');
 const dawStatLufsB= document.getElementById('dawStatLufsB');
+const abLufsA     = document.getElementById('abLufsA');
+const abLufsB     = document.getElementById('abLufsB');
 const spectrumCard   = document.getElementById('spectrumCard');
 const spectrumCanvas = document.getElementById('spectrumCanvas');
 const vectorscopeCard   = document.getElementById('vectorscopeCard');
@@ -65,12 +67,20 @@ const chainModulesHead   = document.getElementById('chainModulesHead');
 const chainModulesBody   = document.getElementById('chainModulesBody');
 const chainModulesList   = document.getElementById('chainModulesList');
 const chainModulesChevron= document.getElementById('chainModulesChevron');
+const chainPresetsWrap   = document.getElementById('chainPresetsWrap');
+const chainPresetName    = document.getElementById('chainPresetName');
+const btnChainPresetSave = document.getElementById('btnChainPresetSave');
+const chainPresetSelect = document.getElementById('chainPresetSelect');
+const btnChainPresetLoad = document.getElementById('btnChainPresetLoad');
+const btnChainPresetDelete = document.getElementById('btnChainPresetDelete');
 
 let currentFile = null;
 /** Текущий конфиг цепочки (из GET /api/v2/chain/default), для отправки в POST /api/v2/master при изменённом порядке */
 let chainModulesConfig = null;
 /** Данные для графика LUFS по времени (после расширенного замера) */
 let lastLufsTimelineData = null;
+/** Последний результат расширенного анализа (для экспорта отчёта P13) */
+let lastAnalyzeReport = null;
 
 /* ═══════ CANVAS RESIZE OBSERVER ═══════ */
 const canvasRO = new ResizeObserver(() => {
@@ -103,8 +113,22 @@ const toastWrap = document.getElementById('toastWrap');
  * Преобразует техническое сообщение об ошибке в читаемый текст.
  * Для ошибок ffprobe/ffmpeg добавляет инструкцию по установке.
  */
+/** Безопасно прочитать ответ как JSON; при не-JSON (например 500 HTML) вернуть текст и status. */
+async function safeResponseJson(res) {
+  const text = await res.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error(text.slice(0, 200) || res.statusText || 'Ошибка сервера');
+  }
+}
+
 function friendlyError(msg) {
   if (!msg) return msg;
+  if (msg.includes('Internal Server Error') || msg.includes('Internal S')) {
+    return 'Ошибка на сервере при обработке. Попробуйте отключить часть модулей «Дополнительная обработка» или другой файл.';
+  }
   if (msg.includes('ffprobe') || msg.includes('ffmpeg') || msg.includes('ffmpeg')) {
     const base = msg.replace(/\[Errno \d+\][^.]*\.\s*/g, '').trim();
     return base + ' → <code style="font-family:\'JetBrains Mono\',monospace;font-size:.85em;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">sudo apt-get install -y ffmpeg</code>';
@@ -222,6 +246,31 @@ histClear.addEventListener('click', e => {
 // Init
 renderHistory();
 if (chainModulesList) loadChainModules();
+
+/* ═══════ Загрузка файла, переданного с лендинга через sessionStorage ═══════ */
+(function() {
+  try {
+    const data = sessionStorage.getItem('mm_pending_file_data');
+    const name = sessionStorage.getItem('mm_pending_file_name');
+    const type = sessionStorage.getItem('mm_pending_file_type') || 'audio/wav';
+    if (!data || !name) return;
+    sessionStorage.removeItem('mm_pending_file_data');
+    sessionStorage.removeItem('mm_pending_file_name');
+    sessionStorage.removeItem('mm_pending_file_type');
+    // data — base64 dataURL
+    const byteStr = atob(data.split(',')[1]);
+    const ab = new ArrayBuffer(byteStr.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+    const file = new File([ab], name, { type });
+    if (/\.(wav|mp3|flac)$/i.test(file.name)) {
+      setFile(file);
+      toast('Файл загружен с главной страницы: ' + file.name, 'ok');
+    }
+  } catch (e) {
+    console.warn('sessionStorage file restore failed:', e);
+  }
+})();
 
 /* ═══════ WEB AUDIO API ═══════ */
 let audioCtx    = null;
@@ -395,8 +444,8 @@ function getSpectrumBars(buffer) {
   return bars;
 }
 
-function drawSpectrum() {
-  if (!spectrumCanvas || !audioBuffer) return;
+function drawSpectrum(barsArg) {
+  if (!spectrumCanvas || (!audioBuffer && !barsArg)) return;
   const dpr = window.devicePixelRatio || 1;
   const rect = spectrumCanvas.getBoundingClientRect();
   const W = Math.floor(rect.width * dpr) || 400 * dpr;
@@ -407,18 +456,26 @@ function drawSpectrum() {
   }
   const ctx = spectrumCanvas.getContext('2d');
   ctx.clearRect(0, 0, W, H);
-  const bars = getSpectrumBars(audioBuffer);
+  const bars = barsArg || getSpectrumBars(audioBuffer);
   const barW = W / bars.length;
   const refDb = 0;
   const minDb = -60;
+  // Цвет полос зависит от активного режима (MID=пурпурный, SIDE=янтарный, MONO=циан)
+  const mode = lastSpectrumData ? lastSpectrumData.active : 'mono';
+  const colorMap = {
+    mono:  ['rgba(34,211,238,0.35)',  'rgba(34,211,238,0.9)'],
+    mid:   ['rgba(139,92,246,0.35)',  'rgba(139,92,246,0.9)'],
+    side:  ['rgba(245,158,11,0.35)',  'rgba(245,158,11,0.9)'],
+  };
+  const [c0, c1] = colorMap[mode] || colorMap.mono;
   for (let i = 0; i < bars.length; i++) {
     const db = bars[i];
     const norm = Math.max(0, Math.min(1, (db - minDb) / (refDb - minDb)));
     const h = norm * H * 0.92;
     const x = i * barW;
     const grd = ctx.createLinearGradient(x, H, x, H - h);
-    grd.addColorStop(0, 'rgba(34,211,238,0.35)');
-    grd.addColorStop(1, 'rgba(34,211,238,0.9)');
+    grd.addColorStop(0, c0);
+    grd.addColorStop(1, c1);
     ctx.fillStyle = grd;
     ctx.fillRect(x, H - h, Math.max(1, barW - 1), h);
   }
@@ -724,6 +781,9 @@ function setMeter(lufs) {
     if (meterCorrelation) { meterCorrelation.classList.remove('visible'); meterCorrelation.textContent = ''; }
     if (lufsTimelineWrap) lufsTimelineWrap.classList.remove('visible');
     lastLufsTimelineData = null;
+    lastAnalyzeReport = null;
+    const reportActions = document.getElementById('reportActions');
+    if (reportActions) reportActions.style.display = 'none';
     return;
   }
   meterVal.textContent = lufs.toFixed(1)+' LUFS';
@@ -824,6 +884,8 @@ function setFile(f){
   progWrap.classList.remove('on');
   pipeline.classList.remove('visible');
   resultPanel.classList.remove('visible');
+  if (abLufsA) abLufsA.textContent = '—';
+  if (abLufsB) abLufsB.textContent = '—';
   resetPipelineSteps();
   updateOzoneSteps(selectedStyle);
   // reset audio state
@@ -859,6 +921,8 @@ function resetAll(){
   progWrap.classList.remove('on');
   pipeline.classList.remove('visible');
   resultPanel.classList.remove('visible');
+  if (abLufsA) abLufsA.textContent = '—';
+  if (abLufsB) abLufsB.textContent = '—';
   resetPipelineSteps();
   updateOzoneSteps(selectedStyle);
   // reset player
@@ -883,6 +947,7 @@ function resetAll(){
 styleGrid.addEventListener('click', e => {
   const card = e.target.closest('.style-card');
   if (!card) return;
+  if (card.classList.contains('locked')) return; // заблокированная — игнорируем
   styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
   card.classList.add('active');
   selectedStyle = card.dataset.style;
@@ -1054,6 +1119,98 @@ async function loadChainModules() {
   }
 }
 
+/* ═══════ P10: сохранённые пресеты цепочки (только для залогиненных) ═══════ */
+async function loadSavedPresetsList() {
+  if (!chainPresetSelect) return;
+  try {
+    const r = await fetch(API + '/api/auth/presets', { headers: authHeaders() });
+    if (!r.ok) return;
+    const data = await r.json();
+    const list = data.presets || [];
+    chainPresetSelect.innerHTML = '<option value="">— Загрузить пресет —</option>' +
+      list.map(p => `<option value="${p.id}">${escapeHtml(p.name || 'Без имени')}</option>`).join('');
+  } catch (e) { /* ignore */ }
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+if (btnChainPresetSave && chainPresetName) {
+  btnChainPresetSave.addEventListener('click', async () => {
+    if (!isLoggedIn()) return;
+    const name = (chainPresetName.value || '').trim();
+    if (!name) { toast('Введите имя пресета', 'warn'); return; }
+    if (!chainModulesConfig || !chainModulesConfig.modules) { toast('Нет цепочки для сохранения', 'warn'); return; }
+    try {
+      const r = await fetch(API + '/api/auth/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          name,
+          config: { modules: chainModulesConfig.modules },
+          style: selectedStyle || 'standard',
+          target_lufs: parseFloat(targetLufsInput?.value) || -14,
+        }),
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || r.statusText); }
+      chainPresetName.value = '';
+      loadSavedPresetsList();
+      toast('Пресет сохранён', 'inf');
+    } catch (e) {
+      toast(e.message || 'Ошибка сохранения', 'err');
+    }
+  });
+}
+
+if (btnChainPresetLoad && chainPresetSelect) {
+  btnChainPresetLoad.addEventListener('click', async () => {
+    if (!isLoggedIn()) return;
+    const id = chainPresetSelect.value;
+    if (!id) { toast('Выберите пресет', 'warn'); return; }
+    try {
+      const r = await fetch(API + '/api/auth/presets/' + id, { headers: authHeaders() });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || r.statusText); }
+      const p = await r.json();
+      const modules = (p.config && p.config.modules) ? p.config.modules : (p.config || []);
+      if (!Array.isArray(modules) || modules.length === 0) { toast('Пресет пустой', 'warn'); return; }
+      chainModulesConfig = { modules };
+      if (p.style) {
+        selectedStyle = p.style;
+        const styleCard = document.querySelector('.style-card[data-style="' + p.style + '"]');
+        if (styleCard && !styleCard.classList.contains('locked')) {
+          styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+          styleCard.classList.add('active');
+        }
+        updateOzoneSteps(selectedStyle);
+      }
+      if (p.target_lufs != null && targetLufsInput) targetLufsInput.value = String(p.target_lufs);
+      renderChainModulesList(modules);
+      toast('Пресет загружен', 'inf');
+    } catch (e) {
+      toast(e.message || 'Ошибка загрузки пресета', 'err');
+    }
+  });
+}
+
+if (btnChainPresetDelete && chainPresetSelect) {
+  btnChainPresetDelete.addEventListener('click', async () => {
+    if (!isLoggedIn()) return;
+    const id = chainPresetSelect.value;
+    if (!id) { toast('Выберите пресет для удаления', 'warn'); return; }
+    try {
+      const r = await fetch(API + '/api/auth/presets/' + id, { method: 'DELETE', headers: authHeaders() });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || r.statusText); }
+      loadSavedPresetsList();
+      toast('Пресет удалён', 'inf');
+    } catch (e) {
+      toast(e.message || 'Ошибка удаления', 'err');
+    }
+  });
+}
+
 /* ═══════ A/B comparison ═══════ */
 function setAB(mode) {
   abMode = mode;
@@ -1073,6 +1230,11 @@ function setAB(mode) {
   else audioBuffer = orig; // restore; playFrom will use correct buf
   // keep the swapped buffer active for playback
   audioBuffer = buf;
+  // обновить спектр и векторскоп под выбранный буфер (A — исходник, B — мастер)
+  requestAnimationFrame(() => {
+    if (spectrumCard && spectrumCard.classList.contains('visible')) drawSpectrum();
+    if (vectorscopeCard && vectorscopeCard.classList.contains('visible')) drawVectorscope();
+  });
 }
 btnABa.addEventListener('click', () => setAB('a'));
 btnABb.addEventListener('click', () => setAB('b'));
@@ -1087,11 +1249,14 @@ btnMeasure.addEventListener('click', async()=>{
   form.append('file',currentFile);
   form.append('extended','true');
   try{
-    const r=await fetch(API+'/api/v2/analyze',{method:'POST',body:form});
-    const d=await r.json();
+    const r=await fetch(API+'/api/v2/analyze',{method:'POST',body:form,headers:authHeaders()});
+    const d=await safeResponseJson(r);
     if(!r.ok) throw new Error(d.detail||r.statusText);
     setMeter(d.lufs);
     setCorrelation(d.stereo_correlation != null ? d.stereo_correlation : null);
+    lastAnalyzeReport = { ...d, filename: currentFile ? currentFile.name : '' };
+    const reportActions = document.getElementById('reportActions');
+    if (reportActions) reportActions.style.display = 'inline-flex';
     if (lufsTimelineWrap && lufsTimelineCanvas && Array.isArray(d.lufs_timeline) && d.lufs_timeline.length > 0) {
       lastLufsTimelineData = {
         timeline: d.lufs_timeline,
@@ -1104,6 +1269,8 @@ btnMeasure.addEventListener('click', async()=>{
       lastLufsTimelineData = null;
       if (lufsTimelineWrap) lufsTimelineWrap.classList.remove('visible');
     }
+    // Streaming Loudness Preview
+    renderStreamingPreview(d.streaming_preview || null);
     const durationSec = d.duration_sec != null ? d.duration_sec : d.duration;
     // Update audio meta with server-side data
     if(d.peak_dbfs!=null) amPeak.textContent = d.peak_dbfs.toFixed(1)+' dB';
@@ -1112,6 +1279,10 @@ btnMeasure.addEventListener('click', async()=>{
     if(durationSec!=null) { amDur.textContent=fmtTime(durationSec); audioMeta.classList.add('visible'); }
     const peakTxt = d.peak_dbfs!=null ? `  ·  Peak ${d.peak_dbfs.toFixed(1)} dB` : '';
     setStatus(stMeasure, 'Измерение завершено'+peakTxt, 'ok');
+    // M/S spectrum tabs
+    if (d.spectrum_bars_mid || d.spectrum_bars_side) {
+      updateSpectrumTabs(d);
+    }
   }catch(e){
     const msg = friendlyError(e.message||'Ошибка измерения');
     setStatus(stMeasure, msg, 'err');
@@ -1121,6 +1292,82 @@ btnMeasure.addEventListener('click', async()=>{
   btnMeasure.disabled=false;
   wdeco.classList.remove('active');
 });
+
+/* ═══════ P13: экспорт отчёта анализа ═══════ */
+function buildAnalyzeReportText(data) {
+  const lines = [];
+  lines.push('Magic Master — Отчёт анализа');
+  lines.push('============================');
+  lines.push('');
+  if (data.filename) lines.push('Файл: ' + data.filename);
+  lines.push('Дата: ' + new Date().toLocaleString('ru-RU'));
+  lines.push('');
+  lines.push('--- Уровень громкости ---');
+  if (data.lufs != null) lines.push('LUFS (интегрированный): ' + data.lufs.toFixed(2) + ' dB');
+  if (data.peak_dbfs != null) lines.push('Peak dBFS: ' + data.peak_dbfs.toFixed(2) + ' dB');
+  lines.push('');
+  lines.push('--- Метаданные ---');
+  const dur = data.duration_sec != null ? data.duration_sec : data.duration;
+  if (dur != null) lines.push('Длительность: ' + (typeof fmtTime === 'function' ? fmtTime(dur) : Math.floor(dur/60)+':'+String(Math.floor(dur%60)).padStart(2,'0')));
+  if (data.sample_rate != null) lines.push('Sample rate: ' + data.sample_rate + ' Hz');
+  if (data.channels != null) lines.push('Каналы: ' + (data.channels === 1 ? 'Mono' : 'Stereo'));
+  if (data.stereo_correlation != null) lines.push('Стерео-корреляция L/R: ' + data.stereo_correlation.toFixed(4) + ' (−1…+1)');
+  if (Array.isArray(data.lufs_timeline) && data.lufs_timeline.length > 0) {
+    const arr = data.lufs_timeline;
+    const min = Math.min.apply(null, arr);
+    const max = Math.max.apply(null, arr);
+    const avg = arr.reduce((a,b)=>a+b,0)/arr.length;
+    lines.push('');
+    lines.push('--- LUFS по времени (краткосрочный) ---');
+    lines.push('Мин: ' + min.toFixed(2) + ' dB  Макс: ' + max.toFixed(2) + ' dB  Среднее: ' + avg.toFixed(2) + ' dB');
+    if (data.timeline_step_sec != null) lines.push('Шаг: ' + data.timeline_step_sec.toFixed(3) + ' с');
+  }
+  if (Array.isArray(data.spectrum_bars) && data.spectrum_bars.length > 0) {
+    lines.push('');
+    lines.push('--- Спектр ---');
+    lines.push('Полос: ' + data.spectrum_bars.length + ' (логарифмическая шкала 20 Hz – 20 kHz)');
+  }
+  if (Array.isArray(data.vectorscope_points) && data.vectorscope_points.length > 0) {
+    lines.push('');
+    lines.push('--- Векторскоп ---');
+    lines.push('Точек: ' + data.vectorscope_points.length);
+  }
+  lines.push('');
+  lines.push('— сгенерировано Magic Master');
+  return lines.join('\n');
+}
+
+const btnDownloadReport = document.getElementById('btnDownloadReport');
+if (btnDownloadReport) {
+  btnDownloadReport.addEventListener('click', () => {
+    if (!lastAnalyzeReport) return;
+    const text = buildAnalyzeReportText(lastAnalyzeReport);
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const name = (lastAnalyzeReport.filename || 'report').replace(/\.[^.]+$/, '') + '_analyze_report.txt';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Отчёт сохранён', 'inf');
+  });
+}
+
+const btnDownloadReportJson = document.getElementById('btnDownloadReportJson');
+if (btnDownloadReportJson) {
+  btnDownloadReportJson.addEventListener('click', () => {
+    if (!lastAnalyzeReport) return;
+    const json = JSON.stringify(lastAnalyzeReport, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const name = (lastAnalyzeReport.filename || 'report').replace(/\.[^.]+$/, '') + '_analyze_report.json';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Отчёт JSON сохранён', 'inf');
+  });
+}
 
 /* ═══════ Master ═══════ */
 btnMaster.addEventListener('click', async()=>{
@@ -1134,6 +1381,8 @@ btnMaster.addEventListener('click', async()=>{
   wdeco.classList.add('active');
   setStatus(stMaster,'');
   resultPanel.classList.remove('visible');
+  if (abLufsA) abLufsA.textContent = '—';
+  if (abLufsB) abLufsB.textContent = '—';
   progWrap.classList.add('on');
   pipeline.classList.add('visible');
   resetPipelineSteps();
@@ -1153,15 +1402,14 @@ btnMaster.addEventListener('click', async()=>{
     const modules = chainModulesConfig.modules.map(m => { const { label, ...rest } = m; return rest; });
     form.append('config', JSON.stringify({ modules }));
   }
+  collectProModuleParams(form);
 
   try{
-    const startRes=await fetch(API+'/api/v2/master',{method:'POST',body:form});
-    if(!startRes.ok){
-      const err=await startRes.json().catch(()=>({}));
-      throw new Error(err.detail||startRes.statusText);
-    }
-    const {job_id}=await startRes.json();
-    const poll=()=>fetch(API+'/api/master/status/'+job_id).then(r=>r.json());
+    const startRes=await fetch(API+'/api/v2/master',{method:'POST',body:form,headers:authHeaders()});
+    const startData=await safeResponseJson(startRes);
+    if(!startRes.ok) throw new Error(startData.detail||startRes.statusText);
+    const job_id=startData.job_id;
+    const poll=async ()=>{ const r=await fetch(API+'/api/master/status/'+job_id); return safeResponseJson(r); };
 
     let data;
     do{
@@ -1205,6 +1453,8 @@ btnMaster.addEventListener('click', async()=>{
     if(data.before_lufs!=null && data.after_lufs!=null){
       rBefore.textContent = data.before_lufs.toFixed(1)+' LUFS';
       rAfter.textContent  = data.after_lufs.toFixed(1)+' LUFS';
+      if (abLufsA) abLufsA.textContent = data.before_lufs.toFixed(1);
+      if (abLufsB) abLufsB.textContent = data.after_lufs.toFixed(1);
       const delta = data.after_lufs - data.before_lufs;
       const sign  = delta>0?'+':'';
       rDelta.innerHTML = `Изменение: <strong>${sign}${delta.toFixed(1)} dB</strong> · Цель: <strong>${targetLufs} LUFS</strong>`;
@@ -1215,7 +1465,41 @@ btnMaster.addEventListener('click', async()=>{
 
     setStatus(stMaster,'Скачано: '+name,'ok');
     toast('Готово! Файл скачан: '+name, 'ok', 4000);
-    // Save to history
+
+    // Reference Track matching — если пользователь загрузил эталонный трек
+    if (refFile) {
+      try {
+        setStatus(stMaster, 'Применяю Reference Track…');
+        const refForm = new FormData();
+        refForm.append('file', blob, name);
+        refForm.append('reference', refFile, refFile.name);
+        const refStrEl = document.getElementById('refStrength');
+        const refStrVal = refStrEl ? (parseFloat(refStrEl.value) / 100).toFixed(2) : '0.80';
+        refForm.append('strength', refStrVal);
+        refForm.append('out_format', outFormat.value);
+        const refRes = await fetch(API + '/api/v2/reference-match', {
+          method: 'POST', body: refForm, headers: authHeaders()
+        });
+        if (refRes.ok) {
+          const refBlob = await refRes.blob();
+          const refName = (currentFile.name.replace(/\.[^.]+$/, '') || 'master') + '_ref-matched.' + outFormat.value;
+          const refUrl = URL.createObjectURL(refBlob);
+          const refA = document.createElement('a');
+          refA.href = refUrl; refA.download = refName; refA.click();
+          URL.revokeObjectURL(refUrl);
+          setStatus(stMaster, 'Готово! Скачано: ' + name + ' + ' + refName, 'ok');
+          toast('Reference Track применён! Скачан: ' + refName, 'ok', 5000);
+        } else {
+          const refErr = await refRes.json().catch(() => ({}));
+          toast('Reference Track: ' + (refErr.detail || 'ошибка'), 'err', 4000);
+          setStatus(stMaster, 'Скачано: ' + name + ' (Reference Track — ошибка)', 'ok');
+        }
+      } catch (refErr) {
+        toast('Reference Track: ' + (refErr.message || 'ошибка'), 'err', 4000);
+      }
+    }
+    refreshTierAfterMaster();
+    // Сохраняем в localStorage (локальная история)
     saveToHistory({
       name: currentFile.name,
       size: fmtSize(currentFile.size),
@@ -1226,6 +1510,21 @@ btnMaster.addEventListener('click', async()=>{
       date:   fmtDate(Date.now()),
       ts:     Date.now(),
     });
+    // Сохраняем на сервере (если залогинен)
+    if (isLoggedIn()) {
+      fetch(API + '/api/auth/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          filename: currentFile.name,
+          style: selectedStyle || 'standard',
+          out_format: outFormat.value,
+          before_lufs: data.before_lufs,
+          after_lufs: data.after_lufs,
+          target_lufs: targetLufs,
+        }),
+      }).catch(() => {}); // silent — не критично
+    }
     setTimeout(()=>progWrap.classList.remove('on'), 2500);
 
   }catch(e){
@@ -1243,3 +1542,512 @@ btnMaster.addEventListener('click', async()=>{
   btnMasterTxt.textContent='Запустить мастеринг';
   wdeco.classList.remove('active');
 });
+
+/* ═══════ Версия приложения в футере ═══════ */
+(function() {
+  const el = document.getElementById('appVersion');
+  if (!el) return;
+  fetch(API + '/api/version').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+    if (d && d.version) el.textContent = 'v' + d.version;
+  }).catch(function() {});
+})();
+
+/* ═══════ Auth helpers ═══════ */
+function getAuthToken() { return localStorage.getItem('mm_token'); }
+function getAuthEmail() { return localStorage.getItem('mm_user_email') || ''; }
+function getAuthTier()  { return localStorage.getItem('mm_user_tier') || 'free'; }
+function isLoggedIn()   { return !!getAuthToken(); }
+
+function authHeaders() {
+  const token = getAuthToken();
+  return token ? { 'Authorization': 'Bearer ' + token } : {};
+}
+
+function logout() {
+  localStorage.removeItem('mm_token');
+  localStorage.removeItem('mm_user_email');
+  localStorage.removeItem('mm_user_tier');
+  window.location.reload();
+}
+
+/* ═══════ Тариф и лимиты (Free tier / Pro) + режим отладки ═══════ */
+let _tierInfo = { tier: 'free', remaining: 3, limit: 3, used: 0, reset_at: '' };
+let _debugMode = typeof window.__MAGIC_MASTER_DEBUG__ !== 'undefined' && window.__MAGIC_MASTER_DEBUG__ === true;
+
+if (_debugMode) {
+  _tierInfo = { tier: 'pro', remaining: -1, limit: -1, used: 0, reset_at: null, debug: true };
+}
+
+async function loadTierLimits() {
+  if (_debugMode) {
+    applyTierUI();
+    return;
+  }
+  try {
+    const debugRes = await fetch(API + '/api/debug-mode');
+    if (debugRes.ok) {
+      const debugData = await debugRes.json();
+      _debugMode = !!debugData.debug;
+      if (_debugMode) {
+        _tierInfo = { tier: 'pro', remaining: -1, limit: -1, used: 0, reset_at: null, debug: true };
+        applyTierUI();
+        return;
+      }
+    }
+  } catch(e) { /* ignore */ }
+  try {
+    const r = await fetch(API + '/api/limits', { headers: authHeaders() });
+    if (!r.ok) return;
+    _tierInfo = await r.json();
+    if (_tierInfo.debug) _debugMode = true;
+  } catch(e) { /* оффлайн — оставляем дефолт */ }
+  applyTierUI();
+}
+
+function applyTierUI() {
+  const isPro = _debugMode || isLoggedIn() || _tierInfo.tier === 'pro' || _tierInfo.tier === 'studio';
+
+  // Показываем правильные строки auth/tier
+  const tierRow      = document.getElementById('tierRow');
+  const authRow      = document.getElementById('authRow');
+  const authRowGuest = document.getElementById('authRowGuest');
+
+  if (isPro && isLoggedIn() && !_debugMode) {
+    // Залогинен (не debug) — показываем email + logout и блок сохранённых пресетов (P10)
+    if (tierRow)      tierRow.style.display = 'none';
+    if (authRow)      authRow.style.display = 'flex';
+    if (authRowGuest) authRowGuest.style.display = 'none';
+    const emailEl = document.getElementById('authEmail');
+    if (emailEl) emailEl.textContent = getAuthEmail();
+    const priorityHint = document.getElementById('authPriorityHint');
+    if (priorityHint) priorityHint.style.display = _tierInfo.priority_queue ? 'inline' : 'none';
+    if (chainPresetsWrap) { chainPresetsWrap.style.display = 'block'; loadSavedPresetsList(); }
+  } else {
+    // Гость или режим отладки — показываем tier row или auth row
+    if (_debugMode) {
+      if (tierRow)      tierRow.style.display = 'flex';
+      if (authRow)      authRow.style.display = 'none';
+      if (authRowGuest) authRowGuest.style.display = 'none';
+      const badge = document.getElementById('tierBadge');
+      if (badge) {
+        badge.classList.add('debug-badge');
+        badge.classList.remove('warn', 'empty');
+        badge.innerHTML = '<span class="tb-dot"></span> Режим отладки · все функции без входа';
+      }
+      const upgradeLink = document.getElementById('upgradeLink');
+      if (upgradeLink) upgradeLink.style.display = 'none';
+    } else {
+      if (tierRow)      tierRow.style.display = 'flex';
+      if (authRow)      authRow.style.display = 'none';
+      if (authRowGuest) authRowGuest.style.display = 'flex';
+      if (chainPresetsWrap) chainPresetsWrap.style.display = 'none';
+      const badge    = document.getElementById('tierBadge');
+      const remaining= document.getElementById('tierRemaining');
+      if (badge) {
+        badge.classList.remove('debug-badge');
+        badge.innerHTML = '<span class="tb-dot"></span> Free · <span id="tierRemaining">' + (_tierInfo.remaining >= 0 ? _tierInfo.remaining : '∞') + '</span> мастеринга осталось';
+        badge.classList.remove('warn', 'empty');
+        if (_tierInfo.remaining === 0)       badge.classList.add('empty');
+        else if (_tierInfo.remaining === 1)  badge.classList.add('warn');
+      }
+      const upgradeLink = document.getElementById('upgradeLink');
+      if (upgradeLink) upgradeLink.style.display = '';
+    }
+  }
+
+  // Разблокируем Pro-карточки если авторизован или режим отладки
+  document.querySelectorAll('.style-card[data-tier="pro"]').forEach(c => {
+    if (isPro) {
+      c.classList.remove('locked');
+    } else {
+      c.classList.add('locked');
+    }
+  });
+
+  // Разблокируем MP3/FLAC в select
+  Array.from(outFormat.options).forEach(function(opt) {
+    opt.disabled = !isPro && opt.dataset.tier === 'pro';
+  });
+
+  // Пакетная обработка — только для Pro / debug
+  const batchSection = document.getElementById('batchSection');
+  if (batchSection) batchSection.style.display = isPro ? 'block' : 'none';
+}
+
+// Logout button
+(function() {
+  const btn = document.getElementById('btnLogout');
+  if (btn) btn.addEventListener('click', function() { logout(); });
+})();
+
+/* Обработчик смены формата — блокировать MP3/FLAC для Free (не для Pro / debug) */
+outFormat.addEventListener('change', function() {
+  const opt = outFormat.options[outFormat.selectedIndex];
+  const isPro = _debugMode || isLoggedIn() || _tierInfo.tier === 'pro' || _tierInfo.tier === 'studio';
+  if (!isPro && opt && opt.dataset.tier === 'pro') {
+    showUpgradeModal(
+      '🎵',
+      'MP3 и FLAC — функция Pro',
+      'Экспорт в MP3 (320 kbps) и FLAC (без потерь) доступен в тарифах Pro и Studio. На Free — экспорт WAV. Зарегистрируйтесь бесплатно для Pro доступа!'
+    );
+    outFormat.value = 'wav';
+  }
+});
+
+/* ═══════ Upgrade Modal ═══════ */
+function showUpgradeModal(icon, title, desc) {
+  const overlay = document.getElementById('upgradeOverlay');
+  if (!overlay) return;
+  const iconEl = document.getElementById('upgradeModalIcon');
+  const titleEl= document.getElementById('upgradeTitle');
+  const descEl = document.getElementById('upgradeDesc');
+  if (iconEl)  iconEl.textContent  = icon;
+  if (titleEl) titleEl.textContent = title;
+  if (descEl)  descEl.textContent  = desc;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function hideUpgradeModal() {
+  const overlay = document.getElementById('upgradeOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+(function() {
+  const closeBtn  = document.getElementById('upgradeClose');
+  const cancelBtn = document.getElementById('upgradeCancel');
+  const overlay   = document.getElementById('upgradeOverlay');
+  if (closeBtn)  closeBtn.addEventListener('click',  hideUpgradeModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideUpgradeModal);
+  if (overlay)   overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) hideUpgradeModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') hideUpgradeModal();
+  });
+})();
+
+/* Перехватываем клик по заблокированной style-карточке (не показываем модалку в режиме отладки / Pro) */
+styleGrid.addEventListener('click', function(e) {
+  const card = e.target.closest('.style-card.locked');
+  if (!card) return;
+  const isPro = _debugMode || _tierInfo.tier === 'pro' || _tierInfo.tier === 'studio' || isLoggedIn();
+  if (isPro) {
+    return; // режим отладки или Pro — не блокируем, даём клику дойти до выбора стиля
+  }
+  const name = card.querySelector('.sc-name')?.textContent || '';
+  showUpgradeModal('⚡', `Жанр "${name}" — функция Pro`,
+    'Жанровые пресеты EDM, Hip-Hop, Classical, Podcast, Lo-fi, House доступны в тарифах Pro и Studio.\nЗарегистрируйтесь бесплатно — в бета-период все пользователи получают Pro!');
+}, true); // capture — раньше обычного обработчика
+
+/* Обновляем лимиты после успешного мастеринга */
+function refreshTierAfterMaster() {
+  if (_debugMode || _tierInfo.remaining === -1) return; // безлимит или режим отладки
+  _tierInfo.used = (_tierInfo.used || 0) + 1;
+  _tierInfo.remaining = Math.max(0, (_tierInfo.remaining || 0) - 1);
+  applyTierUI();
+  if (_tierInfo.remaining === 0) {
+    toast('Лимит Free-тарифа исчерпан (3/3). Сброс: ' + _tierInfo.reset_at + '. Перейти на Pro →', 'err', 7000);
+  }
+}
+
+/* ═══════ Пакетная обработка (Batch) ═══════ */
+(function() {
+  const batchSection = document.getElementById('batchSection');
+  const batchFileInput = document.getElementById('batchFileInput');
+  const batchFileList = document.getElementById('batchFileList');
+  const batchCountEl = document.getElementById('batchCount');
+  const btnSelectBatch = document.getElementById('btnSelectBatch');
+  const btnBatchMaster = document.getElementById('btnBatchMaster');
+  const batchPanel = document.getElementById('batchPanel');
+  const batchJobsEl = document.getElementById('batchJobs');
+  if (!batchSection || !batchFileInput || !btnBatchMaster) return;
+
+  btnSelectBatch.addEventListener('click', function() { batchFileInput.click(); });
+
+  batchFileInput.addEventListener('change', function() {
+    const files = Array.from(batchFileInput.files || []).filter(function(f) {
+      return /\.(wav|mp3|flac)$/i.test(f.name);
+    });
+    if (batchFileList) {
+      batchFileList.innerHTML = files.length ? files.map(function(f) { return '<span>' + f.name + '</span>'; }).join('') : '';
+    }
+    if (batchCountEl) batchCountEl.textContent = files.length;
+    if (btnBatchMaster) {
+      btnBatchMaster.style.display = files.length ? 'inline-flex' : 'none';
+      btnBatchMaster.disabled = files.length === 0;
+    }
+  });
+
+  btnBatchMaster.addEventListener('click', async function() {
+    const files = Array.from(batchFileInput.files || []).filter(function(f) { return /\.(wav|mp3|flac)$/i.test(f.name); });
+    if (files.length === 0) return;
+    btnBatchMaster.disabled = true;
+
+    const form = new FormData();
+    files.forEach(function(f) { form.append('files', f); });
+    form.append('style', selectedStyle || 'standard');
+    form.append('out_format', outFormat.value);
+    form.append('target_lufs', targetLufsInput.value);
+    if (chainModulesConfig && chainModulesConfig.modules) {
+      form.append('config', JSON.stringify({ modules: chainModulesConfig.modules }));
+    }
+    if (document.getElementById('ditherType')) form.append('dither_type', document.getElementById('ditherType').value || 'tpdf');
+    var autoBlank = document.querySelector('[name="auto_blank_sec"]') || document.getElementById('autoBlankSec');
+    if (autoBlank) form.append('auto_blank_sec', autoBlank.value || '0');
+
+    try {
+      const r = await fetch(API + '/api/v2/batch', { method: 'POST', body: form, headers: authHeaders() });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || r.statusText || 'Ошибка batch');
+
+      batchPanel.style.display = 'block';
+      batchJobsEl.innerHTML = data.jobs.map(function(j) {
+        return '<div class="batch-job-row" data-job-id="' + j.job_id + '">' +
+          '<span class="batch-job-name">' + (j.filename || '—') + '</span>' +
+          '<span class="batch-job-progress">0%</span>' +
+          '<a class="batch-job-dl" href="#" style="display:none">Скачать</a></div>';
+      }).join('');
+
+      data.jobs.forEach(function(job) {
+        (function poll(jobId, filename) {
+          fetch(API + '/api/master/status/' + jobId, { headers: authHeaders() }).then(function(res) { return res.json(); }).then(function(st) {
+            const row = batchJobsEl.querySelector('[data-job-id="' + jobId + '"]');
+            if (!row) return;
+            const prog = row.querySelector('.batch-job-progress');
+            const dl = row.querySelector('.batch-job-dl');
+            if (prog) prog.textContent = st.progress + '%';
+            if (st.status === 'done') {
+              if (prog) prog.textContent = '100%';
+              if (dl) {
+                dl.style.display = '';
+                dl.href = API + '/api/master/result/' + jobId;
+                dl.download = (filename || 'master').replace(/\.[^.]+$/, '') + '_mastered.' + outFormat.value;
+                dl.target = '_blank';
+                dl.classList.add('done');
+              }
+              return;
+            }
+            if (st.status === 'error') {
+              if (prog) prog.textContent = 'Ошибка';
+              return;
+            }
+            setTimeout(function() { poll(jobId, filename); }, 1200);
+          }).catch(function() {
+            const row = batchJobsEl.querySelector('[data-job-id="' + jobId + '"]');
+            if (row && row.querySelector('.batch-job-progress')) row.querySelector('.batch-job-progress').textContent = '—';
+          });
+        })(job.job_id, job.filename);
+      });
+
+      toast('Пакет запущен: ' + data.jobs.length + ' файлов', 'ok', 3000);
+      batchFileInput.value = '';
+      batchFileList.innerHTML = '';
+      batchCountEl.textContent = '0';
+      btnBatchMaster.style.display = 'none';
+    } catch (e) {
+      toast(e.message || 'Ошибка пакетной обработки', 'err', 4000);
+    }
+    btnBatchMaster.disabled = false;
+  });
+})();
+
+/* ═══════ Streaming Loudness Preview ═══════ */
+function renderStreamingPreview(data) {
+  const panel = document.getElementById('streamingPreview');
+  const grid  = document.getElementById('streamingPreviewGrid');
+  if (!panel || !grid) return;
+  if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+  const statusLabel = { optimal: '✓ Оптимально', ok: '↓ Понизят', loud: '↓↓ Громко' };
+  grid.innerHTML = Object.entries(data).map(([name, info]) => {
+    const pen = info.penalty_db > 0 ? `−${info.penalty_db.toFixed(1)} dB` : '—';
+    return `<div class="sp-item ${info.status}">
+      <span class="sp-platform">${name}</span>
+      <span class="sp-lufs">Цель: ${info.target_lufs} LUFS</span>
+      <span class="sp-penalty">${pen} ${statusLabel[info.status] || ''}</span>
+    </div>`;
+  }).join('');
+  panel.style.display = 'block';
+}
+
+/* ═══════ Reference Track ═══════ */
+let refFile = null;
+
+(function initReferenceTrack() {
+  const refInput     = document.getElementById('refFileInput');
+  const refFileName  = document.getElementById('refFileName');
+  const btnRefClear  = document.getElementById('btnRefClear');
+  const refStrWrap   = document.getElementById('refStrengthWrap');
+  const refStrength  = document.getElementById('refStrength');
+  const refStrVal    = document.getElementById('refStrengthVal');
+  if (!refInput) return;
+
+  refInput.addEventListener('change', () => {
+    if (refInput.files && refInput.files[0]) {
+      refFile = refInput.files[0];
+      refFileName.textContent = refFile.name;
+      if (btnRefClear) btnRefClear.style.display = 'inline';
+      if (refStrWrap) refStrWrap.style.display = 'flex';
+    }
+  });
+  if (btnRefClear) btnRefClear.addEventListener('click', () => {
+    refFile = null;
+    refInput.value = '';
+    refFileName.textContent = 'не выбран';
+    btnRefClear.style.display = 'none';
+    if (refStrWrap) refStrWrap.style.display = 'none';
+  });
+  if (refStrength && refStrVal) {
+    refStrength.addEventListener('input', () => {
+      refStrVal.textContent = refStrength.value + '%';
+    });
+  }
+})();
+
+/* ═══════ PRO Processing Modules — аккордеон + слайдеры ═══════ */
+(function initProModules() {
+  // Аккордеон секции
+  const head  = document.getElementById('proSectionHead');
+  const body  = document.getElementById('proSectionBody');
+  const chev  = document.getElementById('proSectionChevron');
+  if (head && body) {
+    head.addEventListener('click', () => {
+      const open = body.classList.toggle('open');
+      if (chev) chev.classList.toggle('open', open);
+    });
+  }
+
+  // Раскрытие тела при включении модуля
+  function wireModule(toggleId, bodyId, moduleId) {
+    const tog = document.getElementById(toggleId);
+    const bd  = document.getElementById(bodyId);
+    const mod = document.getElementById(moduleId);
+    if (!tog) return;
+    tog.addEventListener('change', () => {
+      if (bd) bd.style.display = tog.checked ? 'block' : 'none';
+      if (mod) mod.classList.toggle('active', tog.checked);
+    });
+  }
+  wireModule('denoiserEnabled',  'denoiserBody',  'modDenoiser');
+  wireModule('deesserEnabled',   'deesserBody',   'modDeesser');
+  wireModule('transientEnabled', 'transientBody', 'modTransient');
+  wireModule('parallelEnabled',  'parallelBody',  'modParallel');
+  wireModule('dynEQEnabled',     'dynEQBody',     'modDynEQ');
+
+  // Слайдеры — обновление значений
+  function wireSlider(sliderId, valId, fmt) {
+    const sl = document.getElementById(sliderId);
+    const vl = document.getElementById(valId);
+    if (!sl || !vl) return;
+    sl.addEventListener('input', () => { vl.textContent = fmt(sl.value); });
+  }
+  wireSlider('denoiserStrength',  'denoiserStrVal',     v => v + '%');
+  wireSlider('deesserThreshold',  'deesserThrVal',      v => '−' + Math.abs(v) + ' dB');
+  wireSlider('transientAttack',   'transientAttackVal', v => (v / 100).toFixed(2) + '×');
+  wireSlider('transientSustain',  'transientSustainVal',v => (v / 100).toFixed(2) + '×');
+  wireSlider('parallelMix',       'parallelMixVal',     v => v + '%');
+
+  // Раскрытие тела модуля по клику на заголовок (toggle expand)
+  document.querySelectorAll('.pro-module-head').forEach(h => {
+    h.addEventListener('click', e => {
+      if (e.target.closest('.pro-module-toggle')) return; // не мешать toggle
+      h.closest('.pro-module').classList.toggle('expanded');
+    });
+  });
+})();
+
+/* Собираем параметры PRO-модулей для FormData */
+function collectProModuleParams(form) {
+  const gv = id => { const el = document.getElementById(id); return el ? el.value : null; };
+  const gc = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+
+  // Spectral Denoiser
+  if (gc('denoiserEnabled')) {
+    form.append('denoise_strength', (parseFloat(gv('denoiserStrength') || 40) / 100).toFixed(2));
+  }
+  // De-esser
+  if (gc('deesserEnabled')) {
+    form.append('deesser_enabled', 'true');
+    form.append('deesser_threshold', gv('deesserThreshold') || '-10');
+  }
+  // Transient Designer
+  if (gc('transientEnabled')) {
+    form.append('transient_attack',  (parseFloat(gv('transientAttack')  || 100) / 100).toFixed(2));
+    form.append('transient_sustain', (parseFloat(gv('transientSustain') || 100) / 100).toFixed(2));
+  }
+  // Parallel Compression
+  if (gc('parallelEnabled')) {
+    form.append('parallel_mix', (parseFloat(gv('parallelMix') || 30) / 100).toFixed(2));
+  }
+  // Dynamic EQ
+  if (gc('dynEQEnabled')) {
+    form.append('dynamic_eq_enabled', 'true');
+  }
+}
+
+/* ═══════ M/S Spectrum (Mid/Side tabs in spectrum card) ═══════ */
+let lastSpectrumData = { mono: null, mid: null, side: null, active: 'mono' };
+
+function updateSpectrumTabs(data) {
+  if (!data) return;
+  if (data.spectrum_bars)     lastSpectrumData.mono = data.spectrum_bars;
+  if (data.spectrum_bars_mid) lastSpectrumData.mid  = data.spectrum_bars_mid;
+  if (data.spectrum_bars_side)lastSpectrumData.side = data.spectrum_bars_side;
+
+  const hasMidSide = lastSpectrumData.mid || lastSpectrumData.side;
+  const head = document.getElementById('spectrumHead');
+  if (!head) return;
+
+  // Inject tabs if missing and M/S data is available
+  if (hasMidSide && !head.querySelector('.spec-tab-wrap')) {
+    const tabWrap = document.createElement('div');
+    tabWrap.className = 'spec-tab-wrap';
+    const modes = [
+      { id: 'mono', label: 'MONO' },
+      { id: 'mid',  label: 'MID' },
+      { id: 'side', label: 'SIDE' },
+    ];
+    modes.forEach(({ id, label }) => {
+      const btn = document.createElement('button');
+      btn.className = 'spec-tab' + (id === lastSpectrumData.active ? ' active' : '');
+      btn.dataset.mode = id;
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        head.querySelectorAll('.spec-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        lastSpectrumData.active = id;
+        const bars = lastSpectrumData[id] || lastSpectrumData.mono;
+        if (bars) drawSpectrum(bars);
+      });
+      tabWrap.appendChild(btn);
+    });
+    head.appendChild(tabWrap);
+  } else if (!hasMidSide) {
+    // Если M/S нет — убрать табы если были
+    const wrap = head.querySelector('.spec-tab-wrap');
+    if (wrap) wrap.remove();
+  }
+
+  // Render active tab
+  const bars = lastSpectrumData[lastSpectrumData.active] || lastSpectrumData.mono;
+  if (bars) drawSpectrum(bars);
+}
+
+/* Hook into existing spectrum rendering after measure */
+const _origSetMeter = typeof setMeter === 'function' ? setMeter : null;
+
+/* ═══════ Spectrum tabs after analyze ═══════ */
+document.addEventListener('analyzeComplete', (e) => {
+  if (e.detail) updateSpectrumTabs(e.detail);
+});
+
+/* Запускаем при загрузке: в режиме отладки сразу разблокируем Pro-карточки */
+if (_debugMode) {
+  if (typeof applyTierUI === 'function') applyTierUI();
+}
+loadTierLimits();

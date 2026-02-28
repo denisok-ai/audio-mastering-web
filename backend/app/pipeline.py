@@ -14,6 +14,25 @@ from pydub import AudioSegment
 from .config import settings
 
 
+def _safe_filtfilt(b, a, x, signal_module=None):
+    """
+    Безопасная обёртка над scipy.signal.filtfilt.
+    filtfilt внутри вызывает np.linalg.solve для начальных условий,
+    что может бросить LinAlgError: Singular matrix при вырожденных фильтрах.
+    При любой ошибке откатывается на lfilter (однопроходная фильтрация без сдвига фазы — нет,
+    но без краша).
+    """
+    if signal_module is None:
+        from scipy import signal as signal_module
+    try:
+        return signal_module.filtfilt(b, a, x)
+    except (np.linalg.LinAlgError, ValueError):
+        try:
+            return signal_module.lfilter(b, a, x)
+        except Exception:
+            return x
+
+
 # Целевые LUFS по пресетам (Sony/Warner/стриминг: -14 LUFS, True Peak ≤ -1 dBTP)
 PRESET_LUFS = {
     "spotify": -14.0,
@@ -29,36 +48,39 @@ PRESET_LUFS = {
 #        exciter_db (гармонический эксайтер, дБ, аналог iZotope Ozone 5 Exciter),
 #        imager_width (стерео-расширение 0.0=моно, 1.0=оригинал, 1.5=wide, аналог Imager)
 STYLE_CONFIGS: dict[str, dict] = {
-    "standard":    {"lufs": -14.0, "sub":  0.0, "bass":  0.0, "mids":  0.0, "presence":  0.0, "air":  0.0, "comp_mult": 1.0,  "exciter_db": 0.0, "imager_width": 1.0},
-    "edm":         {"lufs":  -9.0, "sub":  1.8, "bass":  0.9, "mids": -0.3, "presence":  0.6, "air":  0.9, "comp_mult": 1.3,  "exciter_db": 0.6, "imager_width": 1.25},
-    "hiphop":      {"lufs": -13.0, "sub":  1.4, "bass":  0.7, "mids":  0.5, "presence":  0.3, "air":  0.2, "comp_mult": 1.2,  "exciter_db": 0.3, "imager_width": 1.1},
-    "classical":   {"lufs": -18.0, "sub": -0.5, "bass":  0.0, "mids":  0.0, "presence":  0.3, "air":  0.6, "comp_mult": 0.45, "exciter_db": 0.0, "imager_width": 1.05},
-    "podcast":     {"lufs": -16.0, "sub": -1.2, "bass": -0.4, "mids":  0.9, "presence":  0.7, "air":  0.0, "comp_mult": 1.1,  "exciter_db": 0.0, "imager_width": 1.0},
-    "lofi":        {"lufs": -18.0, "sub":  0.4, "bass":  0.6, "mids": -0.6, "presence": -1.0, "air": -1.8, "comp_mult": 0.65, "exciter_db": 0.2, "imager_width": 0.9},
+    # parallel_mix: доля сигнала в параллельной компрессии (New York compression); 0.0 = выкл
+    "standard":    {"lufs": -14.0, "sub":  0.0, "bass":  0.0, "mids":  0.0, "presence":  0.0, "air":  0.0, "comp_mult": 1.0,  "exciter_db": 0.0, "imager_width": 1.0,  "parallel_mix": 0.0},
+    "edm":         {"lufs":  -9.0, "sub":  1.8, "bass":  0.9, "mids": -0.3, "presence":  0.6, "air":  0.9, "comp_mult": 1.3,  "exciter_db": 0.6, "imager_width": 1.25, "parallel_mix": 0.3},
+    "hiphop":      {"lufs": -13.0, "sub":  1.4, "bass":  0.7, "mids":  0.5, "presence":  0.3, "air":  0.2, "comp_mult": 1.2,  "exciter_db": 0.3, "imager_width": 1.1,  "parallel_mix": 0.35},
+    "classical":   {"lufs": -18.0, "sub": -0.5, "bass":  0.0, "mids":  0.0, "presence":  0.3, "air":  0.6, "comp_mult": 0.45, "exciter_db": 0.0, "imager_width": 1.05, "parallel_mix": 0.0},
+    "podcast":     {"lufs": -16.0, "sub": -1.2, "bass": -0.4, "mids":  0.9, "presence":  0.7, "air":  0.0, "comp_mult": 1.1,  "exciter_db": 0.0, "imager_width": 1.0,  "parallel_mix": 0.2},
+    "lofi":        {"lufs": -18.0, "sub":  0.4, "bass":  0.6, "mids": -0.6, "presence": -1.0, "air": -1.8, "comp_mult": 0.65, "exciter_db": 0.2, "imager_width": 0.9,  "parallel_mix": 0.0},
     # House Basic — пресет на основе анализа iZotope Ozone 5:
     # Equalizer: буст суб/басов + воздух; срез мутных мидов
     # Dynamics: tight 4-band compression (comp_mult 1.35)
     # Maximizer: клубная громкость −10 LUFS
     # Exciter: лёгкое гармоническое насыщение верхних частот (Ozone 5 Exciter)
     # Imager: широкая стереобаза (Ozone 5 Imager)
-    "house_basic": {"lufs": -10.0, "sub":  1.8, "bass":  0.9, "mids": -0.5, "presence":  0.8, "air":  1.0, "comp_mult": 1.35, "exciter_db": 0.8, "imager_width": 1.3},
+    "house_basic": {"lufs": -10.0, "sub":  1.8, "bass":  0.9, "mids": -0.5, "presence":  0.8, "air":  1.0, "comp_mult": 1.35, "exciter_db": 0.8, "imager_width": 1.3,  "parallel_mix": 0.3},
 }
 
 # Запас под межвыборочные пики (True Peak)
 TRUE_PEAK_LIMIT_DB = -1.5
 
-# Многополосная динамика по скриншотам: кроссоверы 214 Hz, 2.23 kHz, 10 kHz
-MULTIBAND_CROSSOVERS_HZ = (214.0, 2230.0, 10000.0)
+# Многополосная динамика: кроссоверы 214 Hz, 3.5 kHz, 10 kHz
+# Верхний кроссовер сдвинут с 2230 → 3500 Hz: вся presence-зона вокала (2–4 kHz)
+# попадает в одну полосу и обрабатывается единым алгоритмом.
+MULTIBAND_CROSSOVERS_HZ = (214.0, 3500.0, 10000.0)
 # По полосам: (limiter_thresh_db, comp_ratio, comp_thresh_db, gain_linear)
-# Band 1: limiter -7.2, comp 1:1 off, gain 1.5
-# Band 2: limiter -18.5, comp 2.2:1 -18.5, gain 1.5
-# Band 3: limiter -26, comp 2.4:1 -26, gain 3.2
-# Band 4: limiter -26.9, comp 3.7:1 -26.9, gain 3.6
+# Band 1: ≤214 Hz    — без компрессии, умеренный gain
+# Band 2: 214–3500 Hz — включает presence-зону; gain повышен до 1.8 (расширена полоса)
+# Band 3: 3.5–10 kHz  — порог поднят -26→-18, ratio снижен 2.4→1.8, gain 3.2→2.0
+# Band 4: >10 kHz     — порог поднят -26.9→-20, ratio снижен 3.7→2.0, gain 3.6→1.6
 MULTIBAND_CONFIG = (
-    (-7.2, 1.0, -7.2, 1.5),
-    (-18.5, 2.2, -18.5, 1.5),
-    (-26.0, 2.4, -26.0, 3.2),
-    (-26.9, 3.7, -26.9, 3.6),
+    (-7.2,  1.0, -7.2,  1.5),
+    (-18.5, 2.2, -18.5, 1.8),
+    (-18.0, 1.8, -18.0, 2.0),
+    (-20.0, 2.0, -20.0, 1.6),
 )
 # Максимайзер (скриншот 5): порог -2.5 dB, margin (потолок) -0.3 dB
 MAXIMIZER_THRESHOLD_DB = -2.5
@@ -201,10 +223,10 @@ def apply_target_curve(
     b_hp, a_hp, b_lp, a_lp, b_pres, a_pres, b_mud, a_mud = coeffs
     out = np.zeros_like(audio)
     for ch in range(audio.shape[1]):
-        ch_out = signal.filtfilt(b_hp, a_hp, audio[:, ch])
-        ch_out = signal.filtfilt(b_lp, a_lp, ch_out)
-        pres = signal.filtfilt(b_pres, a_pres, ch_out)
-        mud = signal.filtfilt(b_mud, a_mud, ch_out)
+        ch_out = _safe_filtfilt(b_hp, a_hp, audio[:, ch], signal)
+        ch_out = _safe_filtfilt(b_lp, a_lp, ch_out, signal)
+        pres = _safe_filtfilt(b_pres, a_pres, ch_out, signal)
+        mud = _safe_filtfilt(b_mud, a_mud, ch_out, signal)
         ch_out = ch_out + (g_presence - 1.0) * pres + (g_mud - 1.0) * mud
         out[:, ch] = ch_out
     if audio.shape[1] == 1:
@@ -282,15 +304,15 @@ def _split_bands(audio: np.ndarray, sr: float, crossovers_hz: tuple) -> list:
     for ch in range(n_ch):
         x = audio[:, ch]
         b_lp1, a_lp1 = signal.butter(2, f1, btype="low", output="ba")
-        band1 = signal.filtfilt(b_lp1, a_lp1, x)
+        band1 = _safe_filtfilt(b_lp1, a_lp1, x, signal)
         b_hp2, a_hp2 = signal.butter(2, f1, btype="high", output="ba")
         b_lp2, a_lp2 = signal.butter(2, f2, btype="low", output="ba")
-        band2 = signal.filtfilt(b_lp2, a_lp2, signal.filtfilt(b_hp2, a_hp2, x))
+        band2 = _safe_filtfilt(b_lp2, a_lp2, _safe_filtfilt(b_hp2, a_hp2, x, signal), signal)
         b_hp3, a_hp3 = signal.butter(2, f2, btype="high", output="ba")
         b_lp3, a_lp3 = signal.butter(2, f3, btype="low", output="ba")
-        band3 = signal.filtfilt(b_lp3, a_lp3, signal.filtfilt(b_hp3, a_hp3, x))
+        band3 = _safe_filtfilt(b_lp3, a_lp3, _safe_filtfilt(b_hp3, a_hp3, x, signal), signal)
         b_hp4, a_hp4 = signal.butter(2, f3, btype="high", output="ba")
-        band4 = signal.filtfilt(b_hp4, a_hp4, x)
+        band4 = _safe_filtfilt(b_hp4, a_hp4, x, signal)
         if ch == 0:
             bands = [band1.copy(), band2.copy(), band3.copy(), band4.copy()]
         else:
@@ -309,6 +331,36 @@ def _merge_bands(bands: list, n_channels: int) -> np.ndarray:
     return out.astype(np.float32)
 
 
+def _compress_band_pedalboard(band: np.ndarray, sr: int, threshold_db: float, ratio: float, lim_db: float, gain: float) -> np.ndarray:
+    """
+    Компрессия одной полосы через pedalboard.Compressor (JUCE-based, прозрачный).
+    Параметры attack/release выбраны для мастеринга: мягкая атака, быстрое отпускание.
+    Возвращает band после компрессии + лимитера + gain.
+    """
+    try:
+        import pedalboard
+    except ImportError:
+        return None  # type: ignore[return-value]
+
+    if band.ndim == 1:
+        band = band.reshape(-1, 1)
+
+    # pedalboard ожидает shape (channels, samples), float32
+    pb_input = band.T.astype(np.float32)
+    comp = pedalboard.Compressor(
+        threshold_db=float(threshold_db),
+        ratio=float(max(ratio, 1.0)),
+        attack_ms=10.0,
+        release_ms=80.0,
+    )
+    board = pedalboard.Pedalboard([comp])
+    pb_output = board(pb_input, float(sr))
+    result = pb_output.T  # обратно (samples, channels)
+    result = _apply_limiter_numpy(result, threshold_db=lim_db)
+    result = (result * gain).astype(np.float32)
+    return result
+
+
 def apply_multiband_dynamics(
     samples: np.ndarray,
     sr: int,
@@ -319,6 +371,9 @@ def apply_multiband_dynamics(
 ) -> np.ndarray:
     """
     Многополосная динамика: 4 полосы по кроссоверам.
+    Если установлен pedalboard (Spotify/JUCE), использует pedalboard.Compressor —
+    профессиональный компрессор с правильными attack/release огибающими без артефактов.
+    При отсутствии pedalboard автоматически использует scipy-реализацию.
     band_ratios: опционально (r0,r1,r2,r3) — ratio по полосам; ratio < 1 = upward (усиление тихих).
     max_upward_boost_db: макс. подъём при upward (защита от шума).
     """
@@ -333,9 +388,23 @@ def apply_multiband_dynamics(
     ratios_override = None
     if band_ratios is not None and len(band_ratios) == 4:
         ratios_override = tuple(float(band_ratios[i]) for i in range(4))
+
+    use_pedalboard = True
+    try:
+        import pedalboard  # noqa: F401
+    except ImportError:
+        use_pedalboard = False
+
     for i in range(4):
         lim_db, comp_ratio, comp_db, gain = MULTIBAND_CONFIG[i]
         ratio = ratios_override[i] if ratios_override else comp_ratio
+        if use_pedalboard and ratio >= 1.0:
+            pb_result = _compress_band_pedalboard(bands[i], sr, comp_db, ratio, lim_db, gain)
+            if pb_result is not None:
+                if bands[i].ndim == 1 and pb_result.ndim == 2:
+                    pb_result = pb_result[:, 0]
+                bands[i] = pb_result
+                continue
         bands[i] = _compress_soft_knee(
             bands[i],
             threshold_db=comp_db,
@@ -345,6 +414,7 @@ def apply_multiband_dynamics(
         )
         bands[i] = _apply_limiter_numpy(bands[i], threshold_db=lim_db)
         bands[i] = bands[i] * gain
+
     out = _merge_bands(bands, n_ch)
     if n_ch == 1 and out.ndim == 1:
         return out
@@ -445,16 +515,16 @@ def apply_final_spectral_balance(audio: np.ndarray, sr: int) -> np.ndarray:
         lift8k = 10 ** (0.2 / 20)
         f_3k = min(3000.0 / nyq, 0.99)
         b_3k, a_3k = signal.butter(1, [f_3k * 0.8, f_3k * 1.2], btype="band", output="ba")
-        band_3k = signal.filtfilt(b_3k, a_3k, x)
+        band_3k = _safe_filtfilt(b_3k, a_3k, x, signal)
         f_16k = min(16000.0 / nyq, 0.99)
         b_16k, a_16k = signal.butter(2, f_16k, btype="high", output="ba")
-        band_16k = signal.filtfilt(b_16k, a_16k, x)
+        band_16k = _safe_filtfilt(b_16k, a_16k, x, signal)
         f_low = min(180.0 / nyq, 0.99)
         b_low, a_low = signal.butter(2, f_low, btype="low", output="ba")
-        band_low = signal.filtfilt(b_low, a_low, x)
+        band_low = _safe_filtfilt(b_low, a_low, x, signal)
         f_8k = min(8000.0 / nyq, 0.99)
         b_8k, a_8k = signal.butter(1, [f_8k * 0.8, f_8k * 1.2], btype="band", output="ba")
-        band_8k = signal.filtfilt(b_8k, a_8k, x)
+        band_8k = _safe_filtfilt(b_8k, a_8k, x, signal)
         x = x + (dip3k - 1.0) * band_3k * 0.25 + (dip16k - 1.0) * band_16k * 0.25
         x = x + (lift_low - 1.0) * band_low * 0.25 + (lift8k - 1.0) * band_8k * 0.25
         trim = 10 ** (FINAL_TRIM_DB / 20.0)
@@ -740,6 +810,8 @@ def _write_wav_16bit_dithered(
 ) -> None:
     """WAV 16-bit с дизерингом. dither_type: tpdf, ns_e (noise-shaped), ns_itu (ITU-style)."""
     scale = 32767.0
+    samples = np.nan_to_num(samples, copy=False, nan=0.0, posinf=1.0, neginf=-1.0)
+    samples = np.clip(samples, -1.0, 1.0).astype(np.float64)
     if dither_type == "ns_e":
         noise = _dither_noise_ns_e(samples.shape)
     elif dither_type == "ns_itu":
@@ -747,6 +819,7 @@ def _write_wav_16bit_dithered(
     else:
         noise = _dither_noise_tpdf(samples.shape)
     dithered = samples * scale + noise
+    dithered = np.nan_to_num(dithered, copy=False, nan=0.0, posinf=32767.0, neginf=-32768.0)
     int16 = np.clip(np.round(dithered), -32768, 32767).astype(np.int16)
     sf.write(buf, int16, sr, format="WAV", subtype="PCM_16")
 
@@ -961,6 +1034,65 @@ def _exciter_saturate(x: np.ndarray, mode: str, k: float = 2.0) -> np.ndarray:
     return np.tanh(k * x) / (k + 1e-8)
 
 
+def apply_deesser(
+    audio: np.ndarray,
+    sr: int,
+    threshold_db: float = -10.0,
+    ratio: float = 4.0,
+    freq_lo: float = 5000.0,
+    freq_hi: float = 9000.0,
+    attack_ms: float = 1.0,
+    release_ms: float = 50.0,
+) -> np.ndarray:
+    """
+    De-esser: частотно-зависимый компрессор для устранения сибилянтности в полосе 5–9 кГц.
+    Принцип работы: боковая цепь анализирует уровень в полосе sibilance; при превышении порога
+    применяет плавный gain reduction только к этой полосе, не затрагивая остальные частоты.
+    threshold_db: порог срабатывания относительно 0 dBFS (по умолчанию -10 dB).
+    ratio: степень сжатия (по умолчанию 4:1).
+    freq_lo/freq_hi: границы полосы sibilance (Гц).
+    attack_ms/release_ms: времена атаки и отпускания огибающей (мс).
+    """
+    from scipy import signal as sg
+
+    if audio.ndim == 1:
+        audio = audio[:, np.newaxis]
+    n_ch = audio.shape[1]
+    nyq = sr / 2.0
+    f_lo_n = min(freq_lo / nyq, 0.97)
+    f_hi_n = min(freq_hi / nyq, 0.97)
+    if f_lo_n >= f_hi_n:
+        return audio if n_ch > 1 else audio[:, 0]
+
+    b, a = sg.butter(2, [f_lo_n, f_hi_n], btype="band", output="ba")
+    thresh_lin = 10 ** (threshold_db / 20.0)
+    attack_coef = np.exp(-1.0 / max(1e-6, sr * attack_ms / 1000.0))
+    release_coef = np.exp(-1.0 / max(1e-6, sr * release_ms / 1000.0))
+
+    out = audio.copy().astype(np.float32)
+    for ch in range(n_ch):
+        x = audio[:, ch].astype(np.float32)
+        sidechain = _safe_filtfilt(b, a, x, sg).astype(np.float32)
+        abs_sc = np.abs(sidechain)
+
+        env = _envelope_follower(abs_sc, float(sr), attack_ms / 1000.0, release_ms / 1000.0)
+
+        gain_reduction = np.where(
+            env > thresh_lin,
+            thresh_lin + (env - thresh_lin) / ratio,
+            env,
+        )
+        gain_mult = np.where(env > 1e-10, gain_reduction / (env + 1e-12), 1.0)
+        gain_mult = np.clip(gain_mult, 0.0, 1.0).astype(np.float32)
+
+        reduced_band = sidechain * gain_mult
+        out[:, ch] = x - sidechain + reduced_band
+
+    if audio.shape[1] == 1:
+        return out[:, 0]
+    return out
+
+
 def apply_harmonic_exciter(
     audio: np.ndarray,
     sr: int,
@@ -970,7 +1102,9 @@ def apply_harmonic_exciter(
 ) -> np.ndarray:
     """
     Аналог iZotope Ozone 5 Exciter.dll — гармонический эксайтер.
-    Добавляет гармоническое насыщение к высокочастотной части (> 3 kHz).
+    Добавляет гармоническое насыщение к высокочастотной части (> 6 kHz).
+    Нижняя граница поднята с 3 → 6 kHz: presence-зона вокала (2–5 kHz) не затрагивается,
+    насыщение применяется только к «воздуху» и призвукам выше 6 kHz.
     mode: "warm" (по умолчанию), "tape", "tube", "transistor", "digital".
     oversample: 1, 2 или 4 — передискретизация перед насыщением для уменьшения алиасинга.
     """
@@ -994,7 +1128,7 @@ def apply_harmonic_exciter(
         work_sr = sr * os
 
     nyq = work_sr / 2.0
-    f_lo = min(3000.0 / nyq, 0.97)
+    f_lo = min(6000.0 / nyq, 0.97)
     b_hp, a_hp = sg.butter(2, f_lo, btype="high", output="ba")
     gain = 10 ** (exciter_db / 20.0) - 1.0
     valid_modes = ("warm", "tape", "tube", "transistor", "digital")
@@ -1002,7 +1136,7 @@ def apply_harmonic_exciter(
     k = 2.5 if sat_mode == "warm" else 2.0
     out_work = work.copy()
     for ch in range(work.shape[1]):
-        hf = sg.filtfilt(b_hp, a_hp, work[:, ch])
+        hf = _safe_filtfilt(b_hp, a_hp, work[:, ch], sg)
         saturated = _exciter_saturate(hf, sat_mode, k)
         excitation = (saturated - hf) * gain * 0.35
         out_work[:, ch] = work[:, ch] + excitation
@@ -1120,11 +1254,293 @@ def apply_style_eq(audio: np.ndarray, sr: int, style: str = "standard") -> np.nd
         b, a = sg.butter(1, [f_lo_n, f_hi_n], btype="band", output="ba")
         g = 10 ** (gain_db / 20.0)
         for ch in range(out.shape[1]):
-            band = sg.filtfilt(b, a, out[:, ch])
+            band = _safe_filtfilt(b, a, out[:, ch], sg)
             out[:, ch] = out[:, ch] + (g - 1.0) * band
     if audio.shape[1] == 1:
         return out[:, 0]
     return out
+
+
+def apply_spectral_denoise(
+    audio: np.ndarray,
+    sr: int,
+    strength: float = 0.5,
+    noise_percentile: float = 15.0,
+) -> np.ndarray:
+    """
+    Спектральное шумоподавление через STFT Wiener-фильтр.
+    Оценивает шумовой профиль как percentile спектра по времени (устойчиво к транзиентам).
+    Wiener gain: G[k,t] = max(0, 1 − strength × (noise[k] / |X[k,t]|)²)
+    strength (0.0–1.0): интенсивность подавления. 0.0 = bypass.
+    noise_percentile: процентиль для оценки шума (по умолчанию 15% — нижняя часть спектра по времени).
+    """
+    from scipy import signal as sg
+
+    strength = float(np.clip(strength, 0.0, 1.0))
+    if strength < 0.01:
+        return audio
+    # Нижняя граница усиления: не обнулять ячейки полностью — иначе при тихих/классических
+    # записях можно получить почти тишину на выходе (Wiener при mag < noise_profile даёт 0).
+    min_gain = 0.25
+    if audio.ndim == 1:
+        audio = audio[:, np.newaxis]
+    n_ch = audio.shape[1]
+    n_fft = 2048
+    hop = 512
+    out = np.zeros_like(audio, dtype=np.float32)
+    for ch in range(n_ch):
+        x = audio[:, ch].astype(np.float64)
+        _, _, Zxx = sg.stft(x, fs=sr, nperseg=n_fft, noverlap=n_fft - hop, window="hann")
+        mag = np.abs(Zxx)
+        phase = np.angle(Zxx)
+        noise_profile = np.percentile(mag, noise_percentile, axis=1, keepdims=True)
+        # Ограничиваем оценку шума сверху долей от медианы по частоте, чтобы не считать весь сигнал шумом
+        median_mag = np.median(mag, axis=1, keepdims=True)
+        noise_cap = np.maximum(noise_profile, 1e-12)
+        noise_cap = np.minimum(noise_cap, 0.85 * np.maximum(median_mag, 1e-12))
+        wiener_gain = 1.0 - strength * (noise_cap / (mag + 1e-10)) ** 2
+        wiener_gain = np.clip(wiener_gain, min_gain, 1.0)
+        _, x_out = sg.istft(
+            mag * wiener_gain * np.exp(1j * phase),
+            fs=sr, nperseg=n_fft, noverlap=n_fft - hop, window="hann",
+        )
+        n_orig = audio.shape[0]
+        if len(x_out) >= n_orig:
+            x_out = x_out[:n_orig]
+        else:
+            x_out = np.pad(x_out, (0, n_orig - len(x_out)))
+        out[:, ch] = np.clip(x_out, -1.0, 1.0).astype(np.float32)
+    if audio.shape[1] == 1:
+        return out[:, 0]
+    return out
+
+
+def compute_spectral_envelope(audio: np.ndarray, sr: int, n_fft: int = 8192) -> np.ndarray:
+    """
+    Усреднённый RMS спектральный профиль для reference mastering.
+    Разбивает на фреймы (Hann-окно, hop=n_fft//4), считает RMS по бинам.
+    Возвращает массив длиной n_fft//2+1.
+    """
+    if audio.ndim > 1:
+        mono = np.mean(audio, axis=1).astype(np.float32)
+    else:
+        mono = np.asarray(audio, dtype=np.float32)
+    hop = n_fft // 4
+    window = np.hanning(n_fft).astype(np.float32)
+    accum = np.zeros(n_fft // 2 + 1, dtype=np.float64)
+    count = 0
+    for i in range((len(mono) - n_fft) // hop + 1):
+        start = i * hop
+        frame = mono[start: start + n_fft]
+        if len(frame) < n_fft:
+            break
+        spec = np.fft.rfft(frame * window)
+        accum += np.abs(spec) ** 2
+        count += 1
+    if count == 0:
+        return np.ones(n_fft // 2 + 1, dtype=np.float32)
+    return np.sqrt(accum / count).astype(np.float32)
+
+
+def apply_reference_match(
+    audio: np.ndarray,
+    sr: int,
+    reference_audio: np.ndarray,
+    ref_sr: int,
+    strength: float = 1.0,
+    n_fft: int = 8192,
+) -> np.ndarray:
+    """
+    Эталонный мастеринг: подгоняет спектральный баланс трека к эталонному треку (Reference Mastering).
+    Алгоритм:
+    1. Вычисляет усреднённые RMS-спектры обоих треков.
+    2. Строит ratio curve = ref_envelope / src_envelope (сглаженную через Savitzky-Golay).
+    3. Генерирует FIR-фильтр через irfft с оконным взвешиванием.
+    4. Применяет к аудио через overlap-add свёртку.
+    strength (0.0–1.0): интенсивность матчинга (1.0 = полное совпадение, 0.0 = bypass).
+    """
+    from scipy import signal as sg
+    from scipy.signal import savgol_filter
+
+    strength = float(np.clip(strength, 0.0, 1.0))
+    if strength < 0.01:
+        return audio
+    if audio.ndim == 1:
+        audio = audio[:, np.newaxis]
+    n_ch = audio.shape[1]
+
+    if ref_sr != sr:
+        ref_mono = np.mean(reference_audio, axis=1) if reference_audio.ndim > 1 else reference_audio
+        n_ref = int(len(ref_mono) * sr / ref_sr)
+        reference_audio = sg.resample(ref_mono.astype(np.float64), n_ref).astype(np.float32)
+
+    src_env = compute_spectral_envelope(audio, sr, n_fft)
+    ref_env = compute_spectral_envelope(reference_audio, sr, n_fft)
+
+    eps = 1e-8
+    ratio = (ref_env.astype(np.float64) + eps) / (src_env.astype(np.float64) + eps)
+    win_len = min(51, (len(ratio) // 4) * 2 + 1)
+    win_len = max(5, win_len if win_len % 2 == 1 else win_len + 1)
+    ratio_smooth = savgol_filter(ratio, win_len, 3)
+    ratio_smooth = np.clip(ratio_smooth, 0.1, 10.0)
+
+    ratio_applied = 1.0 + (ratio_smooth - 1.0) * strength
+    ratio_applied = np.clip(ratio_applied, 0.1, 10.0)
+
+    n_bins = n_fft // 2 + 1
+    H = np.zeros(n_fft, dtype=np.complex128)
+    H[:n_bins] = ratio_applied
+    H[n_bins:] = ratio_applied[1: n_fft // 2][::-1]
+    ir = np.fft.ifft(H).real * np.hanning(n_fft)
+    ir = ir.astype(np.float32)
+
+    out = np.zeros_like(audio, dtype=np.float32)
+    for ch in range(n_ch):
+        out[:, ch] = sg.fftconvolve(audio[:, ch].astype(np.float64), ir.astype(np.float64), mode="same")
+    out = np.clip(out, -1.0, 1.0).astype(np.float32)
+    if audio.shape[1] == 1:
+        return out[:, 0]
+    return out
+
+
+# Дефолтный 8-полосный Dynamic EQ пресет для мастеринга
+DYNAMIC_EQ_MASTERING_BANDS: list[dict] = [
+    {"freq":  120, "q": 1.0, "threshold_db": -14, "ratio": 2.0, "attack_ms": 10, "release_ms": 100, "max_cut_db": -4},
+    {"freq":  250, "q": 1.2, "threshold_db": -12, "ratio": 2.5, "attack_ms":  8, "release_ms":  80, "max_cut_db": -5},
+    {"freq":  400, "q": 1.0, "threshold_db": -12, "ratio": 2.0, "attack_ms":  8, "release_ms":  80, "max_cut_db": -4},
+    {"freq":  800, "q": 1.2, "threshold_db": -12, "ratio": 2.0, "attack_ms":  5, "release_ms":  60, "max_cut_db": -4},
+    {"freq": 2500, "q": 1.4, "threshold_db": -12, "ratio": 2.5, "attack_ms":  5, "release_ms":  60, "max_cut_db": -5},
+    {"freq": 5000, "q": 1.4, "threshold_db": -14, "ratio": 3.0, "attack_ms":  3, "release_ms":  50, "max_cut_db": -6},
+    {"freq": 8000, "q": 1.2, "threshold_db": -16, "ratio": 4.0, "attack_ms":  2, "release_ms":  40, "max_cut_db": -8},
+    {"freq":12000, "q": 0.8, "threshold_db": -18, "ratio": 2.0, "attack_ms":  5, "release_ms":  60, "max_cut_db": -4},
+]
+
+
+def apply_dynamic_eq(
+    audio: np.ndarray,
+    sr: int,
+    bands: list[dict] | None = None,
+) -> np.ndarray:
+    """
+    Dynamic EQ: параметрические Bell-фильтры с envelope follower на каждой полосе.
+    Срабатывает только при превышении порога — значительно прозрачнее multiband-компрессора.
+    bands: список dict с полями freq, q, threshold_db, ratio, attack_ms, release_ms, max_cut_db.
+           По умолчанию — DYNAMIC_EQ_MASTERING_BANDS (8 полос: mud, presence, sibilance, air).
+    """
+    from scipy import signal as sg
+
+    if bands is None:
+        bands = DYNAMIC_EQ_MASTERING_BANDS
+    if audio.ndim == 1:
+        audio = audio[:, np.newaxis]
+    n_ch = audio.shape[1]
+    nyq = sr / 2.0
+    out = audio.copy().astype(np.float32)
+
+    for band in bands:
+        freq = float(band.get("freq", 1000))
+        q = float(band.get("q", 1.4))
+        threshold_db = float(band.get("threshold_db", -12))
+        ratio = float(band.get("ratio", 3.0))
+        attack_ms = float(band.get("attack_ms", 5))
+        release_ms = float(band.get("release_ms", 80))
+        max_cut_db = float(band.get("max_cut_db", -6))
+
+        if freq <= 0 or freq >= nyq * 0.98:
+            continue
+        w0 = float(np.clip(freq / nyq, 0.001, 0.98))
+        bw = float(np.clip(w0 / max(q, 0.1), 0.001, 0.5))
+        try:
+            b_bell, a_bell = sg.iirpeak(w0, bw)
+        except Exception:
+            continue
+
+        thresh_lin = 10 ** (threshold_db / 20.0)
+        max_cut_lin = 10 ** (max_cut_db / 20.0)
+
+        for ch in range(n_ch):
+            x = out[:, ch]
+            band_signal = _safe_filtfilt(b_bell, a_bell, x.astype(np.float64), sg).astype(np.float32)
+            env = _envelope_follower(np.abs(band_signal), float(sr), attack_ms / 1000.0, release_ms / 1000.0)
+            gain_mult = np.where(
+                env > thresh_lin,
+                np.clip(
+                    (thresh_lin + (env - thresh_lin) / ratio) / (env + 1e-12),
+                    max_cut_lin,
+                    1.0,
+                ),
+                1.0,
+            ).astype(np.float32)
+            out[:, ch] = x - band_signal + band_signal * gain_mult
+
+    out = np.clip(out, -1.0, 1.0).astype(np.float32)
+    if audio.shape[1] == 1:
+        return out[:, 0]
+    return out
+
+
+def apply_transient_designer(
+    audio: np.ndarray,
+    sr: int,
+    attack_gain: float = 1.0,
+    sustain_gain: float = 1.0,
+) -> np.ndarray:
+    """
+    Транзиентный дизайнер: независимый контроль атаки (punch) и сустейна.
+    Использует двойной envelope follower (fast/slow): разница = транзиентная составляющая,
+    slow_env = сустейновая составляющая. Применяет раздельный gain к каждой.
+    attack_gain (0.5–2.0): усиление атак (punch); 1.0 = без изменений.
+    sustain_gain (0.5–2.0): усиление сустейна; 1.0 = без изменений.
+    """
+    attack_gain = float(np.clip(attack_gain, 0.1, 3.0))
+    sustain_gain = float(np.clip(sustain_gain, 0.1, 3.0))
+    if abs(attack_gain - 1.0) < 0.02 and abs(sustain_gain - 1.0) < 0.02:
+        return audio
+    if audio.ndim == 1:
+        audio = audio[:, np.newaxis]
+    n_ch = audio.shape[1]
+    out = np.zeros_like(audio, dtype=np.float32)
+    for ch in range(n_ch):
+        x = audio[:, ch].astype(np.float32)
+        abs_x = np.abs(x)
+        fast_env = _envelope_follower(abs_x, float(sr), 0.0005, 0.005)
+        slow_env = _envelope_follower(abs_x, float(sr), 0.005, 0.1)
+        transient = np.maximum(fast_env - slow_env, 0.0)
+        new_env = transient * attack_gain + slow_env * sustain_gain
+        gain = np.clip(new_env / (fast_env + 1e-12), 0.0, 4.0).astype(np.float32)
+        out[:, ch] = np.clip(x * gain, -1.0, 1.0)
+    if audio.shape[1] == 1:
+        return out[:, 0]
+    return out
+
+
+def apply_parallel_compression(
+    audio: np.ndarray,
+    sr: int,
+    mix: float = 0.3,
+    ratio: float = 8.0,
+    threshold_db: float = -20.0,
+) -> np.ndarray:
+    """
+    Параллельная компрессия (New York compression): blend сильно сжатого сигнала с оригиналом.
+    output = audio * (1 − mix) + compressed * mix
+    Сохраняет транзиенты (punch) оригинала, добавляя плотность за счёт компрессированного сигнала.
+    mix (0.0–1.0): доля сжатого сигнала; 0.0 = bypass.
+    ratio: степень компрессии (по умолчанию 8:1 — жёсткое нью-йоркское сжатие).
+    threshold_db: порог компрессора (по умолчанию −20 dB).
+    """
+    mix = float(np.clip(mix, 0.0, 1.0))
+    if mix < 0.01:
+        return audio
+    compressed = _compress_soft_knee(
+        audio,
+        threshold_db=threshold_db,
+        ratio=ratio,
+        knee_db=6.0,
+        max_upward_boost_db=0.0,
+    )
+    out = (audio * (1.0 - mix) + compressed * mix).astype(np.float32)
+    return np.clip(out, -1.0, 1.0).astype(np.float32)
 
 
 def run_mastering_pipeline(
@@ -1133,12 +1549,21 @@ def run_mastering_pipeline(
     target_lufs: float = -14.0,
     style: str = "standard",
     progress_callback=None,
+    denoise_strength: float = 0.0,
+    transient_attack: float = 1.0,
+    transient_sustain: float = 1.0,
+    reference_audio: np.ndarray | None = None,
+    reference_sr: int | None = None,
+    reference_strength: float = 0.8,
 ) -> np.ndarray:
     """
-    Конвейер студийного мастеринга на основе модулей iZotope Ozone 5.
-    Для стиля house_basic дополнительно применяются:
-      — apply_harmonic_exciter (аналог Ozone 5 Exciter.dll)
-      — apply_stereo_imager    (аналог Ozone 5 Imager.dll)
+    Конвейер студийного мастеринга на основе модулей iZotope Ozone 5 + уникальные функции.
+    Опциональные параметры:
+      denoise_strength (0.0–1.0): спектральное шумоподавление (0 = выкл).
+      transient_attack (0.5–2.0): punch/атака транзиентного дизайнера (1.0 = bypass).
+      transient_sustain (0.5–2.0): sustain транзиентного дизайнера (1.0 = bypass).
+      reference_audio/reference_sr: эталонный трек для reference mastering.
+      reference_strength (0.0–1.0): интенсивность матчинга с эталоном.
     progress_callback(percent: int, message: str) вызывается на каждом шаге (0–100).
     """
     def report(pct: int, msg: str):
@@ -1148,35 +1573,57 @@ def run_mastering_pipeline(
     cfg = STYLE_CONFIGS.get(style, STYLE_CONFIGS["standard"])
     exciter_db    = cfg.get("exciter_db", 0.0)
     imager_width  = cfg.get("imager_width", 1.0)
+    parallel_mix  = cfg.get("parallel_mix", 0.0)
 
     report(5, "Подготовка…")
     audio = remove_dc_offset(audio)
-    report(12, "Удаление DC-смещения")
+    report(10, "Удаление DC-смещения")
     audio = remove_intersample_peaks(audio, headroom_db=0.5)
-    report(20, "Защита от пиков")
+    report(15, "Защита от пиков")
+
+    if denoise_strength > 0.01:
+        audio = apply_spectral_denoise(audio, sr, strength=denoise_strength)
+        report(22, f"Шумоподавление · strength={denoise_strength:.2f}")
+
     audio = apply_target_curve(audio, sr)
-    report(35, "Студийный EQ (Ozone 5 Equalizer)")
+    report(32, "Студийный EQ (Ozone 5 Equalizer)")
+    audio = apply_deesser(audio, sr)
+    report(38, "De-esser (5–9 kHz)")
     audio = apply_dynamics(audio, sr)
-    report(55, "Многополосная динамика и максимайзер (Ozone 5 Dynamics / Maximizer)")
+    report(52, "Многополосная динамика и максимайзер (Ozone 5 Dynamics / Maximizer)")
+
+    if parallel_mix > 0.01:
+        audio = apply_parallel_compression(audio, sr, mix=parallel_mix)
+        report(57, f"Параллельная компрессия · mix={parallel_mix:.2f}")
+
     audio = normalize_lufs(audio, sr, target_lufs)
-    report(70, "Нормализация LUFS")
+    report(65, "Нормализация LUFS")
     audio = apply_final_spectral_balance(audio, sr)
-    report(78, "Финальная частотная коррекция")
+    report(72, "Финальная частотная коррекция")
+
+    if reference_audio is not None and reference_sr is not None:
+        audio = apply_reference_match(audio, sr, reference_audio, reference_sr, strength=reference_strength)
+        report(78, f"Reference mastering · strength={reference_strength:.2f}")
+
     audio = apply_style_eq(audio, sr, style)
-    report(84, f"Жанровый EQ · {style}")
+    report(82, f"Жанровый EQ · {style}")
+
+    if (abs(transient_attack - 1.0) > 0.02 or abs(transient_sustain - 1.0) > 0.02):
+        audio = apply_transient_designer(audio, sr, attack_gain=transient_attack, sustain_gain=transient_sustain)
+        report(86, f"Транзиентный дизайнер · punch={transient_attack:.2f} sustain={transient_sustain:.2f}")
 
     if exciter_db > 0.05:
         audio = apply_harmonic_exciter(audio, sr, exciter_db)
-        report(88, f"Гармонический эксайтер (Ozone 5 Exciter) · +{exciter_db:.1f} dB")
+        report(89, f"Гармонический эксайтер (Ozone 5 Exciter) · +{exciter_db:.1f} dB")
 
     if abs(imager_width - 1.0) > 0.01:
         audio = apply_stereo_imager(audio, imager_width)
-        report(91, f"Стерео-расширение (Ozone 5 Imager) · width={imager_width:.2f}")
+        report(92, f"Стерео-расширение (Ozone 5 Imager) · width={imager_width:.2f}")
 
     audio = remove_intersample_peaks(audio, headroom_db=0.5)
-    report(94, "Финальная защита пиков")
+    report(95, "Финальная защита пиков")
     out = np.clip(audio, -1.0, 1.0).astype(np.float32)
     out = np.ascontiguousarray(out)
     np.nan_to_num(out, copy=False, nan=0.0, posinf=1.0, neginf=-1.0)
-    report(95, "Готово")
+    report(97, "Готово")
     return out
