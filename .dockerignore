@@ -6,6 +6,7 @@ backend/venv/
 .gitignore
 *.md
 !README.md
+!PROGRESS.md
 test_output/
 *.wav
 *.mp3
