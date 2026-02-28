@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>429 — Слишком много запросов · Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810; --border: rgba(255,255,255,0.08);
+      --text: #e8e8f0; --text-soft: #9898b8; --amber: #fbbf24;
+      --accent: #6c4bff; --accent2: #a855f7; --r: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .bg {
+      position: fixed; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 70% 50% at 50% 30%, rgba(251,191,36,.07) 0%, transparent 60%);
+    }
+    .wrap { position: relative; z-index: 1; text-align: center; padding: 2rem 1.5rem; max-width: 500px; }
+    .code {
+      font-size: 6rem; font-weight: 700; line-height: 1;
+      background: linear-gradient(135deg, var(--amber), #f97316);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: .4rem;
+    }
+    .title { font-size: 1.4rem; font-weight: 700; margin-bottom: .7rem; }
+    .sub { font-size: .9rem; color: var(--text-soft); line-height: 1.6; margin-bottom: 2rem; }
+    .timer { font-size: 2.2rem; font-weight: 700; color: var(--amber); margin-bottom: 1.5rem; font-variant-numeric: tabular-nums; }
+    .actions { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .6rem 1.3rem; border-radius: var(--r);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 700; font-size: .9rem;
+      text-decoration: none; border: none; cursor: pointer; font-family: inherit; transition: opacity .15s;
+    }
+    .btn:hover { opacity: .88; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-soft); }
+    .btn-ghost:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); opacity: 1; }
+    .logo { font-size: .9rem; font-weight: 700; color: var(--accent2); text-decoration: none; display: inline-block; margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+  <a href="/" class="logo">✨ Magic Master</a>
+  <div style="font-size:2.5rem;margin-bottom:.5rem">🚦</div>
+  <div class="code">429</div>
+  <div class="title">Слишком много запросов</div>
+  <div class="sub">Вы отправляете запросы слишком часто. Подождите немного и попробуйте снова.</div>
+  <div class="timer" id="countdown">—</div>
+  <div class="actions">
+    <button class="btn" id="retryBtn" onclick="location.reload()" disabled>↻ Повторить</button>
+    <a href="/pricing" class="btn btn-ghost">Увеличить лимит →</a>
+  </div>
+</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const retryAfter = parseInt(params.get('retry')) || 60;
+  let remaining = retryAfter;
+  const countEl = document.getElementById('countdown');
+  const retryBtn = document.getElementById('retryBtn');
+
+  function tick() {
+    if (remaining <= 0) {
+      countEl.textContent = 'Готово!';
+      retryBtn.disabled = false;
+      return;
+    }
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    countEl.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s} с`;
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+  tick();
+</script>
+</body>
+</html>

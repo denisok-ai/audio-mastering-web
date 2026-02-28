@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>500 — Ошибка сервера · Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810; --border: rgba(255,255,255,0.08);
+      --text: #e8e8f0; --text-soft: #9898b8;
+      --accent: #6c4bff; --accent2: #a855f7; --red: #f87171; --r: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .bg {
+      position: fixed; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 20%, rgba(248,113,113,.08) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 85% 80%, rgba(108,75,255,.1) 0%, transparent 55%);
+    }
+    .wrap { position: relative; z-index: 1; text-align: center; padding: 2rem 1.5rem; max-width: 520px; }
+    .code {
+      font-size: 6rem; font-weight: 700; line-height: 1;
+      background: linear-gradient(135deg, var(--red), #f97316);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: .4rem;
+    }
+    .title { font-size: 1.4rem; font-weight: 700; margin-bottom: .7rem; }
+    .sub { font-size: .9rem; color: var(--text-soft); line-height: 1.6; margin-bottom: 2rem; }
+    .actions { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .6rem 1.3rem; border-radius: var(--r);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 700; font-size: .9rem;
+      text-decoration: none; border: none; cursor: pointer; font-family: inherit; transition: opacity .15s;
+    }
+    .btn:hover { opacity: .88; }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); color: var(--text-soft);
+    }
+    .btn-ghost:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); opacity: 1; }
+    .logo { font-size: .9rem; font-weight: 700; color: var(--accent2); text-decoration: none; display: inline-block; margin-bottom: 2rem; }
+    .detail { font-size: .75rem; color: var(--text-soft); background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 8px; padding: .7rem 1rem; margin: 1rem auto; text-align: left; word-break: break-all; max-width: 420px; display: none; }
+    .detail.show { display: block; }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+  <a href="/" class="logo">✨ Magic Master</a>
+  <div style="font-size:2.5rem;margin-bottom:.5rem">⚙️</div>
+  <div class="code">500</div>
+  <div class="title">Внутренняя ошибка сервера</div>
+  <div class="sub">Что-то пошло не так на нашей стороне.<br>Мы уже работаем над исправлением. Попробуйте позже.</div>
+  <div class="actions">
+    <button class="btn" onclick="location.reload()">↻ Попробовать снова</button>
+    <a href="/" class="btn btn-ghost">На главную</a>
+    <a href="/status" class="btn btn-ghost">Статус сервиса</a>
+  </div>
+  <div class="detail" id="errDetail"></div>
+</div>
+<script>
+  // Показываем детали ошибки если переданы через URL
+  const params = new URLSearchParams(location.search);
+  const msg = params.get('msg');
+  if (msg) {
+    const el = document.getElementById('errDetail');
+    el.textContent = decodeURIComponent(msg);
+    el.classList.add('show');
+  }
+</script>
+</body>
+</html>

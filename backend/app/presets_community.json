@@ -1,0 +1,23 @@
+[
+  {
+    "id": "stream",
+    "name": "Stream (−14 LUFS)",
+    "target_lufs": -14,
+    "style": "standard",
+    "chain_config": null
+  },
+  {
+    "id": "podcast",
+    "name": "Подкаст (−16 LUFS)",
+    "target_lufs": -16,
+    "style": "standard",
+    "chain_config": null
+  },
+  {
+    "id": "club",
+    "name": "Клуб (−9 LUFS)",
+    "target_lufs": -9,
+    "style": "edm",
+    "chain_config": null
+  }
+]

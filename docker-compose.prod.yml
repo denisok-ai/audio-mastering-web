@@ -1,0 +1,53 @@
+# Magic Master — docker-compose для PRODUCTION
+#
+# Запуск:
+#   cp .env.example .env          # заполнить переменные
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Останов:
+#   docker compose -f docker-compose.prod.yml down
+#
+# Обновление:
+#   git pull
+#   docker compose -f docker-compose.prod.yml up -d --build --no-deps app
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    volumes:
+      # Только данные персистентные — код встроен в образ
+      - magic_master_data:/app/backend/data
+    environment:
+      - MAGIC_MASTER_HOST=0.0.0.0
+      - MAGIC_MASTER_PORT=8000
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    restart: always
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/magic-master.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL-сертификаты (Let's Encrypt через certbot)
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - app
+    restart: always
+
+volumes:
+  magic_master_data:

@@ -188,6 +188,17 @@ sudo ufw reload
 
 ---
 
+## Production: безопасность (CORS и webhook)
+
+Перед выходом в production задайте на сервере:
+
+- **MAGIC_MASTER_CORS_ORIGINS** — список разрешённых доменов через запятую (например `https://your-domain.com`). Пустое значение = разрешены все origins (`*`), что нежелательно в проде.
+- **MAGIC_MASTER_YOOKASSA_WEBHOOK_IP_WHITELIST** — IP-адреса серверов YooKassa через запятую; webhook будет приниматься только с этих IP. Уточните актуальные IP в документации YooKassa.
+
+Подробнее: [doc/RUNBOOK.md](doc/RUNBOOK.md), [.env.example](.env.example).
+
+---
+
 ## Переменные окружения (опционально)
 
 Их можно задать в systemd-сервисе (секция `[Service]`):
@@ -216,6 +227,32 @@ Environment="MAGIC_MASTER_MAX_UPLOAD_MB=100"
 | Остановить | `sudo systemctl stop magic-master` |
 | Перезапустить | `sudo systemctl restart magic-master` |
 | Смотреть логи | `sudo journalctl -u magic-master -f` |
+| Проверить состояние | `curl http://IP_СЕРВЕРА:8000/api/health` или откройте /status |
 | Открыть приложение | http://IP_СЕРВЕРА:8000 или https://ваш-домен |
+
+**Действия при сбоях:** см. [doc/RUNBOOK.md](doc/RUNBOOK.md) (health, логи, бэкап БД, перезапуск).
+
+---
+
+## Автоматический бэкап БД
+
+Чтобы регулярно сохранять копию базы данных, используйте скрипт `deploy/backup_db.sh` по cron.
+
+1. На сервере перейдите в каталог проекта и сделайте скрипт исполняемым:
+   ```bash
+   cd /home/user/audio-mastering-web
+   chmod +x deploy/backup_db.sh
+   ```
+
+2. Укажите в скрипте путь к backend (переменная `BACKEND_DIR`) и каталог для бэкапов (`BACKUP_DIR`). По умолчанию бэкапы сохраняются в `./backups_db` в корне проекта.
+
+3. Добавьте задачу в cron (например, раз в день в 3:00):
+   ```bash
+   crontab -e
+   # добавить строку (подставьте свой путь):
+   0 3 * * * /home/user/audio-mastering-web/deploy/backup_db.sh
+   ```
+
+Скрипт создаёт файл вида `magic_master_YYYYMMDD_HHMMSS.sqlite3`. Старые бэкапы рекомендуется удалять или выносить в облако (скрипт можно доработать под себя).
 
 После выполнения шагов 1–7 приложение доступно в веб по адресу сервера и порту 8000; при необходимости шаг 8 добавляет домен и HTTPS.

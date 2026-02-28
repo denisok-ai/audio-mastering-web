@@ -1,0 +1,27 @@
+# Magic Master — docker-compose для локальной разработки
+# Запуск: docker compose up --build
+# Приложение доступно на http://localhost:8000
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Монтируем код — чтобы не пересобирать при изменениях
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      - ./PROGRESS.md:/app/PROGRESS.md
+      # Постоянное хранилище БД
+      - magic_master_data:/app/backend/data
+    environment:
+      - MAGIC_MASTER_HOST=0.0.0.0
+      - MAGIC_MASTER_PORT=8000
+      - PYTHONUNBUFFERED=1
+      # Скопируйте .env.example → .env и заполните переменные
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  magic_master_data:

@@ -18,6 +18,8 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
+# Статус плана для /progress.html
+COPY PROGRESS.md ./PROGRESS.md
 
 # Переменные по умолчанию (можно переопределить при run)
 ENV MAGIC_MASTER_HOST=0.0.0.0

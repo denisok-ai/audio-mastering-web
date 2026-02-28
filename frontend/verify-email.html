@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Подтверждение email — Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810; --surface: rgba(16,16,28,0.95); --border: rgba(255,255,255,0.08);
+      --text: #e8e8f0; --text-soft: #9898b8; --text-dim: #52527a;
+      --accent: #6c4bff; --accent2: #a855f7;
+      --green: #34d399; --red: #f87171; --amber: #fbbf24;
+      --r-sm: 8px; --r-lg: 20px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(108,75,255,.14) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 85% 90%, rgba(168,85,247,.09) 0%, transparent 55%);
+    }
+    .card {
+      position: relative; z-index: 1;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 2.5rem 2.2rem;
+      width: 100%; max-width: 440px; margin: 1rem; text-align: center;
+      box-shadow: 0 8px 48px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.05) inset;
+    }
+    .logo { font-size: 1.1rem; font-weight: 700; color: var(--accent2); text-decoration: none; display: inline-block; margin-bottom: 1.8rem; }
+    .icon { font-size: 3rem; margin-bottom: 1rem; }
+    h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: .6rem; }
+    .sub { font-size: .88rem; color: var(--text-soft); line-height: 1.6; margin-bottom: 1.5rem; }
+    .status-ok  { color: var(--green); }
+    .status-err { color: var(--red); }
+    .status-wait { color: var(--amber); }
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .65rem 1.4rem; border-radius: var(--r-sm);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 700; font-size: .9rem; border: none;
+      cursor: pointer; text-decoration: none; transition: opacity .15s;
+      font-family: inherit;
+    }
+    .btn:hover { opacity: .88; }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .55rem 1.2rem; border-radius: var(--r-sm);
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-soft); font-size: .85rem; font-weight: 600;
+      text-decoration: none; transition: border-color .15s; font-family: inherit; cursor: pointer;
+    }
+    .btn-outline:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); }
+    .actions { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+    .resend-form { margin-top: 1.5rem; display: none; }
+    .resend-form input {
+      width: 100%; background: rgba(22,22,38,0.9); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: .6rem .9rem;
+      color: var(--text); font-size: .9rem; outline: none; margin-bottom: .7rem;
+      font-family: inherit;
+    }
+    .resend-form input:focus { border-color: rgba(108,75,255,.5); }
+    .msg { font-size: .82rem; min-height: 1.2em; margin-top: .5rem; }
+    .msg.ok { color: var(--green); } .msg.err { color: var(--red); }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="card">
+  <a href="/" class="logo">✨ Magic Master</a>
+
+  <!-- Ожидание (пока JS проверяет токен) -->
+  <div id="stateWait">
+    <div class="icon">📧</div>
+    <h1>Проверяем ссылку…</h1>
+    <p class="sub">Подождите секунду.</p>
+  </div>
+
+  <!-- Успех -->
+  <div id="stateOk" style="display:none">
+    <div class="icon">✅</div>
+    <h1 class="status-ok">Email подтверждён!</h1>
+    <p class="sub">Ваш аккаунт активирован. Теперь вы можете войти и начать мастерить.</p>
+    <div class="actions">
+      <a href="/login.html" class="btn">Войти →</a>
+      <a href="/app" class="btn-outline">К мастерингу</a>
+    </div>
+  </div>
+
+  <!-- Ошибка / нет токена -->
+  <div id="stateErr" style="display:none">
+    <div class="icon">❌</div>
+    <h1 class="status-err">Ссылка недействительна</h1>
+    <p class="sub" id="errText">Ссылка устарела или уже была использована. Запросите новую.</p>
+    <div class="actions">
+      <button class="btn-outline" id="btnShowResend">Отправить повторно</button>
+      <a href="/login.html" class="btn-outline">Войти</a>
+    </div>
+    <div class="resend-form" id="resendForm">
+      <input type="email" id="resendEmail" placeholder="your@email.com" autocomplete="email">
+      <button class="btn" id="resendBtn" style="width:100%">Отправить письмо</button>
+      <div class="msg" id="resendMsg"></div>
+    </div>
+  </div>
+
+  <!-- Ожидает верификации (нет токена в URL) -->
+  <div id="stateNoToken" style="display:none">
+    <div class="icon">📬</div>
+    <h1>Проверьте почту</h1>
+    <p class="sub">Письмо с ссылкой для подтверждения отправлено на ваш email.<br>
+    Ссылка действует <strong>24 часа</strong>. Проверьте папку «Спам».</p>
+    <div class="actions">
+      <button class="btn-outline" id="btnShowResend2">Не пришло письмо?</button>
+      <a href="/login.html" class="btn-outline">Войти</a>
+    </div>
+    <div class="resend-form" id="resendForm2">
+      <input type="email" id="resendEmail2" placeholder="your@email.com" autocomplete="email">
+      <button class="btn" id="resendBtn2" style="width:100%">Отправить повторно</button>
+      <div class="msg" id="resendMsg2"></div>
+    </div>
+  </div>
+</div>
+<script>
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+
+function show(id) {
+  ['stateWait','stateOk','stateErr','stateNoToken'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'block' : 'none';
+  });
+}
+
+async function verify() {
+  if (!token) {
+    show('stateNoToken');
+    return;
+  }
+  try {
+    const r = await fetch('/api/auth/verify-email?token=' + encodeURIComponent(token));
+    const d = await r.json();
+    if (r.ok) {
+      show('stateOk');
+    } else {
+      document.getElementById('errText').textContent = d.detail || 'Ссылка недействительна.';
+      show('stateErr');
+    }
+  } catch (e) {
+    document.getElementById('errText').textContent = 'Ошибка соединения. Попробуйте позже.';
+    show('stateErr');
+  }
+}
+
+async function resend(emailId, msgId, btnId) {
+  const email = document.getElementById(emailId).value.trim();
+  const msg = document.getElementById(msgId);
+  const btn = document.getElementById(btnId);
+  if (!email) { msg.textContent = 'Введите email'; msg.className = 'msg err'; return; }
+  btn.disabled = true;
+  try {
+    await fetch('/api/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    msg.textContent = 'Письмо отправлено (если аккаунт ожидает верификации)';
+    msg.className = 'msg ok';
+  } catch (e) {
+    msg.textContent = 'Ошибка. Попробуйте позже.';
+    msg.className = 'msg err';
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('btnShowResend').addEventListener('click', () => {
+  document.getElementById('resendForm').style.display = 'block';
+});
+document.getElementById('btnShowResend2').addEventListener('click', () => {
+  document.getElementById('resendForm2').style.display = 'block';
+});
+document.getElementById('resendBtn').addEventListener('click', () => resend('resendEmail','resendMsg','resendBtn'));
+document.getElementById('resendBtn2').addEventListener('click', () => resend('resendEmail2','resendMsg2','resendBtn2'));
+
+verify();
+</script>
+</body>
+</html>

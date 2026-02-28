@@ -369,7 +369,7 @@
       </div>
       <p class="plan-orig" id="proOrig" style="visibility:hidden">$12 / мес</p>
       <p class="plan-desc">Для музыкантов и продюсеров. Все инструменты + уникальные PRO-модули.</p>
-      <a href="/app" class="plan-btn primary">Выбрать Pro →</a>
+      <button class="plan-btn primary" onclick="startPayment('pro_month')">Купить Pro →</button>
       <hr class="plan-divider">
       <ul class="plan-features">
         <li><span class="ico ico-pro">✦</span> Безлимитные мастеринги</li>
@@ -398,7 +398,7 @@
       </div>
       <p class="plan-orig" id="studioOrig" style="visibility:hidden">$39 / мес</p>
       <p class="plan-desc">Для профессиональных студий. Пакетная обработка и API.</p>
-      <a href="#" class="plan-btn outline" onclick="return false;">Выбрать Studio</a>
+      <button class="plan-btn outline" onclick="startPayment('studio_month')">Купить Studio</button>
       <hr class="plan-divider">
       <ul class="plan-features">
         <li><span class="ico ico-yes">✓</span> Всё из Pro</li>
@@ -742,8 +742,37 @@
 
   // Version in footer
   fetch('/api/version').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
-    if (d && d.version) document.getElementById('footVersion').textContent = 'v' + d.version;
+    if (!d) return;
+    const v = d.version ? 'v' + d.version : '';
+    const b = d.build_date || '';
+    var el = document.getElementById('footVersion');
+    if (el) el.textContent = b ? (v ? v + ' · ' + b : b) : v;
   }).catch(function() {});
+
+  // YooKassa payment (P23)
+  async function startPayment(plan) {
+    var token = localStorage.getItem('magic_token');
+    if (!token) {
+      if (confirm('Для оплаты необходима авторизация. Войти или зарегистрироваться?')) {
+        window.location.href = '/login?next=/pricing';
+      }
+      return;
+    }
+    try {
+      var r = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ plan: plan }),
+      });
+      var d = await r.json();
+      if (!r.ok) { alert('Ошибка: ' + (d.detail || r.statusText)); return; }
+      if (d.confirmation_url) {
+        window.location.href = d.confirmation_url;
+      } else {
+        alert('Получен ответ: ' + JSON.stringify(d));
+      }
+    } catch(e) { alert('Ошибка оплаты: ' + e.message); }
+  }
 </script>
 </body>
 </html>

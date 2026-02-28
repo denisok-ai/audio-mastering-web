@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль — Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810; --bg2: #0c0c18;
+      --surface: rgba(16,16,28,0.92); --surface2: rgba(22,22,38,0.97);
+      --border: rgba(255,255,255,0.07);
+      --text: #e8e8f0; --text-soft: #9898b8; --text-dim: #52527a;
+      --accent: #6c4bff; --accent2: #a855f7; --accent-glow: rgba(108,75,255,0.35);
+      --cyan: #22d3ee; --green: #34d399; --amber: #fbbf24; --red: #f87171;
+      --r: 14px; --r-lg: 20px; --r-sm: 8px;
+      --shadow: 0 4px 32px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.04) inset;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+    }
+    .bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 5%, rgba(108,75,255,.12) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 85% 90%, rgba(168,85,247,.09) 0%, transparent 55%);
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .8rem 2rem;
+      background: rgba(8,8,16,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-logo { font-weight: 700; font-size: 1.05rem; color: var(--accent2); text-decoration: none; }
+    .topbar-nav { display: flex; gap: 1.2rem; align-items: center; }
+    .topbar-nav a {
+      color: var(--text-soft); text-decoration: none; font-size: .88rem; font-weight: 500;
+      transition: color .15s;
+    }
+    .topbar-nav a:hover { color: var(--text); }
+    .topbar-nav a.active { color: var(--accent2); }
+    .btn-sm-nav {
+      padding: .38rem .9rem; border-radius: var(--r-sm);
+      background: rgba(108,75,255,.18); border: 1px solid rgba(108,75,255,.35);
+      color: var(--accent2); font-size: .82rem; font-weight: 600; cursor: pointer;
+      text-decoration: none; transition: background .15s;
+    }
+    .btn-sm-nav:hover { background: rgba(108,75,255,.32); }
+
+    /* ── Layout ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; position: relative; z-index: 1; }
+    .page-title { font-size: 1.7rem; font-weight: 700; margin-bottom: 2rem; }
+    .page-title span { color: var(--accent2); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: .8rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 1.2rem;
+    }
+
+    /* ── Info grid ── */
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+    .info-item label { font-size: .75rem; color: var(--text-soft); display: block; margin-bottom: .25rem; }
+    .info-item .val { font-size: 1rem; font-weight: 600; }
+
+    /* ── Tier badge ── */
+    .tier-badge {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .25rem .75rem; border-radius: 20px; font-size: .82rem; font-weight: 700;
+    }
+    .tier-free  { background: rgba(152,152,184,.12); color: var(--text-soft); border: 1px solid rgba(152,152,184,.2); }
+    .tier-pro   { background: rgba(108,75,255,.15);  color: var(--accent2);   border: 1px solid rgba(108,75,255,.3); }
+    .tier-studio{ background: rgba(251,191,36,.12);  color: var(--amber);     border: 1px solid rgba(251,191,36,.3); }
+
+    /* ── Sub status ── */
+    .sub-active  { color: var(--green); }
+    .sub-expired { color: var(--red); }
+    .sub-none    { color: var(--text-dim); }
+
+    /* ── Stats row ── */
+    .stats-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .stat-box {
+      flex: 1; min-width: 120px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1rem 1.2rem; text-align: center;
+    }
+    .stat-box .n { font-size: 1.8rem; font-weight: 700; color: var(--accent2); font-family: 'JetBrains Mono', monospace; }
+    .stat-box .l { font-size: .75rem; color: var(--text-soft); margin-top: .25rem; }
+
+    /* ── History table ── */
+    .history-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .history-table th { text-align: left; padding: .5rem .75rem; color: var(--text-soft); font-weight: 600; font-size: .75rem; border-bottom: 1px solid var(--border); }
+    .history-table td { padding: .55rem .75rem; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: rgba(108,75,255,.05); }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: .8em; }
+    .empty-msg { text-align: center; padding: 2.5rem; color: var(--text-dim); }
+
+    /* ── Password form ── */
+    .form-col { display: flex; flex-direction: column; gap: .9rem; max-width: 400px; }
+    .form-col label { font-size: .8rem; color: var(--text-soft); margin-bottom: .2rem; display: block; }
+    .form-col input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: .65rem .9rem;
+      color: var(--text); font-size: .9rem; outline: none; transition: border-color .15s;
+    }
+    .form-col input:focus { border-color: rgba(108,75,255,.5); }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .45rem;
+      padding: .65rem 1.4rem; border-radius: var(--r-sm);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 700; font-size: .9rem; border: none; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: .45rem;
+      padding: .55rem 1.2rem; border-radius: var(--r-sm);
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-soft); font-size: .85rem; font-weight: 600; cursor: pointer;
+      transition: border-color .15s, color .15s; text-decoration: none;
+    }
+    .btn-outline:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); }
+
+    /* ── Danger zone ── */
+    .danger-zone { border-color: rgba(248,113,113,.18); }
+    .danger-zone .card-title { color: var(--red); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+      padding: .7rem 1.2rem; border-radius: var(--r-sm); font-size: .88rem; font-weight: 600;
+      opacity: 0; transform: translateY(8px); transition: all .25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.ok  { background: rgba(52,211,153,.18); border: 1px solid rgba(52,211,153,.3); color: var(--green); }
+    .toast.err { background: rgba(248,113,113,.18); border: 1px solid rgba(248,113,113,.3); color: var(--red); }
+    .toast.inf { background: rgba(108,75,255,.18); border: 1px solid rgba(108,75,255,.35); color: var(--accent2); }
+
+    /* ── Subscription expiry warning ── */
+    .sub-warning {
+      background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.25);
+      border-radius: var(--r); padding: .8rem 1.2rem;
+      color: var(--amber); font-size: .87rem; margin-bottom: 1.5rem;
+    }
+    .sub-expired-banner {
+      background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.25);
+      border-radius: var(--r); padding: .8rem 1.2rem;
+      color: var(--red); font-size: .87rem; margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .topbar { padding: .7rem 1rem; }
+      .container { padding: 1.5rem 1rem 3rem; }
+      .stats-row { gap: .8rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+
+<!-- Topbar -->
+<header class="topbar">
+  <a href="/" class="topbar-logo">✨ Magic Master</a>
+  <nav class="topbar-nav">
+    <a href="/app">Мастеринг</a>
+    <a href="/pricing">Тарифы</a>
+    <a href="/profile" class="active">Профиль</a>
+    <a href="#" id="logoutLink" class="btn-sm-nav" style="display:none">Выйти</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="page-title">Мой <span>профиль</span></div>
+
+  <!-- Subscription expiry banners -->
+  <div id="subWarning" style="display:none" class="sub-warning">
+    ⚠️ Ваша подписка истекает <strong id="subExpireDate"></strong>. <a href="/pricing" style="color:var(--amber)">Продлить →</a>
+  </div>
+  <div id="subExpiredBanner" style="display:none" class="sub-expired-banner">
+    ❌ Ваша подписка истекла. Тариф понижен до <strong>Free</strong>. <a href="/pricing" style="color:var(--red)">Обновить →</a>
+  </div>
+
+  <!-- Account info -->
+  <div class="card" id="cardAccount">
+    <div class="card-title">Аккаунт</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <label>Email</label>
+        <div class="val" id="profileEmail">—</div>
+      </div>
+      <div class="info-item">
+        <label>Тариф</label>
+        <div class="val" id="profileTier">—</div>
+      </div>
+      <div class="info-item">
+        <label>Подписка</label>
+        <div class="val" id="profileSubStatus">—</div>
+      </div>
+      <div class="info-item">
+        <label>Действует до</label>
+        <div class="val" id="profileSubExpires">—</div>
+      </div>
+      <div class="info-item">
+        <label>Зарегистрирован</label>
+        <div class="val" id="profileCreatedAt">—</div>
+      </div>
+      <div class="info-item">
+        <label>Последний вход</label>
+        <div class="val" id="profileLastLogin">—</div>
+      </div>
+    </div>
+    <div style="margin-top:1.2rem; display:flex; gap:.7rem; flex-wrap:wrap">
+      <a href="/pricing" class="btn-outline">⚡ Улучшить тариф</a>
+      <a href="/app" class="btn-outline">🎛 Запустить мастеринг</a>
+    </div>
+  </div>
+
+  <!-- Statistics -->
+  <div class="card">
+    <div class="card-title">Статистика</div>
+    <div class="stats-row" id="statsRow">
+      <div class="stat-box"><div class="n" id="statTotal">—</div><div class="l">Мастерингов</div></div>
+      <div class="stat-box"><div class="n" id="statAvgLufs">—</div><div class="l">Средний LUFS</div></div>
+      <div class="stat-box"><div class="n" id="statAvgDelta">—</div><div class="l">Ср. изменение LUFS</div></div>
+      <div class="stat-box"><div class="n" id="statHours">—</div><div class="l">Часов аудио</div></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <div class="card-title" style="margin-bottom:0">История мастерингов</div>
+      <button class="btn-outline" id="btnExportHistory" style="padding:.3rem .8rem;font-size:.78rem">⬇ CSV</button>
+    </div>
+    <div id="historyWrap">
+      <p class="empty-msg">Загрузка…</p>
+    </div>
+  </div>
+
+  <!-- Change password -->
+  <div class="card">
+    <div class="card-title">Сменить пароль</div>
+    <div class="form-col" id="passForm">
+      <div>
+        <label>Текущий пароль</label>
+        <input type="password" id="oldPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div>
+        <label>Новый пароль</label>
+        <input type="password" id="newPass" placeholder="минимум 6 символов" autocomplete="new-password">
+      </div>
+      <div>
+        <label>Повторите новый пароль</label>
+        <input type="password" id="newPass2" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <div>
+        <button class="btn-primary" id="btnChangePass">Сменить пароль</button>
+      </div>
+      <div id="passMsg" style="font-size:.82rem; min-height:1.1em"></div>
+    </div>
+  </div>
+
+  <!-- API Keys (P52) — отображается только для Pro/Studio -->
+  <div class="card" id="apiKeysCard" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <div class="card-title" style="margin-bottom:0">API-ключи</div>
+      <button class="btn-outline" id="btnCreateKey" style="padding:.3rem .8rem;font-size:.78rem">+ Создать ключ</button>
+    </div>
+    <p style="font-size:.8rem;color:var(--text-soft);margin-bottom:1rem">
+      Используйте API-ключ для программного доступа к мастерингу.<br>
+      Передавайте заголовок <code style="background:rgba(108,75,255,.15);padding:.1rem .4rem;border-radius:4px;font-size:.75rem">X-API-Key: &lt;ключ&gt;</code> вместо Bearer JWT.
+    </p>
+    <div id="apiKeysList" style="margin-bottom:1rem">
+      <p style="color:var(--text-soft);font-size:.85rem">Загрузка…</p>
+    </div>
+    <!-- Форма создания -->
+    <div id="createKeyForm" style="display:none;background:rgba(108,75,255,.07);border:1px solid rgba(108,75,255,.2);border-radius:8px;padding:1rem;margin-top:.5rem">
+      <label style="font-size:.8rem;color:var(--text-soft);display:block;margin-bottom:.4rem">Название ключа</label>
+      <input id="newKeyName" type="text" placeholder="Например: DAW Integration" maxlength="100"
+        style="width:100%;background:rgba(22,22,38,.9);border:1px solid var(--border);border-radius:8px;padding:.55rem .8rem;color:var(--text);font-size:.88rem;outline:none;margin-bottom:.7rem;font-family:inherit">
+      <div style="display:flex;gap:.6rem">
+        <button class="btn-primary" id="btnSaveKey" style="padding:.45rem 1rem;font-size:.85rem">Создать</button>
+        <button class="btn-outline" id="btnCancelKey" style="padding:.4rem .9rem;font-size:.82rem">Отмена</button>
+      </div>
+    </div>
+    <!-- Результат (новый ключ) -->
+    <div id="newKeyResult" style="display:none;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);border-radius:8px;padding:1rem;margin-top:.7rem">
+      <div style="font-size:.78rem;color:#34d399;font-weight:700;margin-bottom:.5rem">⚠ Сохраните ключ — он показывается только один раз!</div>
+      <code id="newKeyValue" style="display:block;word-break:break-all;font-size:.8rem;background:rgba(0,0,0,.3);padding:.6rem .8rem;border-radius:6px;color:#e8e8f0;user-select:all;margin-bottom:.6rem"></code>
+      <button class="btn-outline" id="btnCopyKey" style="padding:.3rem .8rem;font-size:.75rem">📋 Скопировать</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+const token = localStorage.getItem('mm_token');
+
+if (!token) {
+  window.location.href = '/login.html?redirect=/profile';
+}
+
+function toast(msg, type = 'inf', ms = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => { el.classList.remove('show'); }, ms);
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts * 1000).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDateOnly(ts) {
+  if (!ts) return '—';
+  return new Date(ts * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function fmtDuration(sec) {
+  if (!sec) return '—';
+  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function tierBadge(tier) {
+  const map = { free: ['Free', 'tier-free'], pro: ['Pro', 'tier-pro'], studio: ['Studio', 'tier-studio'] };
+  const [label, cls] = map[tier] || [tier, 'tier-free'];
+  return `<span class="tier-badge ${cls}">${label}</span>`;
+}
+
+function subStatusHtml(status) {
+  if (status === 'active')   return '<span class="sub-active">● Активна</span>';
+  if (status === 'expired')  return '<span class="sub-expired">✕ Истекла</span>';
+  if (status === 'cancelled')return '<span class="sub-expired">✕ Отменена</span>';
+  return '<span class="sub-none">—</span>';
+}
+
+async function loadProfile() {
+  try {
+    const r = await fetch(API + '/api/auth/profile', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (r.status === 401) { window.location.href = '/login.html?redirect=/profile'; return; }
+    const d = await r.json();
+
+    document.getElementById('profileEmail').textContent = d.email || '—';
+    document.getElementById('profileTier').innerHTML = tierBadge(d.tier || 'free');
+    document.getElementById('profileSubStatus').innerHTML = subStatusHtml(d.subscription_status || 'none');
+    document.getElementById('profileSubExpires').textContent = d.subscription_expires_at ? fmtDateOnly(d.subscription_expires_at) : '—';
+    document.getElementById('profileCreatedAt').textContent = fmtDateOnly(d.created_at);
+    document.getElementById('profileLastLogin').textContent = fmtDate(d.last_login_at);
+
+    // Expiry banners
+    if (d.subscription_expires_at) {
+      const now = Date.now() / 1000;
+      const diff = d.subscription_expires_at - now;
+      if (d.subscription_status === 'expired' || diff < 0) {
+        document.getElementById('subExpiredBanner').style.display = 'block';
+      } else if (diff < 3 * 86400) {
+        document.getElementById('subExpireDate').textContent = fmtDateOnly(d.subscription_expires_at);
+        document.getElementById('subWarning').style.display = 'block';
+      }
+    }
+
+    // Stats
+    const s = d.stats || {};
+    document.getElementById('statTotal').textContent = s.total_masterings ?? '0';
+    document.getElementById('statAvgLufs').textContent = s.avg_after_lufs != null ? s.avg_after_lufs.toFixed(1) : '—';
+    document.getElementById('statAvgDelta').textContent = s.avg_lufs_delta != null
+      ? (s.avg_lufs_delta > 0 ? '+' : '') + s.avg_lufs_delta.toFixed(1)
+      : '—';
+    const totalSec = s.total_duration_sec || 0;
+    document.getElementById('statHours').textContent = totalSec > 3600
+      ? (totalSec / 3600).toFixed(1) + ' ч'
+      : Math.round(totalSec / 60) + ' мин';
+
+    // Logout link
+    document.getElementById('logoutLink').style.display = 'inline-flex';
+    document.getElementById('logoutLink').addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.removeItem('mm_token');
+      window.location.href = '/';
+    });
+
+    // P52: показываем API-ключи только для Pro/Studio
+    if (d.tier === 'pro' || d.tier === 'studio') {
+      const apiCard = document.getElementById('apiKeysCard');
+      if (apiCard) apiCard.style.display = 'block';
+      loadApiKeys();
+    }
+
+  } catch (e) {
+    toast('Ошибка загрузки профиля: ' + e.message, 'err');
+  }
+}
+
+async function loadHistory() {
+  const wrap = document.getElementById('historyWrap');
+  try {
+    const r = await fetch(API + '/api/auth/history', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const d = await r.json();
+    const records = d.records || [];
+    if (!records.length) {
+      wrap.innerHTML = '<p class="empty-msg">Мастерингов пока нет. <a href="/app" style="color:var(--accent2)">Запустить первый →</a></p>';
+      return;
+    }
+    wrap.innerHTML = `<table class="history-table">
+      <thead>
+        <tr>
+          <th>Файл</th>
+          <th>Стиль</th>
+          <th>Формат</th>
+          <th>До → После LUFS</th>
+          <th>Длина</th>
+          <th>Дата</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${records.map(r => `
+          <tr>
+            <td title="${r.filename}">${r.filename ? r.filename.replace(/^(.{22}).*(\.\w+)$/, '$1…$2') : '—'}</td>
+            <td>${r.style || '—'}</td>
+            <td class="mono">${(r.out_format || 'wav').toUpperCase()}</td>
+            <td class="mono">${r.before_lufs != null ? r.before_lufs.toFixed(1) : '—'} → ${r.after_lufs != null ? r.after_lufs.toFixed(1) : '—'}</td>
+            <td class="mono">${fmtDuration(r.duration_sec)}</td>
+            <td style="color:var(--text-soft);font-size:.8rem">${fmtDateOnly(r.created_at)}</td>
+            <td><button class="btn-outline" style="padding:.25rem .6rem;font-size:.75rem" onclick="deleteRecord(${r.id}, this)">✕</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  } catch (e) {
+    wrap.innerHTML = '<p class="empty-msg" style="color:var(--red)">Ошибка загрузки истории</p>';
+  }
+}
+
+async function deleteRecord(id, btn) {
+  if (!confirm('Удалить запись из истории?')) return;
+  btn.disabled = true;
+  try {
+    const r = await fetch(API + '/api/auth/history/' + id, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (r.ok) { toast('Запись удалена', 'ok'); loadHistory(); }
+    else { const e = await r.json(); toast(e.detail || 'Ошибка', 'err'); btn.disabled = false; }
+  } catch (e) { toast('Ошибка: ' + e.message, 'err'); btn.disabled = false; }
+}
+
+document.getElementById('btnChangePass').addEventListener('click', async () => {
+  const oldP = document.getElementById('oldPass').value;
+  const newP = document.getElementById('newPass').value;
+  const newP2 = document.getElementById('newPass2').value;
+  const msg = document.getElementById('passMsg');
+  msg.style.color = 'var(--red)';
+  if (!oldP || !newP || !newP2) { msg.textContent = 'Заполните все поля'; return; }
+  if (newP !== newP2) { msg.textContent = 'Новые пароли не совпадают'; return; }
+  if (newP.length < 6) { msg.textContent = 'Новый пароль минимум 6 символов'; return; }
+  const btn = document.getElementById('btnChangePass');
+  btn.disabled = true;
+  try {
+    const r = await fetch(API + '/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ old_password: oldP, new_password: newP })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      msg.style.color = 'var(--green)';
+      msg.textContent = '✓ Пароль успешно изменён';
+      document.getElementById('oldPass').value = '';
+      document.getElementById('newPass').value = '';
+      document.getElementById('newPass2').value = '';
+      toast('Пароль изменён', 'ok');
+    } else {
+      msg.textContent = d.detail || 'Ошибка';
+    }
+  } catch (e) {
+    msg.textContent = 'Ошибка запроса';
+  }
+  btn.disabled = false;
+});
+
+// P42: CSV-экспорт истории
+document.getElementById('btnExportHistory').addEventListener('click', () => {
+  fetch(API + '/api/auth/history/export.csv', { headers: { Authorization: 'Bearer ' + token } })
+    .then(r => {
+      if (!r.ok) throw new Error('Ошибка ' + r.status);
+      return r.blob();
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'mastering_history.csv'; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast('CSV скачан', 'ok');
+    })
+    .catch(e => toast('Ошибка: ' + e.message, 'err'));
+});
+
+// ─── P52: API Keys ────────────────────────────────────────────────────────────
+async function loadApiKeys() {
+  const wrap = document.getElementById('apiKeysList');
+  if (!wrap) return;
+  try {
+    const d = await fetch(API + '/api/auth/api-keys', { headers: { Authorization: 'Bearer ' + token } });
+    if (d.status === 403) { wrap.innerHTML = ''; return; }
+    const data = await d.json();
+    const keys = data.keys || [];
+    if (!keys.length) {
+      wrap.innerHTML = '<p style="color:var(--text-soft);font-size:.83rem">Нет активных ключей.</p>';
+      return;
+    }
+    wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead><tr>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Название</th>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Префикс</th>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Последнее использование</th>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Статус</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+      ${keys.map(k => `<tr style="border-top:1px solid rgba(255,255,255,.05)">
+        <td style="padding:.4rem .5rem">${k.name}</td>
+        <td style="padding:.4rem .5rem"><code style="font-size:.75rem;opacity:.7">${k.prefix}</code></td>
+        <td style="padding:.4rem .5rem;color:var(--text-soft)">${k.last_used_at ? new Date(k.last_used_at * 1000).toLocaleDateString('ru') : '—'}</td>
+        <td style="padding:.4rem .5rem">${k.is_active ? '<span style="color:#34d399">●</span> Активен' : '<span style="color:#f87171">●</span> Отозван'}</td>
+        <td style="padding:.4rem .5rem"><button class="btn-outline" style="padding:.2rem .5rem;font-size:.72rem" onclick="revokeKey(${k.id})">Отозвать</button></td>
+      </tr>`).join('')}
+      </tbody>
+    </table>`;
+  } catch (e) { wrap.innerHTML = '<p style="color:#f87171;font-size:.83rem">Ошибка загрузки</p>'; }
+}
+
+async function revokeKey(id) {
+  if (!confirm('Отозвать ключ?')) return;
+  const r = await fetch(API + '/api/auth/api-keys/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+  if (r.ok) { toast('Ключ отозван', 'ok'); loadApiKeys(); } else { toast('Ошибка', 'err'); }
+}
+
+document.getElementById('btnCreateKey')?.addEventListener('click', () => {
+  document.getElementById('createKeyForm').style.display = 'block';
+  document.getElementById('newKeyResult').style.display = 'none';
+  document.getElementById('newKeyName').focus();
+});
+document.getElementById('btnCancelKey')?.addEventListener('click', () => {
+  document.getElementById('createKeyForm').style.display = 'none';
+});
+document.getElementById('btnSaveKey')?.addEventListener('click', async () => {
+  const name = document.getElementById('newKeyName').value.trim() || 'My API Key';
+  const r = await fetch(API + '/api/auth/api-keys', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  const data = await r.json();
+  if (!r.ok) { toast(data.detail || 'Ошибка', 'err'); return; }
+  document.getElementById('createKeyForm').style.display = 'none';
+  document.getElementById('newKeyValue').textContent = data.key;
+  document.getElementById('newKeyResult').style.display = 'block';
+  loadApiKeys();
+});
+document.getElementById('btnCopyKey')?.addEventListener('click', () => {
+  const val = document.getElementById('newKeyValue').textContent;
+  navigator.clipboard.writeText(val).then(() => toast('Скопировано!', 'ok')).catch(() => {});
+});
+
+// Init
+loadProfile();
+loadHistory();
+</script>
+</body>
+</html>

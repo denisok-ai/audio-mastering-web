@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Magic Master — профессиональный мастеринг</title>
+  <!-- PWA (P49) -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6c4bff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Magic Master">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script>window.__MAGIC_MASTER_DEBUG__=false;</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,6 +76,11 @@
     /* ═══════════════════════ BASE ═══════════════════════ */
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    /* a11y: видимый фокус для навигации с клавиатуры */
+    button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
     body {
       font-family: 'Space Grotesk', system-ui, sans-serif;
       background: var(--bg);
@@ -107,7 +119,7 @@
     .page { width: 100%; max-width: 520px; position: relative; z-index: 1; }
 
     /* ═══════════════════════ HEADER ═══════════════════════ */
-    .header { padding: 2.75rem 0 1.75rem; text-align: center; }
+    .header { position: relative; padding: 2.75rem 0 1.75rem; text-align: center; }
     .logo {
       display: inline-flex; align-items: center; gap: 0.55rem;
       margin-bottom: 1.1rem;
@@ -413,6 +425,24 @@
     }
     .result-panel.visible { display:block }
     @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+    /* ═══════════ A/B AUDIO PLAYER (P45) ═══════════ */
+    .ab-player-wrap{display:none;margin-top:1rem;background:rgba(108,75,255,.06);border:1px solid rgba(108,75,255,.18);border-radius:var(--r);padding:1rem 1.15rem;animation:fadeIn .4s ease}
+    .ab-player-wrap.visible{display:block}
+    .ab-player-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-soft);margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
+    .ab-player-title svg{opacity:.6}
+    .ab-player-controls{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+    .ab-play-btn{width:2.2rem;height:2.2rem;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#6c4bff,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;transition:opacity .15s;flex-shrink:0}
+    .ab-play-btn:hover{opacity:.85}
+    .ab-play-btn svg{width:14px;height:14px}
+    .ab-progress-wrap{flex:1;min-width:100px;position:relative;height:6px;background:rgba(255,255,255,.1);border-radius:3px;cursor:pointer}
+    .ab-progress-fill{position:absolute;top:0;left:0;height:100%;border-radius:3px;background:linear-gradient(90deg,#6c4bff,#a855f7);width:0;pointer-events:none;transition:width .1s linear}
+    .ab-time{font-size:.72rem;color:var(--text-soft);font-family:var(--mono);white-space:nowrap}
+    .ab-switch{display:flex;gap:.35rem;margin-left:auto}
+    .ab-switch-btn{padding:.25rem .65rem;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text-soft);font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+    .ab-switch-btn.active{background:rgba(108,75,255,.25);border-color:rgba(108,75,255,.5);color:#c4b5fd}
+    .ab-vol-wrap{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text-soft)}
+    .ab-vol-wrap input[type=range]{width:64px;accent-color:#6c4bff;cursor:pointer}
     .result-title {
       font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
       color:var(--green);margin-bottom:.75rem;
@@ -483,6 +513,72 @@
     .report-actions { display:inline-flex; align-items:center; gap:.4rem; margin-left:.5rem }
     .btn-report-json { font-size:.7rem; padding:.25rem .5rem; background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:6px; color:var(--text-soft); cursor:pointer }
     .btn-report-json:hover { background:rgba(255,255,255,0.1); color:var(--text) }
+    .btn-ai-report { margin-left:.4rem; font-size:.78rem; padding:.35rem .6rem; background:rgba(124,58,237,0.2); border:1px solid rgba(124,58,237,0.4); color:var(--accent-2); cursor:pointer; border-radius:6px }
+    .btn-ai-report:hover { background:rgba(124,58,237,0.35); color:#fff }
+    .ai-report-result { margin-top:.6rem; padding:.6rem .8rem; background:rgba(16,16,28,0.6); border:1px solid var(--border); border-radius:var(--r); font-size:.85rem; color:var(--text-soft) }
+    .ai-report-result .ai-report-summary { margin-bottom:.4rem }
+    .ai-report-result .ai-report-recs { margin:0; padding-left:1.2rem; color:var(--text) }
+
+    .ai-actions-wrap .ai-actions { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap }
+    .ai-actions-wrap .btn-ai { display:inline-flex; align-items:center; gap:.35rem; background:rgba(124,58,237,0.2); border:1px solid rgba(124,58,237,0.5); color:var(--accent-2); font-size:.8rem }
+    .ai-actions-wrap .btn-ai:hover { background:rgba(124,58,237,0.3); color:#fff }
+    .ai-actions-wrap .btn-ai-icon { font-size:.9em }
+    .ai-actions-wrap .ai-limits { font-size:.75rem; color:var(--text-dim); margin-left:.5rem }
+
+    /* AI помощники — секция в первой карточке */
+    .ai-helpers-section { margin-top:1.2rem; padding:1rem 1rem 1rem; background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(168,85,247,0.06)); border:1px solid rgba(124,58,237,0.35); border-radius:var(--r); }
+    .ai-helpers-title { display:flex; align-items:center; gap:.5rem; font-size:1rem; font-weight:600; color:var(--accent-2); margin-bottom:.35rem }
+    .ai-helpers-icon { font-size:1.2em }
+    .ai-helpers-desc { font-size:.82rem; color:var(--text-soft); margin:0 0 .75rem; line-height:1.4 }
+    .ai-helpers-btns { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem }
+    .btn-ai-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.5rem .9rem; font-size:.85rem; font-weight:500; background:var(--accent); color:#fff; border:none; border-radius:8px; cursor:pointer; transition:background .15s, transform .1s }
+    .btn-ai-primary:hover { background:var(--accent-2); transform:translateY(-1px) }
+    .btn-ai-primary .btn-ai-icon { font-size:1em }
+    .ai-helpers-more { font-size:.75rem; color:var(--text-dim); line-height:1.4 }
+    .ai-helpers-more strong { color:var(--text-soft) }
+    .ai-helpers-limits { font-size:.75rem; color:var(--text-soft); margin-top:.4rem }
+    .ai-helpers-chat-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:.6rem }
+    .btn-ai-outline { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .75rem; font-size:.82rem; background:transparent; color:var(--accent-2); border:1px solid rgba(124,58,237,.5); border-radius:8px; cursor:pointer; transition:.15s }
+    .btn-ai-outline:hover { background:rgba(124,58,237,.15); color:#fff }
+    .ai-fab-hint { font-size:.72rem; color:var(--text-dim) }
+
+    /* P25: NL→настройки */
+    .nl-config-wrap { margin-top:.8rem; padding:.7rem .9rem; background:rgba(124,58,237,.07); border:1px solid rgba(124,58,237,.25); border-radius:var(--r) }
+    .nl-config-label { font-size:.75rem; color:var(--accent-2); margin-bottom:.4rem; font-weight:600 }
+    .nl-config-inline .nl-inline-desc { font-size:.78rem; color:var(--text-soft); margin:0 0 .5rem; line-height:1.35 }
+    .nl-config-inline .nl-config-row { display:flex; gap:.5rem; align-items:center }
+    .nl-config-inline .nl-config-row input { flex:1; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:.4rem .7rem; font-size:.84rem }
+    .nl-config-inline .nl-config-row input:focus { border-color:var(--accent); outline:none }
+    .nl-config-row { display:flex; gap:.5rem; align-items:center }
+    .nl-config-row input { flex:1; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:.4rem .7rem; font-size:.84rem; outline:none }
+    .nl-config-row input:focus { border-color:var(--accent) }
+    .btn-nl { font-size:.78rem; padding:.4rem .8rem; background:rgba(124,58,237,.2); border:1px solid rgba(124,58,237,.5); color:var(--accent-2); border-radius:6px; cursor:pointer; white-space:nowrap }
+    .btn-nl:hover { background:rgba(124,58,237,.35); color:#fff }
+    .btn-nl:disabled { opacity:.4; cursor:not-allowed }
+
+    /* P24: Chat panel */
+    .chat-fab { position:fixed; bottom:1.5rem; right:1.5rem; z-index:200; width:52px; height:52px; border-radius:50%; background:var(--accent); border:none; cursor:pointer; display:none; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(124,58,237,.5); transition:.2s }
+    .chat-fab.visible { display:flex !important; }
+    .chat-fab:hover { background:var(--accent-2); transform:scale(1.08) }
+    .chat-fab svg { width:24px; height:24px; color:#fff }
+    .chat-panel { position:fixed; bottom:5rem; right:1.5rem; z-index:120; width:340px; max-width:calc(100vw - 2rem); background:var(--surface); border:1px solid var(--border); border-radius:var(--r); display:none; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,.5); overflow:hidden }
+    .chat-panel.open { display:flex }
+    .chat-panel-hd { padding:.7rem 1rem; background:rgba(124,58,237,.15); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between }
+    .chat-panel-hd span { font-size:.88rem; font-weight:600; color:var(--accent-2) }
+    .chat-panel-hd button { background:none; border:none; color:var(--text-soft); cursor:pointer; font-size:1.1rem; line-height:1 }
+    .chat-pro-notice { padding:.5rem .7rem; font-size:.78rem; color:var(--text-soft); background:rgba(124,58,237,0.08); border-bottom:1px solid var(--border) }
+    .chat-pro-notice .chat-pro-link { color:var(--accent-2); text-decoration:underline }
+    .chat-msgs { flex:1; overflow-y:auto; max-height:320px; padding:.7rem; display:flex; flex-direction:column; gap:.5rem }
+    .chat-msg { padding:.5rem .7rem; border-radius:8px; font-size:.82rem; line-height:1.45; max-width:85%; word-break:break-word }
+    .chat-msg.user { background:rgba(124,58,237,.25); align-self:flex-end; color:var(--text) }
+    .chat-msg.assistant { background:rgba(255,255,255,.05); align-self:flex-start; color:var(--text-soft) }
+    .chat-msg.system { background:transparent; color:var(--text-dim); font-size:.75rem; align-self:center; font-style:italic }
+    .chat-input-row { padding:.6rem; border-top:1px solid var(--border); display:flex; gap:.4rem }
+    .chat-input-row input { flex:1; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:.4rem .7rem; font-size:.82rem; outline:none }
+    .chat-input-row input:focus { border-color:var(--accent) }
+    .chat-send-btn { padding:.4rem .7rem; background:var(--accent); border:none; border-radius:6px; color:#fff; cursor:pointer; font-size:.82rem }
+    .chat-send-btn:hover { background:var(--accent-2) }
+    .chat-send-btn:disabled { opacity:.4; cursor:not-allowed }
 
     .btn-primary {
       background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
@@ -1012,6 +1108,8 @@
     .pro-slider-label { font-size: .64rem; color: var(--text-dim); white-space: nowrap; min-width: 4rem; }
     .pro-slider-row input[type=range] { flex: 1; accent-color: var(--pro-color, var(--accent)); height: 14px; }
     .pro-slider-val { font-size: .68rem; font-weight: 600; color: var(--pro-color, var(--accent)); min-width: 2.8rem; text-align: right; font-family: var(--text-mono); }
+    .pro-select-row { display: flex; align-items: center; gap: .5rem; margin-top: .4rem; }
+    .pro-select { flex: 1; font-size: .7rem; padding: .25rem .4rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
 
     /* Уникальные цвета для каждого модуля */
     .pro-module[data-pro="denoiser"]  { --pro-color: var(--pro-denoiser);  border-left: 3px solid var(--pro-denoiser);  background: var(--pro-denoiser-bg); }
@@ -1121,6 +1219,18 @@
       display: flex; align-items: center; justify-content: center; gap: .55rem;
       margin: .55rem 0 0;
     }
+    .locale-wrap {
+      position: absolute; top: 1rem; right: 1rem;
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .7rem; color: var(--text-dim);
+    }
+    .locale-btn {
+      background: transparent; border: 1px solid var(--border); color: var(--text-soft);
+      padding: .2rem .5rem; border-radius: 6px; cursor: pointer; font-size: .7rem;
+      transition: color .15s, border-color .15s;
+    }
+    .locale-btn:hover { color: var(--text); border-color: var(--accent); }
+    .locale-btn.active { color: var(--accent); border-color: var(--accent); }
     .tier-badge {
       display: inline-flex; align-items: center; gap: .3rem;
       font-size: .7rem; font-weight: 700; letter-spacing: .04em;
@@ -1349,8 +1459,13 @@
         <span class="logo-badge">Pro</span>
       </div>
     </div>
-    <h1 class="h-title">Мастеринг в два клика</h1>
+    <h1 class="h-title" data-i18n="app.title">Мастеринг в два клика</h1>
     <p class="h-sub">Профессиональная нормализация LUFS · True Peak ≤ −1 dBTP · Studio EQ · TPDF Dithering</p>
+    <div class="locale-wrap" id="localeWrap" title="Язык / Language">
+      <span class="locale-label" data-i18n="locale.label">Язык</span>
+      <button type="button" class="locale-btn active" data-lang="ru" aria-label="Русский">RU</button>
+      <button type="button" class="locale-btn" data-lang="en" aria-label="English">EN</button>
+    </div>
     <div class="tier-row" id="tierRow">
       <div class="tier-badge" id="tierBadge">
         <span class="tb-dot"></span>
@@ -1363,6 +1478,7 @@
       <span class="auth-pro-badge">✦ Pro</span>
       <span class="auth-priority-hint" id="authPriorityHint" style="display:none" title="До 2 задач мастеринга одновременно (Free: 1)">Приоритетная очередь</span>
       <span class="auth-email" id="authEmail"></span>
+      <a href="/profile" class="btn-login-link" style="font-size:.66rem;opacity:.7">Профиль</a>
       <a href="/dashboard" class="btn-login-link" style="font-size:.66rem;opacity:.7">Дашборд</a>
       <button class="btn-logout" id="btnLogout" title="Выйти из аккаунта">Выйти</button>
     </div>
@@ -1387,7 +1503,7 @@
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
         </div>
-        <span class="card-ttl">Загрузка файла</span>
+        <span class="card-ttl" data-i18n="app.upload">Загрузка файла</span>
       </div>
     </div>
 
@@ -1411,7 +1527,7 @@
         </div>
         <span class="file-info-name" id="fileName"></span>
         <span class="file-info-meta" id="fileMeta"></span>
-        <button type="button" class="btn-reset" id="btnReset" title="Выбрать другой файл">
+        <button type="button" class="btn-reset" id="btnReset" title="Выбрать другой файл" aria-label="Выбрать другой файл">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -1441,7 +1557,7 @@
         <canvas id="waveCanvas" class="wave-canvas"></canvas>
       </div>
       <div class="transport">
-        <button class="btn-pp" id="btnPP" title="Play / Pause  [Space]">
+        <button class="btn-pp" id="btnPP" title="Play / Pause  [Space]" aria-label="Воспроизведение и пауза">
           <svg id="iconPlay" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           <svg id="iconPause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
         </button>
@@ -1500,16 +1616,49 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
       </svg>
-      <span>Измерить громкость</span>
+      <span data-i18n="app.measure">Измерить громкость</span>
     </button>
     <span class="report-actions" id="reportActions" style="display:none;">
       <button type="button" class="btn btn-sm btn-report" id="btnDownloadReport" title="Скачать отчёт (TXT)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span>Скачать отчёт</span>
+        <span data-i18n="app.download_report">Скачать отчёт</span>
       </button>
       <button type="button" class="btn-report-json" id="btnDownloadReportJson" title="Скачать отчёт в формате JSON">JSON</button>
+      <button type="button" class="btn-report-json" id="btnDownloadReportPdf" title="Экспортировать отчёт в PDF">PDF</button>
+      <button type="button" class="btn btn-sm btn-ai-report" id="btnAiReport" title="AI: краткое описание и рекомендации по треку">✨ AI отчёт</button>
     </span>
+    <div class="ai-report-result" id="aiReportResult" style="display:none">
+      <div class="ai-report-summary" id="aiReportSummary"></div>
+      <ul class="ai-report-recs" id="aiReportRecs"></ul>
+    </div>
     <div class="status" id="stMeasure"></div>
+
+    <!-- AI помощники: видимая секция при загруженном файле -->
+    <div class="ai-helpers-section" id="aiHelpersSection" style="display:none">
+      <div class="ai-helpers-title">
+        <span class="ai-helpers-icon">✨</span>
+        <span>AI помощники</span>
+      </div>
+      <p class="ai-helpers-desc">Подбор стиля и громкости по треку, авто-мастеринг в один клик, отчёт и чат.</p>
+      <div class="ai-helpers-btns">
+        <button type="button" class="btn btn-ai-primary" id="btnAiRecommendHero" title="Подобрать стиль и LUFS по анализу">
+          <span class="btn-ai-icon">✨</span> Рекомендовать пресет
+        </button>
+        <button type="button" class="btn btn-ai-primary" id="btnAutoMasterHero" title="Анализ → настройки → мастеринг автоматически">
+          <span class="btn-ai-icon">⚡</span> Авто-мастеринг
+        </button>
+      </div>
+      <div class="ai-helpers-more">
+        После замера громкости: <strong>AI отчёт</strong> · В блоке «Параметры»: <strong>настройки голосом</strong>
+      </div>
+      <div class="ai-helpers-chat-row">
+        <button type="button" class="btn btn-ai-outline" id="btnChatHelper" title="Открыть чат с AI-помощником по мастерингу">
+          <span class="btn-ai-icon">💬</span> Чат-помощник
+        </button>
+        <span class="ai-fab-hint">или кнопка в правом нижнем углу</span>
+      </div>
+      <div class="ai-helpers-limits" id="aiHelpersLimits"></div>
+    </div>
   </div>
 
   <!-- ──── CARD 2: SETTINGS + MASTER ──── -->
@@ -1583,6 +1732,28 @@
         </div>
       </div>
 
+      <!-- AI помощники: рекомендация и авто-мастеринг -->
+      <div class="field ai-actions-wrap" id="aiActionsWrap" style="display:none">
+        <span class="f-lbl">✨ AI помощники</span>
+        <div class="ai-actions">
+          <button type="button" class="btn btn-sm btn-ai" id="btnAiRecommend" title="Подобрать стиль и LUFS по анализу трека">
+            <span class="btn-ai-icon">✨</span> AI рекомендует
+          </button>
+          <button type="button" class="btn btn-sm btn-ai" id="btnAutoMaster" title="Анализ → подбор настроек → мастеринг в один клик">
+            <span class="btn-ai-icon">⚡</span> Авто-мастеринг
+          </button>
+          <span class="ai-limits" id="aiLimitsHint"></span>
+        </div>
+      </div>
+      <!-- Настройки голосом (AI NL→config) — видимо в Параметрах -->
+      <div class="field nl-config-inline" id="nlConfigInline" style="display:none">
+        <span class="f-lbl">✨ Настройки голосом</span>
+        <p class="nl-inline-desc">Опишите желаемые изменения — AI подстроит параметры цепочки.</p>
+        <div class="nl-config-row">
+          <input type="text" id="nlConfigInputInline" placeholder="Например: сделай потише, больше воздуха, меньше сибилянтов" maxlength="300">
+          <button type="button" class="btn btn-sm btn-ai" id="btnNlConfigInline">Применить</button>
+        </div>
+      </div>
       <!-- Target LUFS + custom override -->
       <div class="field">
         <span class="f-lbl">Целевой LUFS</span>
@@ -1593,6 +1764,8 @@
             <option value="wav">WAV — без потерь</option>
             <option value="mp3" data-tier="pro">MP3 — 320 kbps 🔒</option>
             <option value="flac" data-tier="pro">FLAC — без потерь 🔒</option>
+            <option value="opus" data-tier="pro">OPUS — 192 kbps 🔒</option>
+            <option value="aac" data-tier="pro">AAC — 192 kbps (M4A) 🔒</option>
           </select>
         </div>
       </div>
@@ -1606,7 +1779,7 @@
             <input type="file" id="refFileInput" accept=".wav,.mp3,.flac" style="display:none;">
           </label>
           <span class="ref-file-name" id="refFileName">не выбран</span>
-          <button type="button" class="btn-ref-clear" id="btnRefClear" style="display:none;" title="Убрать эталон">✕</button>
+          <button type="button" class="btn-ref-clear" id="btnRefClear" style="display:none;" title="Убрать эталон" aria-label="Убрать эталонный трек">✕</button>
         </div>
         <div class="ref-strength-wrap" id="refStrengthWrap" style="display:none;">
           <label class="f-lbl-sm">Интенсивность</label>
@@ -1646,6 +1819,15 @@
                 </label>
               </div>
               <div class="pro-module-body" id="denoiserBody">
+                <div class="pro-select-row">
+                  <span class="pro-slider-label">Пресет</span>
+                  <select id="denoiserPreset" class="pro-select" title="Лёгкий / Средний / Агрессивный или свой уровень">
+                    <option value="">Свой</option>
+                    <option value="light">Лёгкий</option>
+                    <option value="medium" selected>Средний</option>
+                    <option value="aggressive">Агрессивный</option>
+                  </select>
+                </div>
                 <div class="pro-slider-row">
                   <span class="pro-slider-label">Сила</span>
                   <input type="range" id="denoiserStrength" min="0" max="100" value="40" step="5">
@@ -1792,6 +1974,14 @@
       </div>
       <div class="chain-modules-body" id="chainModulesBody">
         <div class="chain-modules-list" id="chainModulesList"></div>
+        <!-- P25: NL→настройки (только при загруженном файле, pro/debug) -->
+        <div class="nl-config-wrap" id="nlConfigWrap" style="display:none">
+          <div class="nl-config-label">✨ AI: описать изменения</div>
+          <div class="nl-config-row">
+            <input type="text" id="nlConfigInput" placeholder="Например: сделай потише, больше воздуха" maxlength="300">
+            <button type="button" class="btn-nl" id="btnNlConfig">Применить</button>
+          </div>
+        </div>
         <!-- P10: сохранённые пресеты (только для залогиненных) -->
         <div class="chain-presets-wrap" id="chainPresetsWrap" style="display:none;">
           <div class="chain-presets-row">
@@ -1856,7 +2046,7 @@
     </div>
 
     <!-- Progress -->
-    <div class="prog-wrap" id="progWrap">
+    <div class="prog-wrap" id="progWrap" role="status" aria-live="polite" aria-label="Прогресс мастеринга">
       <div class="prog-hd">
         <span class="prog-msg" id="progMsg">Подготовка…</span>
         <span class="prog-pct"><span id="progPct">0</span>%</span>
@@ -1888,6 +2078,34 @@
         </div>
       </div>
       <div class="result-delta" id="rDelta"></div>
+    </div>
+
+    <!-- A/B Audio Player (P45) -->
+    <div class="ab-player-wrap" id="abPlayerWrap">
+      <div class="ab-player-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        Прослушать до / после
+      </div>
+      <div class="ab-player-controls">
+        <button class="ab-play-btn" id="abPlayBtn" title="Play / Pause">
+          <svg id="abPlayIcon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <span class="ab-time" id="abTimeCur">0:00</span>
+        <div class="ab-progress-wrap" id="abProgressWrap">
+          <div class="ab-progress-fill" id="abProgressFill"></div>
+        </div>
+        <span class="ab-time" id="abTimeDur">0:00</span>
+        <div class="ab-vol-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
+          <input type="range" id="abVolSlider" min="0" max="1" step="0.02" value="0.8">
+        </div>
+        <div class="ab-switch">
+          <button class="ab-switch-btn active" id="abSrcOrig" title="Оригинал до мастеринга">A — оригинал</button>
+          <button class="ab-switch-btn" id="abSrcMast" title="После мастеринга">B — мастер</button>
+        </div>
+      </div>
+      <!-- Native audio element (hidden) — управляется JS -->
+      <audio id="abAudio" preload="auto" style="display:none"></audio>
     </div>
 
     <!-- DAW-style waveform comparison (Original vs Mastered) -->
@@ -1988,7 +2206,7 @@
 </div><!-- /page -->
 
 <!-- Toast container -->
-<div class="toast-wrap" id="toastWrap"></div>
+<div class="toast-wrap" id="toastWrap" role="region" aria-label="Уведомления" aria-live="polite"></div>
 
 <!-- Page-wide drop overlay -->
 <div class="drop-overlay" id="dropOverlay">
@@ -1998,6 +2216,29 @@
     </svg>
     <div class="drop-overlay-txt">Отпустите файл</div>
     <div class="drop-overlay-hint">WAV · MP3 · FLAC</div>
+  </div>
+</div>
+
+<!-- Кнопка чата (FAB) и панель AI-помощника — показываются при загруженном файле -->
+<button class="chat-fab" id="chatFab" title="Чат с AI-помощником по мастерингу" style="display:none" aria-label="Открыть чат">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-panel-hd">
+    <span>✨ AI-помощник</span>
+    <button id="chatClose" aria-label="Закрыть чат">×</button>
+  </div>
+  <div class="chat-pro-notice" id="chatProNotice" style="display:none">
+    Чат доступен в тарифах Pro и Studio. <a href="/pricing" class="chat-pro-link">Перейти на тарифы</a>
+  </div>
+  <div class="chat-msgs" id="chatMsgs">
+    <div class="chat-msg system">Спросите что-нибудь о мастеринге треков</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Ваш вопрос…" maxlength="500" autocomplete="off">
+    <button class="chat-send-btn" id="chatSend" aria-label="Отправить сообщение">↑</button>
   </div>
 </div>
 

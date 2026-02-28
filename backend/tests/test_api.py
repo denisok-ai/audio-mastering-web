@@ -11,7 +11,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.main import app, _rate_limits
+from app.main import app, _rate_limits, _check_audio_magic_bytes
 
 
 @pytest.fixture(autouse=True)
@@ -41,6 +41,57 @@ async def test_api_health():
 
 
 @pytest.mark.anyio
+async def test_api_metrics():
+    """P58: эндпоинт метрик для внешнего мониторинга."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.get("/api/metrics")
+    assert r.status_code == 200
+    data = r.json()
+    assert "uptime_seconds" in data
+    assert "jobs_running" in data
+    assert "jobs_total" in data
+    assert "version" in data
+    assert isinstance(data["uptime_seconds"], (int, float))
+    assert data["uptime_seconds"] >= 0
+    assert isinstance(data["jobs_running"], int)
+    assert isinstance(data["jobs_total"], int)
+
+
+@pytest.mark.anyio
+async def test_api_locale():
+    """P59: эндпоинт доступных локалей (i18n)."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.get("/api/locale")
+    assert r.status_code == 200
+    data = r.json()
+    assert "available" in data
+    assert "default" in data
+    assert "ru" in data["available"]
+    assert "en" in data["available"]
+    assert data["default"] == "ru"
+
+
+def test_check_audio_magic_bytes():
+    """P60: проверка magic bytes для загружаемых файлов."""
+    # WAV: RIFF....WAVE
+    assert _check_audio_magic_bytes(b"RIFF\x00\x00\x00\x00WAVE\x00\x00", "a.wav") is True
+    assert _check_audio_magic_bytes(b"RIFF\x10\x00\x00\x00WAVE", "x.wav") is True
+    assert _check_audio_magic_bytes(b"fLaC\x00", "a.wav") is False
+    # FLAC
+    assert _check_audio_magic_bytes(b"fLaC\x00\x00\x00", "a.flac") is True
+    assert _check_audio_magic_bytes(b"RIFF", "a.flac") is False
+    # MP3: ID3 или 0xFF 0xE?
+    assert _check_audio_magic_bytes(b"ID3\x04", "a.mp3") is True
+    assert _check_audio_magic_bytes(b"\xff\xfb\x90\x00", "a.mp3") is True
+    assert _check_audio_magic_bytes(b"\xff\xfa\x00\x00", "a.mp3") is True
+    assert _check_audio_magic_bytes(b"RIFF", "a.mp3") is False
+    # неизвестное расширение — пропуск проверки
+    assert _check_audio_magic_bytes(b"xxx", "a.xyz") is True
+    # пустые данные
+    assert _check_audio_magic_bytes(b"", "a.wav") is True
+
+
+@pytest.mark.anyio
 async def test_api_version():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         r = await ac.get("/api/version")
@@ -65,6 +116,20 @@ async def test_api_presets():
     assert "presets" in data
     assert isinstance(data["presets"], dict)
     assert len(data["presets"]) > 0
+
+
+@pytest.mark.anyio
+async def test_api_presets_community():
+    """P64: пресеты сообщества."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.get("/api/presets/community")
+    assert r.status_code == 200
+    data = r.json()
+    assert "presets" in data
+    assert isinstance(data["presets"], list)
+    for p in data["presets"]:
+        assert "id" in p and "name" in p
+        assert "target_lufs" in p
 
 
 @pytest.mark.anyio

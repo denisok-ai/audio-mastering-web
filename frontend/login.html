@@ -196,12 +196,25 @@
     <button type="submit" class="btn-submit" id="submitBtn">Войти</button>
   </form>
 
+  <div style="text-align:right; margin-top:-.4rem; margin-bottom:.6rem">
+    <a href="/forgot-password" style="font-size:.8rem; color:var(--text-soft); text-decoration:none">Забыли пароль?</a>
+  </div>
+
   <div class="divider">или</div>
 
-  <p class="alt-link">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+  <p class="alt-link" id="registerLinkWrap">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
 </div>
 
 <script>
+  // Скрыть ссылку на регистрацию, если она отключена в настройках
+  (function() {
+    fetch('/api/health').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+      if (d && d.features && d.features.registration_enabled === false) {
+        var wrap = document.getElementById('registerLinkWrap');
+        if (wrap) wrap.style.display = 'none';
+      }
+    }).catch(function() {});
+  })();
   // Если уже залогинен — редирект
   (function() {
     const token = localStorage.getItem('mm_token');

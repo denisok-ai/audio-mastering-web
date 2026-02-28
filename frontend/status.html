@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Статус сервиса — Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810; --surface: rgba(16,16,28,0.95); --border: rgba(255,255,255,0.08);
+      --text: #e8e8f0; --text-soft: #9898b8; --text-dim: #52527a;
+      --accent: #6c4bff; --accent2: #a855f7;
+      --green: #34d399; --red: #f87171; --amber: #fbbf24; --blue: #60a5fa;
+      --r: 10px; --mono: 'Space Grotesk', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+    .bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 10%, rgba(108,75,255,.12) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 35% at 90% 85%, rgba(168,85,247,.08) 0%, transparent 55%);
+    }
+    .container { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 2.5rem 1.2rem 4rem; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; }
+    .logo { font-size: 1.05rem; font-weight: 700; color: var(--accent2); text-decoration: none; }
+    .last-check { font-size: .75rem; color: var(--text-dim); }
+
+    /* Overall status banner */
+    .banner { border-radius: var(--r); padding: 1.2rem 1.4rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; }
+    .banner-ok  { background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.25); }
+    .banner-deg { background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.2); }
+    .banner-err { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.2); }
+    .banner-icon { font-size: 2rem; flex-shrink: 0; }
+    .banner-title { font-size: 1.15rem; font-weight: 700; }
+    .banner-sub { font-size: .82rem; color: var(--text-soft); margin-top: .25rem; }
+
+    /* Components */
+    .section-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; color: var(--text-dim); margin-bottom: .7rem; }
+    .comp-list { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 2rem; }
+    .comp-row {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: .85rem 1rem; display: flex; align-items: center; gap: .8rem;
+    }
+    .comp-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .dot-ok   { background: var(--green); box-shadow: 0 0 6px rgba(52,211,153,.5); }
+    .dot-warn { background: var(--amber); box-shadow: 0 0 6px rgba(251,191,36,.5); }
+    .dot-err  { background: var(--red);   box-shadow: 0 0 6px rgba(248,113,113,.5); }
+    .comp-name { font-weight: 600; font-size: .9rem; flex: 1; }
+    .comp-badge { font-size: .72rem; padding: .15rem .55rem; border-radius: 4px; font-weight: 700; font-family: var(--mono); }
+    .badge-ok   { background: rgba(52,211,153,.15); color: var(--green); }
+    .badge-warn { background: rgba(251,191,36,.12); color: var(--amber); }
+    .badge-err  { background: rgba(248,113,113,.12); color: var(--red); }
+    .comp-detail { font-size: .75rem; color: var(--text-soft); margin-top: .15rem; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: .8rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: .9rem 1rem; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; color: var(--accent2); font-family: var(--mono); }
+    .stat-lbl { font-size: .72rem; color: var(--text-soft); margin-top: .2rem; }
+
+    /* Footer */
+    .footer { margin-top: 2.5rem; text-align: center; font-size: .75rem; color: var(--text-dim); }
+    .footer a { color: var(--accent2); text-decoration: none; }
+    .refresh-btn {
+      background: transparent; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-soft); font-size: .78rem; padding: .35rem .8rem; cursor: pointer;
+      font-family: inherit; transition: border-color .15s;
+    }
+    .refresh-btn:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .loading { animation: pulse 1.2s ease infinite; }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="container">
+  <div class="header">
+    <a href="/" class="logo">✨ Magic Master</a>
+    <div style="display:flex;align-items:center;gap:.8rem">
+      <span class="last-check" id="lastCheck">Загрузка…</span>
+      <button class="refresh-btn" onclick="loadStatus()">↻ Обновить</button>
+    </div>
+  </div>
+
+  <!-- Banner -->
+  <div class="banner banner-ok loading" id="banner">
+    <div class="banner-icon" id="bannerIcon">⏳</div>
+    <div>
+      <div class="banner-title" id="bannerTitle">Проверка состояния…</div>
+      <div class="banner-sub" id="bannerSub">Получаем данные с сервера</div>
+    </div>
+  </div>
+
+  <!-- Компоненты -->
+  <div class="section-title">Компоненты</div>
+  <div class="comp-list" id="compList">
+    <div class="comp-row"><div class="comp-dot dot-ok loading"></div><div class="comp-name">…</div></div>
+  </div>
+
+  <!-- Статистика -->
+  <div class="section-title">Статистика</div>
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card loading"><div class="stat-val">—</div><div class="stat-lbl">…</div></div>
+  </div>
+
+  <div class="footer">
+    Страница обновляется каждые 30 секунд · <a href="/">Вернуться в приложение</a>
+  </div>
+</div>
+
+<script>
+const API = '';
+
+function statusColor(s) {
+  if (s === 'ok')  return 'ok';
+  if (s === 'low' || s === 'degraded' || s === 'missing') return 'warn';
+  return 'err';
+}
+function dotClass(s)   { return 'dot-'   + statusColor(s); }
+function badgeClass(s) { return 'badge-' + statusColor(s); }
+function badgeLabel(s) {
+  if (s === 'ok')          return '✓ OK';
+  if (s === 'low')         return '⚠ Мало места';
+  if (s === 'degraded')    return '⚠ Деградация';
+  if (s === 'missing')     return '✗ Отсутствует';
+  if (s === 'unavailable') return '— Недоступно';
+  if (s === 'error')       return '✗ Ошибка';
+  return s;
+}
+
+function fmtUptime(isoStr) {
+  if (!isoStr) return '—';
+  const started = new Date(isoStr.endsWith('Z') ? isoStr : isoStr + 'Z');
+  const diffMs = Date.now() - started.getTime();
+  const h = Math.floor(diffMs / 3600000);
+  const m = Math.floor((diffMs % 3600000) / 60000);
+  if (h >= 24) return `${Math.floor(h/24)}д ${h%24}ч ${m}м`;
+  return `${h}ч ${m}м`;
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch(API + '/api/health');
+    const d = await r.json();
+
+    // Убираем loading-анимацию
+    document.querySelectorAll('.loading').forEach(el => el.classList.remove('loading'));
+
+    // Banner
+    const banner = document.getElementById('banner');
+    const icon   = document.getElementById('bannerIcon');
+    const title  = document.getElementById('bannerTitle');
+    const sub    = document.getElementById('bannerSub');
+    banner.className = 'banner';
+    if (d.status === 'ok') {
+      banner.classList.add('banner-ok');
+      icon.textContent  = '✅';
+      title.textContent = 'Все системы работают нормально';
+      sub.textContent   = `Версия ${d.version || '—'}${d.build_date ? ' · ' + d.build_date : ''} · Сервер работает ${fmtUptime(d.uptime_since)}`;
+    } else if (d.status === 'degraded') {
+      banner.classList.add('banner-deg');
+      icon.textContent  = '⚠️';
+      title.textContent = 'Частичные проблемы';
+      sub.textContent   = `Версия ${d.version || '—'}${d.build_date ? ' · ' + d.build_date : ''} · Некоторые компоненты требуют внимания`;
+    } else {
+      banner.classList.add('banner-err');
+      icon.textContent  = '❌';
+      title.textContent = 'Обнаружены проблемы';
+      sub.textContent   = `Версия ${d.version || '—'}${d.build_date ? ' · ' + d.build_date : ''}`;
+    }
+
+    // Компоненты
+    const comps = d.components || {};
+    const compDefs = [
+      { key: 'database', label: 'База данных (SQLite)' },
+      { key: 'disk',     label: 'Дисковое пространство' },
+      { key: 'ffmpeg',   label: 'FFmpeg (MP3/OPUS экспорт)' },
+    ];
+    const compHtml = compDefs.map(def => {
+      const comp = comps[def.key] || { status: 'unknown' };
+      const s = comp.status || 'unknown';
+      let detail = '';
+      if (def.key === 'disk' && comp.free_mb != null) {
+        detail = `Свободно: ${comp.free_mb.toLocaleString('ru')} МБ`;
+      }
+      if (comp.detail) detail = comp.detail;
+      return `<div class="comp-row">
+        <div class="comp-dot ${dotClass(s)}"></div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <span class="comp-name">${def.label}</span>
+            <span class="comp-badge ${badgeClass(s)}">${badgeLabel(s)}</span>
+          </div>
+          ${detail ? `<div class="comp-detail">${detail}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('compList').innerHTML = compHtml;
+
+    // Статистика
+    const jobs = d.jobs || {};
+    const statsHtml = [
+      { val: [d.version, d.build_date].filter(Boolean).join(' · ') || '—', lbl: 'Версия' },
+      { val: fmtUptime(d.uptime_since),   lbl: 'Uptime' },
+      { val: d.python   || '—',           lbl: 'Python' },
+      { val: jobs.running ?? '—',         lbl: 'Задач выполняется' },
+      { val: jobs.total_cached ?? '—',    lbl: 'Задач в кэше' },
+      { val: comps.disk?.free_mb != null ? comps.disk.free_mb.toLocaleString('ru') + ' МБ' : '—', lbl: 'Свободно на диске' },
+    ].map(s => `<div class="stat-card">
+      <div class="stat-val">${s.val}</div>
+      <div class="stat-lbl">${s.lbl}</div>
+    </div>`).join('');
+    document.getElementById('statsGrid').innerHTML = statsHtml;
+
+    // Время проверки
+    document.getElementById('lastCheck').textContent =
+      'Обновлено: ' + new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  } catch (e) {
+    document.getElementById('banner').className = 'banner banner-err';
+    document.getElementById('bannerIcon').textContent = '❌';
+    document.getElementById('bannerTitle').textContent = 'Сервис недоступен';
+    document.getElementById('bannerSub').textContent = e.message;
+    document.getElementById('lastCheck').textContent = 'Ошибка подключения';
+  }
+}
+
+loadStatus();
+// Автообновление каждые 30 секунд
+setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>

@@ -219,6 +219,13 @@
 
   const form      = document.getElementById('registerForm');
   const alertBox  = document.getElementById('alertBox');
+  // Проверка: если регистрация отключена в настройках — показать сообщение и скрыть форму
+  fetch('/api/health').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+    if (d && d.features && d.features.registration_enabled === false) {
+      if (alertBox) { alertBox.textContent = 'Регистрация новых пользователей временно отключена.'; alertBox.className = 'alert warn'; }
+      if (form) form.style.display = 'none';
+    }
+  }).catch(function() {});
   const submitBtn = document.getElementById('submitBtn');
   const emailInput = document.getElementById('email');
   const passInput  = document.getElementById('password');

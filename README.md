@@ -170,6 +170,17 @@ audio-mastering-web/
 | `MAGIC_MASTER_MAX_UPLOAD_MB` | Максимальный размер загружаемого файла (МБ) | 100 |
 | `MAGIC_MASTER_TEMP_DIR` | Каталог для временных файлов | /tmp/masterflow |
 | `MAGIC_MASTER_DEFAULT_TARGET_LUFS` | Целевая громкость по умолчанию (LUFS) | -14.0 |
+| `MAGIC_MASTER_DEBUG` | Режим отладки (все функции без входа) | 0 |
+| `MAGIC_MASTER_CORS_ORIGINS` | Разрешённые CORS origins через запятую; пусто = все (*). В production укажите свой домен | — |
+| `MAGIC_MASTER_YOOKASSA_WEBHOOK_IP_WHITELIST` | IP-адреса YooKassa для webhook через запятую; при задании запросы только с этих IP | — |
+| **AI-агенты** | | |
+| `MAGIC_MASTER_AI_BACKEND` | Бэкенд LLM: `openai` или `deepseek` | openai |
+| `OPENAI_API_KEY` или `MAGIC_MASTER_OPENAI_API_KEY` | Ключ OpenAI (для рекомендаций, отчёта, чата) | — |
+| `DEEPSEEK_API_KEY` или `MAGIC_MASTER_DEEPSEEK_API_KEY` | Ключ DeepSeek (при `AI_BACKEND=deepseek`) | — |
+| `MAGIC_MASTER_DEEPSEEK_BASE_URL` | URL API DeepSeek | https://api.deepseek.com |
+| `MAGIC_MASTER_DEEPSEEK_MODEL` | Модель DeepSeek | deepseek-chat |
+
+Чтобы использовать оплаченный аккаунт **DeepSeek**, задайте `MAGIC_MASTER_AI_BACKEND=deepseek` и `DEEPSEEK_API_KEY=ваш_ключ`. Все AI-фичи (рекомендатор пресета, отчёт, авто-мастеринг, NL→настройки, чат) будут работать через DeepSeek.
 
 ## API (кратко)
 

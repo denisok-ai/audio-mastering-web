@@ -850,10 +850,11 @@ def export_audio(
     dither_type: str = "tpdf",
     auto_blank_sec: float = 0.0,
 ) -> bytes:
-    """Экспорт в wav/mp3/flac.
+    """Экспорт в wav/mp3/flac/opus/aac.
 
-    WAV: 16-bit с дизерингом (dither_type: tpdf или ns_e). FLAC: 24-bit. MP3: 320 kbps (ffmpeg).
-    auto_blank_sec > 0: обрезка тишины в конце перед экспортом.
+    WAV: 16-bit с дизерингом (dither_type: tpdf или ns_e). FLAC: 24-bit.
+    MP3: 320 kbps (ffmpeg). OPUS: 192 kbps libopus через ogg-контейнер (ffmpeg).
+    AAC: 192 kbps в контейнере M4A (ffmpeg). auto_blank_sec > 0: обрезка тишины в конце перед экспортом.
     """
     samples = np.asarray(samples, dtype=np.float32)
     if samples.ndim == 1:
@@ -886,6 +887,34 @@ def export_audio(
             return out_buf.getvalue()
         except FileNotFoundError as exc:
             _raise_ffmpeg_error("mp3", exc)
+
+    if out_format == "opus":
+        try:
+            wav_buf = io.BytesIO()
+            _write_wav_16bit_dithered(wav_buf, samples, sr, dither_type=dither_type)
+            wav_buf.seek(0)
+            seg = AudioSegment.from_wav(wav_buf)
+            out_buf = io.BytesIO()
+            # pydub/ffmpeg: opus через ogg-контейнер, кодек libopus
+            seg.export(out_buf, format="opus", codec="libopus", parameters=["-b:a", "192k"])
+            out_buf.seek(0)
+            return out_buf.getvalue()
+        except FileNotFoundError as exc:
+            _raise_ffmpeg_error("opus", exc)
+
+    if out_format == "aac":
+        try:
+            wav_buf = io.BytesIO()
+            _write_wav_16bit_dithered(wav_buf, samples, sr, dither_type=dither_type)
+            wav_buf.seek(0)
+            seg = AudioSegment.from_wav(wav_buf)
+            out_buf = io.BytesIO()
+            # pydub/ffmpeg: AAC в контейнере M4A (ipod)
+            seg.export(out_buf, format="ipod", codec="aac", bitrate="192k")
+            out_buf.seek(0)
+            return out_buf.getvalue()
+        except FileNotFoundError as exc:
+            _raise_ffmpeg_error("aac", exc)
 
     # Прочие форматы через pydub
     try:
@@ -1261,6 +1290,15 @@ def apply_style_eq(audio: np.ndarray, sr: int, style: str = "standard") -> np.nd
     return out
 
 
+# Пресеты Spectral Denoiser: (strength 0–1, noise_percentile для оценки шума)
+# light — мягкое подавление; medium — сбалансированно; aggressive — сильное.
+DENOISE_PRESETS: dict[str, tuple[float, float]] = {
+    "light": (0.25, 20.0),
+    "medium": (0.5, 15.0),
+    "aggressive": (0.75, 10.0),
+}
+
+
 def apply_spectral_denoise(
     audio: np.ndarray,
     sr: int,
@@ -1273,6 +1311,7 @@ def apply_spectral_denoise(
     Wiener gain: G[k,t] = max(0, 1 − strength × (noise[k] / |X[k,t]|)²)
     strength (0.0–1.0): интенсивность подавления. 0.0 = bypass.
     noise_percentile: процентиль для оценки шума (по умолчанию 15% — нижняя часть спектра по времени).
+    Пресеты: DENOISE_PRESETS["light"|"medium"|"aggressive"] → (strength, noise_percentile).
     """
     from scipy import signal as sg
 

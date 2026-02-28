@@ -1,0 +1,14 @@
+{
+  "app.title": "Mastering in two clicks",
+  "app.upload": "Upload file",
+  "app.measure": "Measure loudness",
+  "app.download_report": "Download report",
+  "app.done": "Done",
+  "app.master": "Run mastering",
+  "app.load_preset": "Load preset",
+  "app.load": "Load",
+  "app.reference": "Load reference",
+  "locale.ru": "Русский",
+  "locale.en": "English",
+  "locale.label": "Language"
+}

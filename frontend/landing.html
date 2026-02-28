@@ -537,6 +537,11 @@
     @media (max-width: 480px) {
       footer { grid-template-columns: 1fr; }
     }
+    /* News section (P21) */
+    .news-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1.1rem 1.3rem; }
+    .news-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
+    .news-card p { font-size: .88rem; color: var(--soft); margin-bottom: .35rem; white-space: pre-wrap; }
+    .news-card time { font-size: .75rem; color: rgba(255,255,255,.3); }
   </style>
 </head>
 <body>
@@ -560,6 +565,7 @@
     <a href="#how" class="nav-link">Как работает</a>
     <a href="#features" class="nav-link">Возможности</a>
     <a href="#pricing" class="nav-link">Тарифы</a>
+    <a href="#news" class="nav-link">Новости</a>
     <a href="#faq" class="nav-link">FAQ</a>
     <a href="/app" class="nav-cta">Мастерить бесплатно →</a>
   </div>
@@ -1107,6 +1113,15 @@
   </div>
 </section>
 
+<!-- ═══════ НОВОСТИ (P21) ═══════ -->
+<section id="news" style="padding:3.5rem 1.5rem;max-width:900px;margin:0 auto">
+  <div class="section-label" style="margin-bottom:.5rem">Новости</div>
+  <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:800;letter-spacing:-.025em;margin-bottom:1.5rem">Обновления и объявления</h2>
+  <div id="newsSection" style="display:grid;gap:.9rem">
+    <div style="color:var(--soft);font-size:.9rem">Загрузка…</div>
+  </div>
+</section>
+
 <!-- ═══════ CTA BANNER ═══════ -->
 <div class="cta-banner" style="padding: 0 1.5rem;">
   <div style="max-width: 900px; margin: 0 auto; padding: 3.5rem 2.5rem; text-align: center;">
@@ -1268,11 +1283,30 @@ document.querySelectorAll('.faq-q').forEach(function(q) {
 
 /* ═══════ VERSION IN FOOTER ═══════ */
 fetch('/api/version').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
-  if (d && d.version) {
-    var el = document.getElementById('footVersion');
-    if (el) el.textContent = 'v' + d.version;
-  }
+  if (!d) return;
+  var el = document.getElementById('footVersion');
+  if (!el) return;
+  var v = d.version ? 'v' + d.version : '';
+  var b = d.build_date || '';
+  el.textContent = b ? (v ? v + ' · ' + b : b) : v;
 }).catch(function(){});
+
+// News section (P21)
+(async function() {
+  var wrap = document.getElementById('newsSection');
+  if (!wrap) return;
+  try {
+    var r = await fetch('/api/news?limit=5');
+    var d = await r.json();
+    var posts = d.posts || [];
+    if (!posts.length) { wrap.innerHTML = '<div style="color:var(--soft);font-size:.9rem">Новостей пока нет.</div>'; return; }
+    wrap.innerHTML = posts.map(function(p) {
+      var dt = p.published_at ? new Date(p.published_at * 1000).toLocaleDateString('ru-RU', {day:'2-digit',month:'long',year:'numeric'}) : '';
+      var bodyPrev = (p.body || '').slice(0, 280) + ((p.body || '').length > 280 ? '…' : '');
+      return '<div class="news-card"><h3>' + (p.title || '') + '</h3><p>' + bodyPrev + '</p><time>' + dt + '</time></div>';
+    }).join('');
+  } catch(e) { wrap.innerHTML = ''; }
+})();
 </script>
 </body>
 </html>

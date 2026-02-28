@@ -37,6 +37,28 @@ const btnABa        = document.getElementById('btnAB-a');
 const btnABb        = document.getElementById('btnAB-b');
 const btnMaster     = document.getElementById('btnMaster');
 const btnMasterTxt  = document.getElementById('btnMasterTxt');
+const aiActionsWrap = document.getElementById('aiActionsWrap');
+const btnAiRecommend = document.getElementById('btnAiRecommend');
+const btnAutoMaster  = document.getElementById('btnAutoMaster');
+const aiLimitsHint   = document.getElementById('aiLimitsHint');
+const btnAiReport    = document.getElementById('btnAiReport');
+const aiReportResult = document.getElementById('aiReportResult');
+const aiReportSummary= document.getElementById('aiReportSummary');
+const aiReportRecs   = document.getElementById('aiReportRecs');
+
+// P25: NL→настройки
+const nlConfigWrap   = document.getElementById('nlConfigWrap');
+const nlConfigInput  = document.getElementById('nlConfigInput');
+const btnNlConfig    = document.getElementById('btnNlConfig');
+
+// P24: Chat
+const chatFab        = document.getElementById('chatFab');
+const chatPanel      = document.getElementById('chatPanel');
+const chatMsgs       = document.getElementById('chatMsgs');
+const chatInput      = document.getElementById('chatInput');
+const chatSend       = document.getElementById('chatSend');
+const chatClose      = document.getElementById('chatClose');
+let _chatHistory     = [];   // [{role, content}]
 
 let selectedStyle   = 'standard';
 let masteredBuffer  = null;  // decoded AudioBuffer of mastered file
@@ -122,6 +144,71 @@ async function safeResponseJson(res) {
   } catch (e) {
     throw new Error(text.slice(0, 200) || res.statusText || 'Ошибка сервера');
   }
+}
+
+/**
+ * P37: Ждёт завершения задачи мастеринга через SSE (EventSource).
+ * Если браузер не поддерживает SSE или соединение обрывается — переключается на polling.
+ * @param {string} jobId
+ * @param {function} onProgress - вызывается с (progress: number, message: string)
+ * @returns {Promise<{status, progress, message, before_lufs, after_lufs, ...}>}
+ */
+function waitForJobCompletion(jobId, onProgress) {
+  return new Promise((resolve, reject) => {
+    const sseUrl = API + '/api/master/progress/' + jobId;
+
+    // SSE-путь
+    if (typeof EventSource !== 'undefined') {
+      const es = new EventSource(sseUrl);
+      let resolved = false;
+
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (onProgress) onProgress(data.progress || 0, data.message || '');
+          if (data.status === 'done' || data.status === 'error') {
+            es.close();
+            resolved = true;
+            resolve(data);
+          }
+        } catch (e) { /* ignore parse errors */ }
+      };
+
+      es.onerror = () => {
+        es.close();
+        if (!resolved) {
+          // Fallback на polling
+          _pollJobCompletion(jobId, onProgress).then(resolve).catch(reject);
+        }
+      };
+
+      // Страховочный тайм-аут 12 минут
+      setTimeout(() => {
+        if (!resolved) {
+          es.close();
+          reject(new Error('Тайм-аут ожидания результата'));
+        }
+      }, 720000);
+    } else {
+      // Fallback: браузер не поддерживает EventSource
+      _pollJobCompletion(jobId, onProgress).then(resolve).catch(reject);
+    }
+  });
+}
+
+async function _pollJobCompletion(jobId, onProgress) {
+  const poll = async () => {
+    const r = await fetch(API + '/api/master/status/' + jobId);
+    return safeResponseJson(r);
+  };
+  let data;
+  do {
+    await new Promise(r => setTimeout(r, 400));
+    data = await poll();
+    if (onProgress) onProgress(data.progress || 0, data.message || '');
+    if (data.status === 'error') throw new Error(data.error || 'Ошибка мастеринга');
+  } while (data.status === 'running');
+  return data;
 }
 
 function friendlyError(msg) {
@@ -320,6 +407,15 @@ async function loadAudio(file) {
     if (vectorscopeCard) {
       vectorscopeCard.classList.add('visible');
       requestAnimationFrame(() => drawVectorscope());
+    }
+    if (_features.ai_enabled) {
+      if (aiActionsWrap) { aiActionsWrap.style.display = 'block'; loadAiLimits(); }
+      if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
+      if (nlConfigWrap) nlConfigWrap.style.display = 'block';
+    } else {
+      if (aiActionsWrap) aiActionsWrap.style.display = 'none';
+      if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
+      if (nlConfigWrap) nlConfigWrap.style.display = 'none';
     }
   } catch(e) {
     console.warn('Audio decode failed:', e);
@@ -784,6 +880,7 @@ function setMeter(lufs) {
     lastAnalyzeReport = null;
     const reportActions = document.getElementById('reportActions');
     if (reportActions) reportActions.style.display = 'none';
+    if (aiReportResult) aiReportResult.style.display = 'none';
     return;
   }
   meterVal.textContent = lufs.toFixed(1)+' LUFS';
@@ -897,7 +994,26 @@ function setFile(f){
   dawCard.classList.remove('visible');
   if (spectrumCard) spectrumCard.classList.remove('visible');
   if (vectorscopeCard) vectorscopeCard.classList.remove('visible');
+  // AI-блок, секция «AI помощники», чат и NL — показываем при выборе файла, если AI включён в настройках
+  const aiHelpersSection = document.getElementById('aiHelpersSection');
+  if (_features.ai_enabled) {
+    if (aiActionsWrap) { aiActionsWrap.style.display = 'block'; if (typeof loadAiLimits === 'function') loadAiLimits(); }
+    if (aiHelpersSection) aiHelpersSection.style.display = 'block';
+    if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
+    if (nlConfigWrap) nlConfigWrap.style.display = 'block';
+    const nlConfigInlineEl = document.getElementById('nlConfigInline');
+    if (nlConfigInlineEl) nlConfigInlineEl.style.display = 'block';
+  } else {
+    if (aiActionsWrap) aiActionsWrap.style.display = 'none';
+    if (aiHelpersSection) aiHelpersSection.style.display = 'none';
+    if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
+    if (nlConfigWrap) nlConfigWrap.style.display = 'none';
+    const nlConfigInlineEl = document.getElementById('nlConfigInline');
+    if (nlConfigInlineEl) nlConfigInlineEl.style.display = 'none';
+  }
   lastDawState = null;
+  // P45: сброс A/B плеера
+  document.dispatchEvent(new Event('masteringReset'));
   btnABa.classList.add('active'); btnABb.classList.remove('active');
   audioMeta.classList.remove('visible');
   tTotal.textContent='0:00';
@@ -915,6 +1031,14 @@ function resetAll(){
   drop.classList.remove('has-file');
   btnMeasure.disabled=true;
   btnMaster.disabled=true;
+  if (aiActionsWrap) aiActionsWrap.style.display = 'none';
+  const aiHelpersSection = document.getElementById('aiHelpersSection');
+  if (aiHelpersSection) aiHelpersSection.style.display = 'none';
+  if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
+  if (chatPanel) chatPanel.classList.remove('open');
+  if (nlConfigWrap) nlConfigWrap.style.display = 'none';
+  const nlConfigInlineEl = document.getElementById('nlConfigInline');
+  if (nlConfigInlineEl) nlConfigInlineEl.style.display = 'none';
   setMeter(null);
   setStatus(stMeasure,'');
   setStatus(stMaster,'');
@@ -1119,17 +1243,36 @@ async function loadChainModules() {
   }
 }
 
-/* ═══════ P10: сохранённые пресеты цепочки (только для залогиненных) ═══════ */
+/* ═══════ P10: сохранённые пресеты цепочки; P64: пресеты сообщества ═══════ */
+let _communityPresetsCache = [];
 async function loadSavedPresetsList() {
   if (!chainPresetSelect) return;
+  let html = '<option value="">— Загрузить пресет —</option>';
+  try {
+    const rComm = await fetch(API + '/api/presets/community');
+    if (rComm.ok) {
+      const dataComm = await rComm.json();
+      _communityPresetsCache = dataComm.presets || [];
+      if (_communityPresetsCache.length) {
+        html += '<optgroup label="Пресеты сообщества">' +
+          _communityPresetsCache.map(p => `<option value="c:${escapeHtml(p.id)}">${escapeHtml(p.name || p.id)}</option>`).join('') +
+          '</optgroup>';
+      }
+    }
+  } catch (e) { /* ignore */ }
   try {
     const r = await fetch(API + '/api/auth/presets', { headers: authHeaders() });
-    if (!r.ok) return;
-    const data = await r.json();
-    const list = data.presets || [];
-    chainPresetSelect.innerHTML = '<option value="">— Загрузить пресет —</option>' +
-      list.map(p => `<option value="${p.id}">${escapeHtml(p.name || 'Без имени')}</option>`).join('');
+    if (r.ok) {
+      const data = await r.json();
+      const list = data.presets || [];
+      if (list.length)
+        html += '<optgroup label="Мои пресеты">' +
+          list.map(p => `<option value="${p.id}">${escapeHtml(p.name || 'Без имени')}</option>`).join('') +
+          '</optgroup>';
+    }
   } catch (e) { /* ignore */ }
+  chainPresetSelect.innerHTML = html;
+  if (btnChainPresetDelete) btnChainPresetDelete.disabled = chainPresetSelect.value.startsWith('c:');
 }
 
 function escapeHtml(s) {
@@ -1165,30 +1308,45 @@ if (btnChainPresetSave && chainPresetName) {
   });
 }
 
+function applyPresetToUI(p) {
+  if (p.style) {
+    selectedStyle = p.style;
+    const styleCard = document.querySelector('.style-card[data-style="' + p.style + '"]');
+    if (styleCard && styleGrid && !styleCard.classList.contains('locked')) {
+      styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+      styleCard.classList.add('active');
+    }
+    if (typeof updateOzoneSteps === 'function') updateOzoneSteps(selectedStyle);
+  }
+  if (p.target_lufs != null && targetLufsInput) targetLufsInput.value = String(p.target_lufs);
+  const modules = (p.config && p.config.modules) ? p.config.modules : (p.chain_config && p.chain_config.modules) ? p.chain_config.modules : (Array.isArray(p.config) ? p.config : null);
+  if (Array.isArray(modules) && modules.length > 0) {
+    chainModulesConfig = { modules };
+    renderChainModulesList(modules);
+  }
+  toast('Пресет загружен', 'inf');
+}
+
 if (btnChainPresetLoad && chainPresetSelect) {
   btnChainPresetLoad.addEventListener('click', async () => {
-    if (!isLoggedIn()) return;
-    const id = chainPresetSelect.value;
-    if (!id) { toast('Выберите пресет', 'warn'); return; }
+    const val = chainPresetSelect.value;
+    if (!val) { toast('Выберите пресет', 'warn'); return; }
+    if (val.startsWith('c:')) {
+      const id = val.slice(2);
+      const p = _communityPresetsCache.find(x => x.id === id);
+      if (!p) { toast('Пресет не найден', 'warn'); return; }
+      applyPresetToUI(p);
+      return;
+    }
+    if (!isLoggedIn()) { toast('Войдите для загрузки своих пресетов', 'warn'); return; }
     try {
-      const r = await fetch(API + '/api/auth/presets/' + id, { headers: authHeaders() });
+      const r = await fetch(API + '/api/auth/presets/' + val, { headers: authHeaders() });
       if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || r.statusText); }
       const p = await r.json();
       const modules = (p.config && p.config.modules) ? p.config.modules : (p.config || []);
       if (!Array.isArray(modules) || modules.length === 0) { toast('Пресет пустой', 'warn'); return; }
       chainModulesConfig = { modules };
-      if (p.style) {
-        selectedStyle = p.style;
-        const styleCard = document.querySelector('.style-card[data-style="' + p.style + '"]');
-        if (styleCard && !styleCard.classList.contains('locked')) {
-          styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
-          styleCard.classList.add('active');
-        }
-        updateOzoneSteps(selectedStyle);
-      }
-      if (p.target_lufs != null && targetLufsInput) targetLufsInput.value = String(p.target_lufs);
-      renderChainModulesList(modules);
-      toast('Пресет загружен', 'inf');
+      applyPresetToUI(p);
     } catch (e) {
       toast(e.message || 'Ошибка загрузки пресета', 'err');
     }
@@ -1196,7 +1354,11 @@ if (btnChainPresetLoad && chainPresetSelect) {
 }
 
 if (btnChainPresetDelete && chainPresetSelect) {
+  chainPresetSelect.addEventListener('change', function() {
+    btnChainPresetDelete.disabled = chainPresetSelect.value.startsWith('c:');
+  });
   btnChainPresetDelete.addEventListener('click', async () => {
+    if (chainPresetSelect.value.startsWith('c:')) { toast('Пресеты сообщества нельзя удалить', 'warn'); return; }
     if (!isLoggedIn()) return;
     const id = chainPresetSelect.value;
     if (!id) { toast('Выберите пресет для удаления', 'warn'); return; }
@@ -1369,9 +1531,269 @@ if (btnDownloadReportJson) {
   });
 }
 
+/* ═══ P27: PDF-экспорт отчёта ═══ */
+function buildReportHtmlForPrint(data) {
+  const dur = data.duration_sec != null ? data.duration_sec : data.duration;
+  const fmtDur = dur != null
+    ? (Math.floor(dur / 60) + ':' + String(Math.floor(dur % 60)).padStart(2, '0'))
+    : '—';
+  const rows = [];
+  const add = (label, val) => val != null && val !== '' && rows.push(`<tr><td>${label}</td><td>${val}</td></tr>`);
+  add('Файл', data.filename || '—');
+  add('Дата', new Date().toLocaleString('ru-RU'));
+  add('LUFS (интегрированный)', data.lufs != null ? data.lufs.toFixed(2) + ' dB' : null);
+  add('Peak dBFS', data.peak_dbfs != null ? data.peak_dbfs.toFixed(2) + ' dB' : null);
+  add('Длительность', fmtDur);
+  add('Sample rate', data.sample_rate != null ? data.sample_rate + ' Hz' : null);
+  add('Каналы', data.channels != null ? (data.channels === 1 ? 'Mono' : 'Stereo') : null);
+  add('Стерео-корреляция L/R', data.stereo_correlation != null ? data.stereo_correlation.toFixed(4) + ' (−1…+1)' : null);
+  if (Array.isArray(data.lufs_timeline) && data.lufs_timeline.length > 0) {
+    const arr = data.lufs_timeline;
+    const min = Math.min.apply(null, arr).toFixed(2);
+    const max = Math.max.apply(null, arr).toFixed(2);
+    const avg = (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
+    add('LUFS мин / макс / среднее', `${min} / ${max} / ${avg} dB`);
+    if (data.timeline_step_sec != null) add('Шаг LUFS', data.timeline_step_sec.toFixed(3) + ' с');
+  }
+  if (Array.isArray(data.spectrum_bars)) add('Полос спектра', data.spectrum_bars.length);
+  if (Array.isArray(data.vectorscope_points)) add('Точек векторскопа', data.vectorscope_points.length);
+
+  const aiSummaryEl = document.getElementById('aiReportSummary');
+  const aiRecsEl = document.getElementById('aiReportRecs');
+  const aiVisible = document.getElementById('aiReportResult');
+  let aiSection = '';
+  if (aiVisible && aiVisible.style.display !== 'none') {
+    const summary = aiSummaryEl ? aiSummaryEl.textContent.trim() : '';
+    const recs = aiRecsEl ? Array.from(aiRecsEl.querySelectorAll('li')).map(li => li.textContent).filter(Boolean) : [];
+    if (summary || recs.length) {
+      const recsList = recs.length ? '<ul>' + recs.map(r => `<li>${r.replace(/</g, '&lt;')}</li>`).join('') + '</ul>' : '';
+      aiSection = `<h2>AI-отчёт</h2><p>${summary.replace(/</g, '&lt;')}</p>${recsList}`;
+    }
+  }
+  return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
+<title>Magic Master — Отчёт анализа</title>
+<style>
+  body{font-family:Arial,sans-serif;margin:40px;color:#111;background:#fff}
+  h1{font-size:1.4em;margin-bottom:4px;color:#4a0e99}
+  h2{font-size:1.1em;margin-top:24px;color:#4a0e99;border-bottom:1px solid #ccc;padding-bottom:4px}
+  table{border-collapse:collapse;width:100%;margin-top:12px}
+  td{padding:6px 10px;border-bottom:1px solid #eee;font-size:0.95em}
+  td:first-child{font-weight:600;width:40%;color:#333}
+  ul{margin:8px 0;padding-left:20px}
+  li{margin:4px 0;font-size:0.9em}
+  footer{margin-top:40px;font-size:0.8em;color:#999;border-top:1px solid #eee;padding-top:8px}
+  @media print{body{margin:20px}}
+</style></head><body>
+<h1>Magic Master — Отчёт анализа</h1>
+<h2>Параметры трека</h2>
+<table>${rows.join('')}</table>
+${aiSection}
+<footer>Сгенерировано Magic Master &bull; ${new Date().toLocaleString('ru-RU')}</footer>
+</body></html>`;
+}
+
+const btnDownloadReportPdf = document.getElementById('btnDownloadReportPdf');
+if (btnDownloadReportPdf) {
+  btnDownloadReportPdf.addEventListener('click', () => {
+    if (!lastAnalyzeReport) return;
+    const html = buildReportHtmlForPrint(lastAnalyzeReport);
+    const win = window.open('', '_blank', 'width=800,height=900');
+    if (!win) { toast('Разрешите всплывающие окна и повторите', 'err', 4000); return; }
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 400);
+    toast('Откройте PDF в диалоге печати', 'inf');
+  });
+}
+
+if (btnAiReport) {
+  btnAiReport.addEventListener('click', async () => {
+    if (!lastAnalyzeReport && !currentFile) return;
+    btnAiReport.disabled = true;
+    setStatus(stMeasure, 'AI формирует отчёт…', '');
+    if (aiReportResult) aiReportResult.style.display = 'none';
+    try {
+      let res;
+      if (lastAnalyzeReport && lastAnalyzeReport.lufs != null) {
+        const r = await fetch(API + '/api/ai/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ analysis: lastAnalyzeReport }),
+        });
+        res = await safeResponseJson(r);
+        if (!r.ok) throw new Error(res.detail || r.statusText);
+      } else {
+        const form = new FormData();
+        form.append('file', currentFile);
+        const r = await fetch(API + '/api/ai/report', { method: 'POST', body: form, headers: authHeaders() });
+        res = await safeResponseJson(r);
+        if (!r.ok) throw new Error(res.detail || r.statusText);
+      }
+      if (aiReportSummary) aiReportSummary.textContent = res.summary || '';
+      if (aiReportRecs) {
+        aiReportRecs.innerHTML = (res.recommendations || []).map(rec => '<li>' + String(rec).replace(/</g, '&lt;') + '</li>').join('');
+      }
+      if (aiReportResult) {
+        aiReportResult.style.display = 'block';
+        aiReportResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      setStatus(stMeasure, '', '');
+      if (typeof loadAiLimits === 'function') loadAiLimits();
+    } catch (e) {
+      setStatus(stMeasure, '', '');
+      toast(friendlyError(e.message || 'Ошибка AI отчёта'), 'err', 4000);
+    }
+    btnAiReport.disabled = false;
+  });
+}
+
+/* ═══════ P25: NL→настройки ═══════ */
+if (btnNlConfig && nlConfigInput) {
+  btnNlConfig.addEventListener('click', async () => {
+    const text = nlConfigInput.value.trim();
+    if (!text) return;
+    btnNlConfig.disabled = true;
+    btnNlConfig.textContent = '…';
+    try {
+      const currentConfig = typeof chainModulesConfig !== 'undefined' ? chainModulesConfig : null;
+      const r = await fetch(API + '/api/ai/nl-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ text, current_config: currentConfig }),
+      });
+      const res = await safeResponseJson(r);
+      if (!r.ok) throw new Error(res.detail || r.statusText);
+
+      // Применяем target_lufs если вернулся
+      if (res.target_lufs != null && !isNaN(res.target_lufs)) {
+        targetLufsInput.value = res.target_lufs;
+      }
+      // Применяем chain_config если вернулся
+      if (res.chain_config && res.chain_config.modules && typeof renderChainModules === 'function') {
+        chainModulesConfig = res.chain_config;
+        renderChainModules(chainModulesConfig.modules);
+      }
+      toast('AI настройки применены', 'ok', 2500);
+      nlConfigInput.value = '';
+      const inpInline = document.getElementById('nlConfigInputInline');
+      if (inpInline) inpInline.value = '';
+      if (typeof loadAiLimits === 'function') loadAiLimits();
+    } catch (e) {
+      toast(friendlyError(e.message || 'Ошибка AI'), 'err', 4000);
+    }
+    btnNlConfig.disabled = false;
+    btnNlConfig.textContent = 'Применить';
+  });
+  nlConfigInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') btnNlConfig.click();
+  });
+}
+// Дублирующий блок «Настройки голосом» в карточке Параметры — делегирует основному
+const nlConfigInputInline = document.getElementById('nlConfigInputInline');
+const btnNlConfigInline = document.getElementById('btnNlConfigInline');
+if (btnNlConfigInline && nlConfigInputInline && nlConfigInput && btnNlConfig) {
+  btnNlConfigInline.addEventListener('click', () => {
+    const t = nlConfigInputInline.value.trim();
+    if (!t) return;
+    nlConfigInput.value = t;
+    btnNlConfig.click();
+  });
+  nlConfigInputInline.addEventListener('keydown', e => { if (e.key === 'Enter') btnNlConfigInline.click(); });
+}
+
+/* ═══════ P24: AI Chat ═══════ */
+(function initChat() {
+  if (!chatFab || !chatPanel) return;
+
+  chatFab.addEventListener('click', () => {
+    chatPanel.classList.toggle('open');
+    const notice = document.getElementById('chatProNotice');
+    if (notice) {
+      const isPro = _debugMode || isLoggedIn() || (_tierInfo && (_tierInfo.tier === 'pro' || _tierInfo.tier === 'studio'));
+      notice.style.display = (chatPanel.classList.contains('open') && !isPro) ? 'block' : 'none';
+    }
+    if (chatPanel.classList.contains('open')) chatInput.focus();
+  });
+  if (chatClose) chatClose.addEventListener('click', () => chatPanel.classList.remove('open'));
+
+  function appendMsg(role, text) {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + role;
+    div.textContent = text;
+    chatMsgs.appendChild(div);
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+    return div;
+  }
+
+  async function sendChat() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    const isPro = _debugMode || isLoggedIn() || (_tierInfo && (_tierInfo.tier === 'pro' || _tierInfo.tier === 'studio'));
+    if (!isPro) {
+      if (typeof toast === 'function') toast('Чат-помощник доступен в Pro и Studio. Перейдите на тарифы.', 'err', 4000);
+      return;
+    }
+    chatInput.value = '';
+    chatSend.disabled = true;
+
+    appendMsg('user', text);
+    _chatHistory.push({ role: 'user', content: text });
+
+    // Контекст: анализ если есть
+    const context = (typeof lastAnalyzeReport !== 'undefined' && lastAnalyzeReport)
+      ? lastAnalyzeReport : null;
+
+    const typingEl = appendMsg('assistant', '…');
+
+    try {
+      const r = await fetch(API + '/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ messages: _chatHistory, context }),
+      });
+      const res = await safeResponseJson(r);
+      if (!r.ok) throw new Error(res.detail || r.statusText);
+      const reply = res.reply || '(нет ответа)';
+      typingEl.textContent = reply;
+      _chatHistory.push({ role: 'assistant', content: reply });
+      if (typeof loadAiLimits === 'function') loadAiLimits();
+    } catch (e) {
+      typingEl.textContent = '⚠ ' + friendlyError(e.message || 'Ошибка');
+      typingEl.style.color = 'var(--danger, #f87171)';
+      _chatHistory.pop();
+    }
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+
+  if (chatSend) chatSend.addEventListener('click', sendChat);
+  if (chatInput) chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  });
+
+  // Кнопка «Чат-помощник» в секции AI — открывает панель чата
+  const btnChatHelper = document.getElementById('btnChatHelper');
+  if (btnChatHelper && chatPanel) {
+    btnChatHelper.addEventListener('click', () => {
+      chatPanel.classList.add('open');
+      const notice = document.getElementById('chatProNotice');
+      if (notice) {
+        const isPro = _debugMode || isLoggedIn() || (_tierInfo && (_tierInfo.tier === 'pro' || _tierInfo.tier === 'studio'));
+        notice.style.display = !isPro ? 'block' : 'none';
+      }
+      if (chatInput) chatInput.focus();
+    });
+  }
+})();
+
 /* ═══════ Master ═══════ */
 btnMaster.addEventListener('click', async()=>{
-  if(!currentFile) return;
+  if(!currentFile) {
+    if (typeof toast === 'function') toast('Сначала загрузите аудиофайл (перетащите или выберите файл)', 'err', 4000);
+    else if (stMaster) setStatus(stMaster, 'Сначала загрузите аудиофайл', 'err');
+    return;
+  }
   let targetLufs = parseFloat(targetLufsInput.value);
   if(isNaN(targetLufs)) targetLufs=-14;
 
@@ -1409,24 +1831,20 @@ btnMaster.addEventListener('click', async()=>{
     const startData=await safeResponseJson(startRes);
     if(!startRes.ok) throw new Error(startData.detail||startRes.statusText);
     const job_id=startData.job_id;
-    const poll=async ()=>{ const r=await fetch(API+'/api/master/status/'+job_id); return safeResponseJson(r); };
 
-    let data;
-    do{
-      await new Promise(r=>setTimeout(r,300));
-      data=await poll();
-      setProgress(data.progress||0, data.message||'Обработка…');
-      if(data.status==='error') throw new Error(data.error||'Ошибка мастеринга');
-    } while(data.status==='running');
-
+    // P37: SSE с fallback на polling если EventSource недоступен
+    const data = await waitForJobCompletion(job_id, (progress, message) => {
+      setProgress(progress, message || 'Обработка…');
+    });
+    if(data.status==='error') throw new Error(data.error||'Ошибка мастеринга');
     if(data.status!=='done') throw new Error('Неизвестный статус');
 
     // Download
     const r=await fetch(API+'/api/master/result/'+job_id);
     if(!r.ok) throw new Error('Не удалось скачать результат');
     const blob=await r.blob();
-    const name=(currentFile.name.replace(/\.[^.]+$/,'')||'master')+'_mastered.'+outFormat.value;
-    // Download
+    const ext = outFormat.value === 'aac' ? 'm4a' : outFormat.value;
+    const name=(currentFile.name.replace(/\.[^.]+$/,'')||'master')+'_mastered.'+ext;
     const dlUrl=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=dlUrl; a.download=name; a.click();
@@ -1463,6 +1881,11 @@ btnMaster.addEventListener('click', async()=>{
       if (audioBuffer && masteredBuffer) showDawComparison(audioBuffer, masteredBuffer, data.before_lufs, data.after_lufs);
     }
 
+    // P45: A/B плеер — передаём blob URL оригинала и мастера, чтобы кнопки работали без API
+    const originalUrl = currentFile ? URL.createObjectURL(currentFile) : null;
+    const masteredUrl = blob ? URL.createObjectURL(blob) : null;
+    if (typeof window.initABPlayer === 'function') window.initABPlayer(job_id, { originalUrl: originalUrl || undefined, masteredUrl: masteredUrl || undefined });
+
     setStatus(stMaster,'Скачано: '+name,'ok');
     toast('Готово! Файл скачан: '+name, 'ok', 4000);
 
@@ -1482,7 +1905,8 @@ btnMaster.addEventListener('click', async()=>{
         });
         if (refRes.ok) {
           const refBlob = await refRes.blob();
-          const refName = (currentFile.name.replace(/\.[^.]+$/, '') || 'master') + '_ref-matched.' + outFormat.value;
+          const refExt = outFormat.value === 'aac' ? 'm4a' : outFormat.value;
+          const refName = (currentFile.name.replace(/\.[^.]+$/, '') || 'master') + '_ref-matched.' + refExt;
           const refUrl = URL.createObjectURL(refBlob);
           const refA = document.createElement('a');
           refA.href = refUrl; refA.download = refName; refA.click();
@@ -1543,12 +1967,134 @@ btnMaster.addEventListener('click', async()=>{
   wdeco.classList.remove('active');
 });
 
+/* ═══════ AI: рекомендация и авто-мастеринг ═══════ */
+if (btnAiRecommend) {
+  btnAiRecommend.addEventListener('click', async () => {
+    if (!currentFile) return;
+    btnAiRecommend.disabled = true;
+    if (btnAiRecommendHero) btnAiRecommendHero.disabled = true;
+    setStatus(stMeasure, 'AI подбирает пресет…', '');
+    try {
+      let res;
+      if (lastAnalyzeReport && lastAnalyzeReport.lufs != null) {
+        const r = await fetch(API + '/api/ai/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ analysis: lastAnalyzeReport }),
+        });
+        res = await safeResponseJson(r);
+        if (!r.ok) throw new Error(res.detail || r.statusText);
+      } else {
+        const form = new FormData();
+        form.append('file', currentFile);
+        const r = await fetch(API + '/api/ai/recommend', { method: 'POST', body: form, headers: authHeaders() });
+        res = await safeResponseJson(r);
+        if (!r.ok) throw new Error(res.detail || r.statusText);
+      }
+      const style = (res.style || 'standard').toLowerCase();
+      const lufs = typeof res.target_lufs === 'number' ? res.target_lufs : -14;
+      selectedStyle = style;
+      targetLufsInput.value = String(lufs);
+      const card = styleGrid && styleGrid.querySelector('.style-card[data-style="' + style + '"]');
+      if (styleGrid && card) {
+        styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      }
+      updateOzoneSteps(style);
+      setStatus(stMeasure, res.reason || 'Пресет применён', 'ok');
+      toast(res.reason || 'AI применил пресет', 'ok', 3000);
+      loadAiLimits();
+    } catch (e) {
+      setStatus(stMeasure, '', '');
+      toast(friendlyError(e.message || 'Ошибка AI'), 'err', 4000);
+    }
+    btnAiRecommend.disabled = false;
+    if (btnAiRecommendHero) btnAiRecommendHero.disabled = false;
+  });
+}
+
+// Дублирующие кнопки «AI помощники» в первой карточке — делегируют основным
+const btnAiRecommendHero = document.getElementById('btnAiRecommendHero');
+const btnAutoMasterHero = document.getElementById('btnAutoMasterHero');
+if (btnAiRecommendHero && btnAiRecommend) btnAiRecommendHero.addEventListener('click', () => { if (currentFile) btnAiRecommend.click(); });
+if (btnAutoMasterHero && btnMaster) btnAutoMasterHero.addEventListener('click', () => { if (currentFile) btnAutoMaster.click(); });
+
+if (btnAutoMaster) {
+  btnAutoMaster.addEventListener('click', async () => {
+    if (!currentFile) return;
+    btnAutoMaster.disabled = true;
+    if (btnAutoMasterHero) btnAutoMasterHero.disabled = true;
+    btnMaster.disabled = true;
+    wdeco.classList.add('active');
+    pipeline.classList.add('visible');
+    setStatus(stMaster, 'Авто-мастеринг…');
+    setProgress(0, 'Анализ и подбор настроек…');
+    progWrap.classList.add('on');
+    resetPipelineSteps();
+    try {
+      const form = new FormData();
+      form.append('file', currentFile);
+      form.append('out_format', outFormat.value);
+      const r = await fetch(API + '/api/v2/master/auto', { method: 'POST', body: form, headers: authHeaders() });
+      const data = await safeResponseJson(r);
+      if (!r.ok) throw new Error(data.detail || r.statusText);
+      const job_id = data.job_id;
+      if (data.recommendation) {
+        setStatus(stMaster, 'AI: ' + (data.recommendation.reason || data.recommendation.style) + ' — обработка…');
+      }
+      const st = await waitForJobCompletion(job_id, (progress, message) => {
+        setProgress(progress, message || 'Обработка…');
+      });
+      if (st.status === 'error') throw new Error(st.error || 'Ошибка мастеринга');
+      if (st.status !== 'done') throw new Error('Неизвестный статус');
+      const blobRes = await fetch(API + '/api/master/result/' + job_id);
+      if (!blobRes.ok) throw new Error('Не удалось скачать результат');
+      const blob = await blobRes.blob();
+      const outExt = outFormat.value === 'aac' ? 'm4a' : outFormat.value;
+      const name = (currentFile.name.replace(/\.[^.]+$/, '') || 'master') + '_mastered.' + outExt;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+      pipeline.querySelectorAll('.pipe-step').forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
+      setProgress(100, 'Готово!');
+      if (st.before_lufs != null && st.after_lufs != null && resultPanel) {
+        rBefore.textContent = st.before_lufs.toFixed(1) + ' LUFS';
+        rAfter.textContent = st.after_lufs.toFixed(1) + ' LUFS';
+        if (abLufsA) abLufsA.textContent = st.before_lufs.toFixed(1);
+        if (abLufsB) abLufsB.textContent = st.after_lufs.toFixed(1);
+        resultPanel.classList.add('visible');
+      }
+      const origUrl = currentFile ? URL.createObjectURL(currentFile) : null;
+      const mastUrl = blob ? URL.createObjectURL(blob) : null;
+      if (typeof window.initABPlayer === 'function') window.initABPlayer(job_id, { originalUrl: origUrl || undefined, masteredUrl: mastUrl || undefined });
+      setStatus(stMaster, 'Скачано: ' + name, 'ok');
+      toast('Авто-мастеринг готов: ' + name, 'ok', 4000);
+      loadAiLimits();
+    } catch (e) {
+      setStatus(stMaster, friendlyError(e.message || 'Ошибка'), 'err');
+      toast(friendlyError(e.message || 'Ошибка авто-мастеринга'), 'err', 4000);
+      setProgress(0, '');
+    }
+    progWrap.classList.remove('on');
+    btnAutoMaster.disabled = false;
+    if (btnAutoMasterHero) btnAutoMasterHero.disabled = false;
+    btnMaster.disabled = false;
+    wdeco.classList.remove('active');
+  });
+}
+
 /* ═══════ Версия приложения в футере ═══════ */
 (function() {
   const el = document.getElementById('appVersion');
   if (!el) return;
   fetch(API + '/api/version').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
-    if (d && d.version) el.textContent = 'v' + d.version;
+    if (!d) return;
+    const v = d.version ? 'v' + d.version : '';
+    const b = d.build_date || '';
+    el.textContent = b ? (v ? v + ' · ' + b : b) : v;
   }).catch(function() {});
 })();
 
@@ -1573,6 +2119,8 @@ function logout() {
 /* ═══════ Тариф и лимиты (Free tier / Pro) + режим отладки ═══════ */
 let _tierInfo = { tier: 'free', remaining: 3, limit: 3, used: 0, reset_at: '' };
 let _debugMode = typeof window.__MAGIC_MASTER_DEBUG__ !== 'undefined' && window.__MAGIC_MASTER_DEBUG__ === true;
+/** Флаги функций из /api/health (админка). По умолчанию true. */
+let _features = { ai_enabled: true, batch_enabled: true, registration_enabled: true };
 
 if (_debugMode) {
   _tierInfo = { tier: 'pro', remaining: -1, limit: -1, used: 0, reset_at: null, debug: true };
@@ -1583,6 +2131,19 @@ async function loadTierLimits() {
     applyTierUI();
     return;
   }
+  try {
+    const healthRes = await fetch(API + '/api/health');
+    if (healthRes.ok) {
+      const healthData = await healthRes.json();
+      if (healthData.features) {
+        _features = {
+          ai_enabled: healthData.features.ai_enabled !== false,
+          batch_enabled: healthData.features.batch_enabled !== false,
+          registration_enabled: healthData.features.registration_enabled !== false
+        };
+      }
+    }
+  } catch(e) { /* ignore */ }
   try {
     const debugRes = await fetch(API + '/api/debug-mode');
     if (debugRes.ok) {
@@ -1602,6 +2163,25 @@ async function loadTierLimits() {
     if (_tierInfo.debug) _debugMode = true;
   } catch(e) { /* оффлайн — оставляем дефолт */ }
   applyTierUI();
+}
+
+async function loadAiLimits() {
+  const hintText = (backend, rem) => (backend ? (rem >= 0 ? `AI: ${backend} · осталось ${rem}` : `AI: ${backend}`) : '');
+  try {
+    const r = await fetch(API + '/api/ai/limits', { headers: authHeaders() });
+    if (!r.ok) return;
+    const d = await r.json();
+    const backend = d.ai_backend || '';
+    const rem = d.ai_remaining;
+    const text = hintText(backend, rem);
+    if (aiLimitsHint) aiLimitsHint.textContent = text;
+    const aiHelpersLimits = document.getElementById('aiHelpersLimits');
+    if (aiHelpersLimits) aiHelpersLimits.textContent = text;
+  } catch(e) {
+    if (aiLimitsHint) aiLimitsHint.textContent = '';
+    const aiHelpersLimits = document.getElementById('aiHelpersLimits');
+    if (aiHelpersLimits) aiHelpersLimits.textContent = '';
+  }
 }
 
 function applyTierUI() {
@@ -1669,9 +2249,18 @@ function applyTierUI() {
     opt.disabled = !isPro && opt.dataset.tier === 'pro';
   });
 
-  // Пакетная обработка — только для Pro / debug
+  // Пакетная обработка — только для Pro / debug и если включена в настройках
   const batchSection = document.getElementById('batchSection');
-  if (batchSection) batchSection.style.display = isPro ? 'block' : 'none';
+  if (batchSection) batchSection.style.display = (isPro && _features.batch_enabled) ? 'block' : 'none';
+
+  // P24/P25: Chat FAB и NL-config — при наличии файла и если AI включён
+  if (_features.ai_enabled && currentFile) {
+    if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
+    if (nlConfigWrap) nlConfigWrap.style.display = 'block';
+  } else {
+    if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
+    if (nlConfigWrap) nlConfigWrap.style.display = 'none';
+  }
 }
 
 // Logout button
@@ -1687,8 +2276,8 @@ outFormat.addEventListener('change', function() {
   if (!isPro && opt && opt.dataset.tier === 'pro') {
     showUpgradeModal(
       '🎵',
-      'MP3 и FLAC — функция Pro',
-      'Экспорт в MP3 (320 kbps) и FLAC (без потерь) доступен в тарифах Pro и Studio. На Free — экспорт WAV. Зарегистрируйтесь бесплатно для Pro доступа!'
+      'MP3, FLAC, OPUS и AAC — функция Pro',
+      'Экспорт в MP3 (320 kbps), FLAC (без потерь), OPUS (192 kbps) и AAC (M4A, 192 kbps) доступен в тарифах Pro и Studio. На Free — экспорт WAV. Зарегистрируйтесь бесплатно для Pro доступа!'
     );
     outFormat.value = 'wav';
   }
@@ -1824,7 +2413,8 @@ function refreshTierAfterMaster() {
               if (dl) {
                 dl.style.display = '';
                 dl.href = API + '/api/master/result/' + jobId;
-                dl.download = (filename || 'master').replace(/\.[^.]+$/, '') + '_mastered.' + outFormat.value;
+                const batchExt = outFormat.value === 'aac' ? 'm4a' : outFormat.value;
+                dl.download = (filename || 'master').replace(/\.[^.]+$/, '') + '_mastered.' + batchExt;
                 dl.target = '_blank';
                 dl.classList.add('done');
               }
@@ -1966,9 +2556,14 @@ function collectProModuleParams(form) {
   const gv = id => { const el = document.getElementById(id); return el ? el.value : null; };
   const gc = id => { const el = document.getElementById(id); return el ? el.checked : false; };
 
-  // Spectral Denoiser
+  // Spectral Denoiser: пресет (light/medium/aggressive) или свой уровень силы
   if (gc('denoiserEnabled')) {
-    form.append('denoise_strength', (parseFloat(gv('denoiserStrength') || 40) / 100).toFixed(2));
+    const preset = (gv('denoiserPreset') || '').trim();
+    if (preset && ['light', 'medium', 'aggressive'].includes(preset)) {
+      form.append('denoise_preset', preset);
+    } else {
+      form.append('denoise_strength', (parseFloat(gv('denoiserStrength') || 40) / 100).toFixed(2));
+    }
   }
   // De-esser
   if (gc('deesserEnabled')) {
@@ -2051,3 +2646,267 @@ if (_debugMode) {
   if (typeof applyTierUI === 'function') applyTierUI();
 }
 loadTierLimits();
+
+/* ═══════════════════════════════════════════════════
+   P49 — PWA: Service Worker registration + Install btn
+   ══════════════════════════════════════════════════ */
+(function () {
+  // Регистрация Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(() => { /* зарегистрирован тихо */ })
+        .catch(() => { /* ошибка — не критично */ });
+    });
+  }
+
+  // Кнопка «Установить приложение»
+  let _deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    showInstallBtn();
+  });
+
+  function showInstallBtn() {
+    // Ищем или создаём кнопку в хедере
+    let btn = document.getElementById('pwaInstallBtn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'pwaInstallBtn';
+      btn.title = 'Установить приложение';
+      btn.style.cssText = [
+        'display:flex', 'align-items:center', 'gap:.35rem',
+        'padding:.3rem .7rem', 'border-radius:6px',
+        'border:1px solid rgba(108,75,255,.4)',
+        'background:rgba(108,75,255,.15)', 'color:#c4b5fd',
+        'font-size:.75rem', 'font-weight:600',
+        'cursor:pointer', 'font-family:inherit',
+        'transition:opacity .15s',
+      ].join(';');
+      btn.innerHTML = '⬇ Установить';
+      // Вставляем в хедер если есть, иначе игнорируем
+      const header = document.querySelector('.header-right, .header-actions, header');
+      if (header) header.prepend(btn);
+    }
+    btn.style.display = 'flex';
+    btn.addEventListener('click', async () => {
+      if (!_deferredPrompt) return;
+      _deferredPrompt.prompt();
+      const { outcome } = await _deferredPrompt.userChoice;
+      if (outcome === 'accepted') btn.remove();
+      _deferredPrompt = null;
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    const btn = document.getElementById('pwaInstallBtn');
+    if (btn) btn.remove();
+    _deferredPrompt = null;
+  });
+})();
+
+/* ═══════════════════════════════════════════════════
+   P45 — A/B Audio Player (before / after mastering)
+   ══════════════════════════════════════════════════ */
+(function () {
+  const wrap      = document.getElementById('abPlayerWrap');
+  const audio     = document.getElementById('abAudio');
+  const playBtn   = document.getElementById('abPlayBtn');
+  const playIcon  = document.getElementById('abPlayIcon');
+  const timeCur   = document.getElementById('abTimeCur');
+  const timeDur   = document.getElementById('abTimeDur');
+  const progWrap  = document.getElementById('abProgressWrap');
+  const progFill  = document.getElementById('abProgressFill');
+  const volSlider = document.getElementById('abVolSlider');
+  const srcOrig   = document.getElementById('abSrcOrig');
+  const srcMast   = document.getElementById('abSrcMast');
+  if (!wrap || !audio) return;
+
+  const ICONS = {
+    play:  '<polygon points="5 3 19 12 5 21 5 3"/>',
+    pause: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>',
+  };
+
+  let currentJobId = null;
+  let currentSrc   = 'original'; // 'original' | 'mastered'
+  let savedTime    = 0;
+  let blobUrls     = { original: null, mastered: null };
+
+  function getSrcUrl(src) {
+    const key = src === 'mastered' ? 'mastered' : 'original';
+    if (blobUrls[key]) return blobUrls[key];
+    if (currentJobId) return `${API}/api/master/preview/${currentJobId}?src=${src}`;
+    return '';
+  }
+
+  function fmtTime(s) {
+    if (!isFinite(s) || isNaN(s)) return '0:00';
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${m}:${String(sec).padStart(2, '0')}`;
+  }
+
+  function loadSrc(src, preserveTime = false) {
+    currentSrc = src;
+    srcOrig.classList.toggle('active', src === 'original');
+    srcMast.classList.toggle('active', src === 'mastered');
+    const url = getSrcUrl(src);
+    if (!url) return;
+    const wasPlaying = !audio.paused;
+    savedTime = audio.currentTime;
+    audio.src = url;
+    audio.volume = parseFloat(volSlider.value);
+    audio.load();
+    audio.addEventListener('canplay', function onCanPlay() {
+      audio.removeEventListener('canplay', onCanPlay);
+      if (preserveTime && savedTime > 0 && isFinite(audio.duration)) {
+        audio.currentTime = Math.min(savedTime, audio.duration - 0.05);
+      }
+      if (wasPlaying) audio.play().catch(() => {});
+    }, { once: true });
+    audio.addEventListener('error', function onErr() {
+      audio.removeEventListener('error', onErr);
+      if (typeof toast === 'function') toast('Не удалось загрузить аудио для прослушивания', 'err', 3000);
+    }, { once: true });
+  }
+
+  // Вызывается после завершения мастеринга. urls: { originalUrl, masteredUrl } — опционально (blob URL)
+  window.initABPlayer = function (jobId, urls) {
+    if (!jobId && !(urls && (urls.originalUrl || urls.masteredUrl))) return;
+    currentJobId = jobId || null;
+    if (blobUrls.original) { URL.revokeObjectURL(blobUrls.original); blobUrls.original = null; }
+    if (blobUrls.mastered) { URL.revokeObjectURL(blobUrls.mastered); blobUrls.mastered = null; }
+    if (urls) {
+      if (urls.originalUrl) blobUrls.original = urls.originalUrl;
+      if (urls.masteredUrl) blobUrls.mastered = urls.masteredUrl;
+    }
+    savedTime = 0;
+    srcOrig.classList.add('active');
+    srcMast.classList.remove('active');
+    const firstUrl = getSrcUrl('original');
+    if (!firstUrl) return;
+    audio.src = firstUrl;
+    audio.volume = parseFloat(volSlider.value);
+    audio.load();
+    wrap.classList.add('visible');
+    updatePlayIcon();
+  };
+
+  function updatePlayIcon() {
+    if (!playIcon) return;
+    playIcon.innerHTML = audio.paused ? ICONS.play : ICONS.pause;
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (!getSrcUrl(currentSrc)) {
+      if (typeof toast === 'function') toast('Сначала выполните мастеринг — затем здесь можно прослушать до/после', 'err', 4000);
+      return;
+    }
+    if (audio.paused) audio.play().catch(() => {});
+    else audio.pause();
+  });
+
+  audio.addEventListener('play',  updatePlayIcon);
+  audio.addEventListener('pause', updatePlayIcon);
+  audio.addEventListener('ended', () => { updatePlayIcon(); });
+
+  audio.addEventListener('timeupdate', () => {
+    if (!isFinite(audio.duration)) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    if (progFill) progFill.style.width = pct + '%';
+    if (timeCur) timeCur.textContent = fmtTime(audio.currentTime);
+  });
+
+  audio.addEventListener('durationchange', () => {
+    if (timeDur) timeDur.textContent = fmtTime(audio.duration);
+  });
+
+  // Клик по прогресс-бару — перемотка
+  if (progWrap) {
+    progWrap.addEventListener('click', (e) => {
+      if (!isFinite(audio.duration)) return;
+      const rect = progWrap.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = pct * audio.duration;
+    });
+  }
+
+  // Громкость
+  volSlider.addEventListener('input', () => {
+    audio.volume = parseFloat(volSlider.value);
+  });
+
+  // A/B переключение с сохранением позиции
+  srcOrig.addEventListener('click', () => { if (currentSrc !== 'original') loadSrc('original', true); });
+  srcMast.addEventListener('click', () => { if (currentSrc !== 'mastered') loadSrc('mastered', true); });
+
+  // Сброс при новом мастеринге / сбросе файла
+  document.addEventListener('masteringReset', () => {
+    audio.pause();
+    audio.src = '';
+    wrap.classList.remove('visible');
+    currentJobId = null;
+    savedTime = 0;
+    if (blobUrls.original) { URL.revokeObjectURL(blobUrls.original); blobUrls.original = null; }
+    if (blobUrls.mastered) { URL.revokeObjectURL(blobUrls.mastered); blobUrls.mastered = null; }
+    if (progFill) progFill.style.width = '0';
+    if (timeCur) timeCur.textContent = '0:00';
+    if (timeDur) timeDur.textContent = '0:00';
+    updatePlayIcon();
+  });
+})();
+
+/* ═══════ P59: i18n (локализация) ═══════ */
+(function i18nInit() {
+  var STORAGE_KEY = 'magic_master_lang';
+  window.__locale = window.__locale || {};
+  window.__t = function(key) { return (window.__locale && window.__locale[key]) || key; };
+
+  function getLocale() {
+    var match = /[?&]lang=(\w+)/.exec(window.location.search);
+    if (match) return match[1].toLowerCase() === 'en' ? 'en' : 'ru';
+    try { return (localStorage.getItem(STORAGE_KEY) || 'ru').toLowerCase() === 'en' ? 'en' : 'ru'; } catch (e) { return 'ru'; }
+  }
+  function setLocale(lang) {
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+  }
+  function loadLocale(lang) {
+    return fetch('/locales/' + (lang === 'en' ? 'en' : 'ru') + '.json')
+      .then(function(r) { return r.ok ? r.json() : {}; })
+      .then(function(data) { window.__locale = data; return data; })
+      .catch(function() { window.__locale = {}; return {}; });
+  }
+  function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (key && window.__t(key) !== key) el.textContent = window.__t(key);
+    });
+  }
+  function setActiveLocaleBtn(lang) {
+    var wrap = document.getElementById('localeWrap');
+    if (!wrap) return;
+    wrap.querySelectorAll('.locale-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+    });
+  }
+
+  var currentLang = getLocale();
+  loadLocale(currentLang).then(function() {
+    applyI18n();
+    setActiveLocaleBtn(currentLang);
+  });
+
+  var localeWrap = document.getElementById('localeWrap');
+  if (localeWrap) {
+    localeWrap.querySelectorAll('.locale-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var lang = this.getAttribute('data-lang');
+        setLocale(lang);
+        loadLocale(lang).then(function() {
+          applyI18n();
+          setActiveLocaleBtn(lang);
+        });
+      });
+    });
+  }
+})();

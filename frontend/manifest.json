@@ -1,0 +1,40 @@
+{
+  "name": "Magic Master — AI Audio Mastering",
+  "short_name": "Magic Master",
+  "description": "Профессиональный AI-мастеринг аудио прямо в браузере",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#080810",
+  "theme_color": "#6c4bff",
+  "lang": "ru",
+  "orientation": "any",
+  "categories": ["music", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Начать мастеринг",
+      "short_name": "Мастеринг",
+      "description": "Открыть приложение мастеринга",
+      "url": "/app"
+    },
+    {
+      "name": "Мой профиль",
+      "short_name": "Профиль",
+      "url": "/profile"
+    }
+  ]
+}

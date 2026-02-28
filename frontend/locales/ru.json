@@ -1,0 +1,14 @@
+{
+  "app.title": "Мастеринг в два клика",
+  "app.upload": "Загрузить файл",
+  "app.measure": "Измерить громкость",
+  "app.download_report": "Скачать отчёт",
+  "app.done": "Готово",
+  "app.master": "Запустить мастеринг",
+  "app.load_preset": "Загрузить пресет",
+  "app.load": "Загрузить",
+  "app.reference": "Загрузить эталон",
+  "locale.ru": "Русский",
+  "locale.en": "English",
+  "locale.label": "Язык"
+}
