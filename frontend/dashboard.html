@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Дашборд — Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810; --bg2: #0c0c18;
+      --surface: rgba(16,16,28,0.92); --surface2: rgba(22,22,38,0.97);
+      --border: rgba(255,255,255,0.07);
+      --text: #e8e8f0; --text-soft: #9898b8; --text-dim: #52527a;
+      --accent: #6c4bff; --accent2: #a855f7; --accent-glow: rgba(108,75,255,0.35);
+      --cyan: #22d3ee; --green: #34d399; --amber: #fbbf24; --red: #f87171;
+      --r: 14px; --r-lg: 20px; --r-sm: 8px;
+      --shadow: 0 4px 32px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.04) inset;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      margin: 0; min-height: 100vh; overflow-x: hidden;
+    }
+
+    /* ── Background ── */
+    .bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, rgba(108,75,255,.12) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(34,211,238,.07) 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+    }
+    .bg::after {
+      content: ''; position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.014) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,16,.75); backdrop-filter: blur(14px);
+    }
+    .nav-left { display: flex; align-items: center; gap: 1.25rem; }
+    .nav-logo {
+      display: flex; align-items: center; gap: .5rem;
+      text-decoration: none; color: var(--text);
+    }
+    .nav-logo-icon {
+      width: 30px; height: 30px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+    .nav-logo-icon svg { width: 15px; height: 15px; color: #fff; }
+    .nav-logo-name { font-weight: 700; font-size: 1rem; }
+    .nav-crumb {
+      font-size: .78rem; color: var(--text-dim);
+      display: flex; align-items: center; gap: .35rem;
+    }
+    .nav-crumb a { color: var(--text-dim); text-decoration: none; transition: color .15s; }
+    .nav-crumb a:hover { color: var(--text-soft); }
+    .nav-right { display: flex; align-items: center; gap: .75rem; }
+    .nav-email { font-size: .78rem; color: var(--text-soft); }
+    .btn-logout-nav {
+      font-size: .75rem; color: var(--text-dim); background: none; border: none;
+      cursor: pointer; text-decoration: underline; transition: color .15s; padding: 0;
+    }
+    .btn-logout-nav:hover { color: var(--red); }
+    .btn-app {
+      font-size: .78rem; font-weight: 600; color: var(--accent);
+      text-decoration: none; padding: .35rem .85rem;
+      background: rgba(108,75,255,.1); border: 1px solid rgba(108,75,255,.22);
+      border-radius: 8px; transition: all .15s;
+    }
+    .btn-app:hover { background: rgba(108,75,255,.18); }
+
+    /* ── Main layout ── */
+    main {
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto;
+      padding: 2.5rem 1.5rem 6rem;
+    }
+
+    /* ── Page header ── */
+    .page-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .page-hd h1 {
+      font-size: 1.65rem; font-weight: 700; letter-spacing: -.04em; margin: 0;
+    }
+    .pro-pill {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+      color: var(--accent2); background: rgba(168,85,247,.12);
+      border: 1px solid rgba(168,85,247,.25); border-radius: 99px;
+      padding: 3px 10px; text-transform: uppercase;
+    }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 1.35rem 1.5rem;
+      box-shadow: var(--shadow); backdrop-filter: blur(14px);
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at top left, var(--sc-glow, rgba(108,75,255,.06)), transparent 65%);
+    }
+    .stat-label {
+      font-size: .65rem; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: .5rem;
+    }
+    .stat-value {
+      font-size: 2rem; font-weight: 700; letter-spacing: -.04em;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text); line-height: 1;
+    }
+    .stat-sub {
+      font-size: .72rem; color: var(--text-soft); margin-top: .3rem;
+    }
+
+    /* ── Section title ── */
+    .section-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--text-dim);
+    }
+    .section-action {
+      font-size: .72rem; color: var(--text-dim); cursor: pointer;
+      background: none; border: none; padding: 0;
+      transition: color .15s; text-decoration: underline;
+    }
+    .section-action:hover { color: var(--red); }
+
+    /* ── Account card ── */
+    .account-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 1.5rem;
+      box-shadow: var(--shadow); backdrop-filter: blur(14px);
+      margin-bottom: 2rem;
+    }
+    .account-row {
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .account-avatar {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(108,75,255,.25), rgba(168,85,247,.18));
+      border: 1px solid rgba(108,75,255,.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .account-info { flex: 1; min-width: 0; }
+    .account-email {
+      font-size: .95rem; font-weight: 600; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .account-meta { font-size: .75rem; color: var(--text-soft); margin-top: .2rem; }
+    .account-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .btn-sm {
+      font-size: .75rem; font-weight: 600; padding: .38rem .9rem;
+      border-radius: var(--r-sm); cursor: pointer; transition: all .15s;
+      border: 1px solid var(--border); background: none; color: var(--text-soft);
+    }
+    .btn-sm:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+    .btn-sm.danger { color: var(--red); border-color: rgba(248,113,113,.2); }
+    .btn-sm.danger:hover { background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.4); }
+
+    /* ── History table ── */
+    .history-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); overflow: hidden;
+      box-shadow: var(--shadow); backdrop-filter: blur(14px);
+    }
+    .history-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .history-table th {
+      font-size: .62rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-dim);
+      padding: .75rem 1rem; text-align: left;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+    }
+    .history-table td {
+      padding: .72rem 1rem; font-size: .82rem;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      color: var(--text-soft); vertical-align: middle;
+    }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: rgba(255,255,255,.018); }
+    .td-name {
+      color: var(--text); font-weight: 500;
+      max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .td-lufs {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+    }
+    .td-lufs .before { color: var(--text-dim); }
+    .td-lufs .arrow  { color: var(--text-dim); margin: 0 .2rem; }
+    .td-lufs .after  { color: var(--green); }
+    .style-pill {
+      font-size: .65rem; font-weight: 600; padding: 2px 7px;
+      border-radius: 99px; display: inline-block;
+    }
+    .fmt-pill {
+      font-size: .65rem; font-weight: 700; letter-spacing: .04em;
+      text-transform: uppercase; color: var(--cyan);
+      background: rgba(34,211,238,.08); border: 1px solid rgba(34,211,238,.15);
+      border-radius: 4px; padding: 1px 5px; display: inline-block;
+    }
+    .btn-del {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: none; border: 1px solid transparent;
+      color: var(--text-dim); cursor: pointer; font-size: .75rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .btn-del:hover { border-color: rgba(248,113,113,.3); color: var(--red); background: rgba(248,113,113,.08); }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 3.5rem 2rem;
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+    .empty-title { font-size: 1rem; font-weight: 600; margin: 0 0 .4rem; }
+    .empty-desc  { font-size: .82rem; color: var(--text-soft); margin: 0 0 1.25rem; }
+    .btn-go-app {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 700; font-size: .85rem;
+      padding: .65rem 1.35rem; border-radius: var(--r-sm);
+      text-decoration: none; transition: opacity .15s;
+    }
+    .btn-go-app:hover { opacity: .85; }
+
+    /* ── Skeleton loader ── */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.08) 50%, rgba(255,255,255,.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .skel-row { height: 42px; margin: 2px 0; }
+    .skel-stat { height: 80px; }
+
+    /* ── Change password panel ── */
+    .change-pass-panel {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.25rem;
+      margin-top: 1rem; display: none;
+    }
+    .change-pass-panel.open { display: block; }
+    .pass-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; }
+    .pass-field input {
+      width: 100%; padding: .6rem .9rem;
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: var(--r-sm); color: var(--text);
+      font-family: inherit; font-size: .85rem; outline: none;
+      transition: border-color .2s;
+    }
+    .pass-field input:focus { border-color: rgba(108,75,255,.5); }
+    .pass-field label { font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); display: block; margin-bottom: .3rem; }
+    .pass-actions { display: flex; gap: .5rem; margin-top: .75rem; }
+    .btn-save-pass {
+      font-size: .8rem; font-weight: 700; padding: .5rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; border: none; border-radius: var(--r-sm); cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-save-pass:hover { opacity: .85; }
+    .btn-cancel-pass {
+      font-size: .8rem; padding: .5rem 1rem;
+      background: none; border: 1px solid var(--border); color: var(--text-dim);
+      border-radius: var(--r-sm); cursor: pointer; transition: border-color .15s;
+    }
+    .btn-cancel-pass:hover { border-color: rgba(255,255,255,.2); }
+    .pass-msg { font-size: .78rem; margin-top: .5rem; }
+    .pass-msg.ok  { color: var(--green); }
+    .pass-msg.err { color: var(--red); }
+
+    @media(max-width:640px) {
+      nav { padding: 1rem; }
+      .nav-crumb { display: none; }
+      main { padding: 1.75rem 1rem 4rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .history-table th:nth-child(4),
+      .history-table td:nth-child(4),
+      .history-table th:nth-child(5),
+      .history-table td:nth-child(5) { display: none; }
+      .pass-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+      </div>
+      <span class="nav-logo-name">Magic Master</span>
+    </a>
+    <div class="nav-crumb">
+      <span>›</span>
+      <span>Дашборд</span>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="nav-email" id="navEmail"></span>
+    <a href="/app" class="btn-app">← Мастеринг</a>
+    <button class="btn-logout-nav" id="btnLogoutNav">Выйти</button>
+  </div>
+</nav>
+
+<main>
+  <!-- Page header -->
+  <div class="page-hd">
+    <h1>Мой аккаунт</h1>
+    <span class="pro-pill" id="tierPill">✦ Pro</span>
+  </div>
+
+  <!-- Account card -->
+  <div class="account-card">
+    <div class="account-row">
+      <div class="account-avatar" id="avatarEmoji">🎵</div>
+      <div class="account-info">
+        <div class="account-email" id="accountEmail">Загрузка…</div>
+        <div class="account-meta" id="accountMeta">Pro тариф · бета-период</div>
+      </div>
+      <div class="account-actions">
+        <button class="btn-sm" id="btnChangePass">Сменить пароль</button>
+        <button class="btn-sm danger" id="btnLogoutCard">Выйти</button>
+      </div>
+    </div>
+    <!-- Change password panel -->
+    <div class="change-pass-panel" id="changePassPanel">
+      <div class="pass-fields">
+        <div class="pass-field">
+          <label>Текущий пароль</label>
+          <input type="password" id="oldPass" placeholder="Текущий пароль">
+        </div>
+        <div class="pass-field">
+          <label>Новый пароль</label>
+          <input type="password" id="newPass" placeholder="Минимум 6 символов">
+        </div>
+        <div class="pass-field">
+          <label>Повтор нового</label>
+          <input type="password" id="newPass2" placeholder="Повторите">
+        </div>
+      </div>
+      <div class="pass-actions">
+        <button class="btn-save-pass" id="btnSavePass">Сохранить</button>
+        <button class="btn-cancel-pass" id="btnCancelPass">Отмена</button>
+      </div>
+      <div class="pass-msg" id="passMsg"></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="section-hd" style="margin-bottom:.85rem">
+    <span class="section-title">Статистика</span>
+  </div>
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card skeleton skel-stat"></div>
+    <div class="stat-card skeleton skel-stat"></div>
+    <div class="stat-card skeleton skel-stat"></div>
+    <div class="stat-card skeleton skel-stat"></div>
+  </div>
+
+  <!-- History -->
+  <div class="section-hd">
+    <span class="section-title">История мастерингов</span>
+    <button class="section-action" id="btnClearHistory">Очистить всё</button>
+  </div>
+  <div class="history-wrap" id="historyWrap">
+    <div style="padding:1.5rem">
+      <div class="skeleton skel-row"></div>
+      <div class="skeleton skel-row"></div>
+      <div class="skeleton skel-row"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // ── Auth guard ──────────────────────────────────────────────────────────────
+  const token = localStorage.getItem('mm_token');
+  if (!token) {
+    window.location.replace('/login?next=/dashboard');
+  }
+
+  const email = localStorage.getItem('mm_user_email') || '';
+  const tier  = localStorage.getItem('mm_user_tier')  || 'free';
+
+  document.getElementById('navEmail').textContent  = email;
+  document.getElementById('accountEmail').textContent = email;
+  document.getElementById('accountMeta').textContent =
+    (tier === 'pro' ? '✦ Pro тариф' : tier === 'studio' ? '✦ Studio тариф' : 'Free тариф') + ' · бета-период';
+  document.getElementById('tierPill').textContent = tier === 'studio' ? '✦ Studio' : tier === 'pro' ? '✦ Pro' : 'Free';
+
+  // Avatar emoji based on email
+  const avatarEmojis = ['🎵','🎸','🎹','🎺','🎻','🥁','🎷','🎼'];
+  const avatarIdx = email.charCodeAt(0) % avatarEmojis.length;
+  document.getElementById('avatarEmoji').textContent = avatarEmojis[avatarIdx] || '🎵';
+
+  // Logout
+  function logout() {
+    localStorage.removeItem('mm_token');
+    localStorage.removeItem('mm_user_email');
+    localStorage.removeItem('mm_user_tier');
+    window.location.replace('/');
+  }
+  document.getElementById('btnLogoutNav').addEventListener('click', logout);
+  document.getElementById('btnLogoutCard').addEventListener('click', logout);
+
+  // ── Style pill colors ──────────────────────────────────────────────────────
+  const STYLE_META = {
+    standard:   { label: 'Stream',    color: 'rgba(108,75,255,.18)',  tc: '#a78bfa' },
+    edm:        { label: 'EDM',       color: 'rgba(34,211,238,.15)',  tc: '#22d3ee' },
+    hiphop:     { label: 'Hip-Hop',   color: 'rgba(251,191,36,.15)',  tc: '#fbbf24' },
+    classical:  { label: 'Classical', color: 'rgba(167,139,250,.15)', tc: '#c4b5fd' },
+    podcast:    { label: 'Podcast',   color: 'rgba(52,211,153,.15)',  tc: '#34d399' },
+    lofi:       { label: 'Lo-fi',     color: 'rgba(248,113,113,.12)', tc: '#f87171' },
+    house_basic:{ label: 'House',     color: 'rgba(251,146,60,.15)',  tc: '#fb923c' },
+  };
+
+  function styleTag(style) {
+    const m = STYLE_META[style] || { label: style, color: 'rgba(255,255,255,.07)', tc: '#9898b8' };
+    return `<span class="style-pill" style="background:${m.color};color:${m.tc}">${m.label}</span>`;
+  }
+
+  function fmtDate(ts) {
+    const d = new Date(ts * 1000);
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' }) +
+           ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function fmtLufs(v) {
+    return v != null ? v.toFixed(1) : '—';
+  }
+
+  // ── Load data ──────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const r = await fetch('/api/auth/history', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (r.status === 401) { logout(); return; }
+      if (!r.ok) throw new Error('Ошибка загрузки');
+      const data = await r.json();
+      renderStats(data.stats);
+      renderHistory(data.records);
+    } catch(e) {
+      document.getElementById('statsGrid').innerHTML = '<p style="color:var(--red);font-size:.82rem;padding:.5rem">Ошибка загрузки данных</p>';
+      document.getElementById('historyWrap').innerHTML = '<p style="color:var(--red);font-size:.82rem;padding:1rem">Ошибка загрузки истории</p>';
+    }
+  }
+
+  function renderStats(stats) {
+    const total = stats.total || 0;
+    const avgChange = stats.avg_lufs_change != null ? (stats.avg_lufs_change > 0 ? '+' : '') + stats.avg_lufs_change.toFixed(1) : '—';
+    const topStyle = stats.top_style ? (STYLE_META[stats.top_style]?.label || stats.top_style) : '—';
+
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card" style="--sc-glow:rgba(108,75,255,.08)">
+        <div class="stat-label">Мастерингов</div>
+        <div class="stat-value">${total}</div>
+        <div class="stat-sub">за всё время</div>
+      </div>
+      <div class="stat-card" style="--sc-glow:rgba(52,211,153,.06)">
+        <div class="stat-label">Среднее изм. LUFS</div>
+        <div class="stat-value" style="font-size:1.55rem;color:var(--green)">${avgChange}</div>
+        <div class="stat-sub">dB в среднем</div>
+      </div>
+      <div class="stat-card" style="--sc-glow:rgba(251,191,36,.06)">
+        <div class="stat-label">Любимый жанр</div>
+        <div class="stat-value" style="font-size:1.25rem">${topStyle}</div>
+        <div class="stat-sub">чаще всего</div>
+      </div>
+      <div class="stat-card" style="--sc-glow:rgba(168,85,247,.06)">
+        <div class="stat-label">Тариф</div>
+        <div class="stat-value" style="font-size:1.25rem;color:var(--accent2)">${tier === 'pro' ? 'Pro' : tier === 'studio' ? 'Studio' : 'Free'}</div>
+        <div class="stat-sub">текущий план</div>
+      </div>
+    `;
+  }
+
+  function renderHistory(records) {
+    if (!records || records.length === 0) {
+      document.getElementById('historyWrap').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🎛️</div>
+          <div class="empty-title">Нет записей</div>
+          <div class="empty-desc">Мастерингов пока не было. Попробуйте прямо сейчас!</div>
+          <a href="/app" class="btn-go-app">Открыть мастеринг →</a>
+        </div>`;
+      return;
+    }
+
+    const rows = records.map(r => `
+      <tr>
+        <td class="td-name" title="${r.filename}">${r.filename || '—'}</td>
+        <td class="td-lufs">
+          <span class="before">${fmtLufs(r.before_lufs)}</span>
+          <span class="arrow">→</span>
+          <span class="after">${fmtLufs(r.after_lufs)}</span>
+        </td>
+        <td>${styleTag(r.style)}</td>
+        <td><span class="fmt-pill">${(r.out_format || 'wav').toUpperCase()}</span></td>
+        <td style="color:var(--text-dim);font-size:.75rem">${fmtDate(r.created_at)}</td>
+        <td>
+          <button class="btn-del" data-id="${r.id}" title="Удалить запись">✕</button>
+        </td>
+      </tr>`).join('');
+
+    document.getElementById('historyWrap').innerHTML = `
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Файл</th>
+            <th>LUFS (до → после)</th>
+            <th>Жанр</th>
+            <th>Формат</th>
+            <th>Дата</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">${rows}</tbody>
+      </table>`;
+
+    // Delete buttons
+    document.querySelectorAll('.btn-del').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        if (!confirm('Удалить эту запись из истории?')) return;
+        try {
+          const r = await fetch('/api/auth/history/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (r.ok) {
+            this.closest('tr').remove();
+            // Если строк не осталось — перезагружаем
+            if (!document.querySelector('#historyBody tr')) loadDashboard();
+          }
+        } catch(e) { alert('Ошибка удаления'); }
+      });
+    });
+  }
+
+  // Clear all history
+  document.getElementById('btnClearHistory').addEventListener('click', async function() {
+    if (!confirm('Удалить всю историю мастерингов? Это действие необратимо.')) return;
+    try {
+      // Load all IDs and delete one by one
+      const r = await fetch('/api/auth/history', { headers: { 'Authorization': 'Bearer ' + token } });
+      const data = await r.json();
+      await Promise.all(data.records.map(rec =>
+        fetch('/api/auth/history/' + rec.id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+      ));
+      loadDashboard();
+    } catch(e) { alert('Ошибка очистки'); }
+  });
+
+  // ── Change password ────────────────────────────────────────────────────────
+  const changePassPanel = document.getElementById('changePassPanel');
+  document.getElementById('btnChangePass').addEventListener('click', function() {
+    changePassPanel.classList.toggle('open');
+    document.getElementById('passMsg').textContent = '';
+    document.getElementById('oldPass').value = '';
+    document.getElementById('newPass').value = '';
+    document.getElementById('newPass2').value = '';
+  });
+  document.getElementById('btnCancelPass').addEventListener('click', function() {
+    changePassPanel.classList.remove('open');
+  });
+  document.getElementById('btnSavePass').addEventListener('click', async function() {
+    const oldP  = document.getElementById('oldPass').value;
+    const newP  = document.getElementById('newPass').value;
+    const newP2 = document.getElementById('newPass2').value;
+    const msg   = document.getElementById('passMsg');
+    if (!oldP || !newP) { msg.className='pass-msg err'; msg.textContent='Заполните все поля'; return; }
+    if (newP.length < 6) { msg.className='pass-msg err'; msg.textContent='Новый пароль минимум 6 символов'; return; }
+    if (newP !== newP2) { msg.className='pass-msg err'; msg.textContent='Пароли не совпадают'; return; }
+    try {
+      const r = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ old_password: oldP, new_password: newP })
+      });
+      const d = await r.json();
+      if (!r.ok) { msg.className='pass-msg err'; msg.textContent = d.detail || 'Ошибка'; }
+      else { msg.className='pass-msg ok'; msg.textContent = '✓ Пароль изменён'; setTimeout(()=>changePassPanel.classList.remove('open'), 1500); }
+    } catch(e) { msg.className='pass-msg err'; msg.textContent='Ошибка сети'; }
+  });
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadDashboard();
+</script>
+</body>
+</html>

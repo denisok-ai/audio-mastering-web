@@ -108,6 +108,24 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - Интерфейс: **http://localhost:8000**
 - API документация: **http://localhost:8000/docs**
 
+### Режим отладки (проверка всех функций без авторизации)
+
+Чтобы тестировать все функции (все жанры, MP3/FLAC, без лимита мастерингов) **без входа в аккаунт**, запустите сервер с переменной окружения `MAGIC_MASTER_DEBUG=1`:
+
+```bash
+# из корня проекта
+MAGIC_MASTER_DEBUG=1 bash start.sh
+```
+
+Или из каталога backend:
+
+```bash
+cd backend
+MAGIC_MASTER_DEBUG=1 python run.py
+```
+
+В интерфейсе появится жёлтый бейдж **«Режим отладки · все функции без входа»**, разблокируются все жанровые пресеты и экспорт в MP3/FLAC, счётчик мастерингов не ограничивается. Используйте только для локальной разработки и проверки.
+
 ## Разделение фронтенда (CSS и JS в отдельные файлы)
 
 Сейчас интерфейс использует **внешний** `app.js` и **встроенные** стили в `index.html`. Чтобы вынести стили в `styles.css`:
@@ -164,7 +182,7 @@ audio-mastering-web/
 - `GET /api/v2/chain/default` — список модулей цепочки по умолчанию (style, target_lufs); для UI «Модули цепочки» и будущего drag-and-drop.
 - `POST /api/v2/analyze` — анализ загруженного файла: LUFS, peak_dbfs, duration_sec, sample_rate, channels; для стерео — stereo_correlation. При `extended=true`: дополнительно `spectrum_bars`, `lufs_timeline`, `timeline_step_sec`; для стерео — `vectorscope_points` (до 1000 точек [l, r] для векторскопа).
 
-Подробнее: **http://localhost:8000/docs**.
+Подробнее: **http://localhost:8000/docs**. Версия приложения отображается в футере и доступна по `GET /api/version`. История изменений — [CHANGELOG.md](CHANGELOG.md). Разделение функций на уровни (без регистрации / по подписке) — [doc/ФУНКЦИИ_И_УРОВНИ.md](doc/ФУНКЦИИ_И_УРОВНИ.md).
 
 ## Самодиагностика
 

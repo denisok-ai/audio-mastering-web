@@ -2,38 +2,68 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Magic Master — профессиональный мастеринг</title>
+  <script>window.__MAGIC_MASTER_DEBUG__=false;</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
   <style>
-    /* ═══════════════════════ DESIGN TOKENS ═══════════════════════ */
+    /* ═══════════════════════ DESIGN TOKENS — MusicTechPro ═══════════════════════ */
     :root {
-      --bg:          #080810;
-      --bg-grid:     #0c0c18;
-      --surface:     rgba(16,16,28,0.9);
-      --surface-2:   rgba(22,22,38,0.95);
-      --border:      rgba(255,255,255,0.07);
-      --text:        #e8e8f0;
-      --text-soft:   #9898b8;
-      --text-dim:    #52527a;
+      /* Фон: глубокий, насыщенный */
+      --bg:          #040408;
+      --bg-grid:     #08080f;
+      --surface:     rgba(10,10,18,0.96);
+      --surface-2:   rgba(16,16,28,0.98);
+      --surface-3:   rgba(20,20,36,0.95);
+      --border:      rgba(255,255,255,0.06);
+      --border-soft: rgba(255,255,255,0.04);
 
-      --accent:      #6c4bff;
+      /* Текст */
+      --text:        #eeeef8;
+      --text-soft:   #8888aa;
+      --text-dim:    #44445e;
+      --text-mono:   'JetBrains Mono', 'Fira Mono', monospace;
+
+      /* Основные акценты — глубокий фиолетовый */
+      --accent:      #7c3aed;
       --accent-2:    #a855f7;
-      --accent-glow: rgba(108,75,255,0.35);
-      --cyan:        #22d3ee;
-      --green:       #34d399;
-      --green-glow:  rgba(52,211,153,0.28);
-      --red:         #f87171;
-      --red-glow:    rgba(248,113,113,0.28);
-      --amber:       #fbbf24;
+      --accent-3:    #db2777;
+      --accent-glow: rgba(124,58,237,0.4);
+
+      /* Статусы и анализ */
+      --cyan:        #06b6d4;
+      --cyan-glow:   rgba(6,182,212,0.3);
+      --green:       #10b981;
+      --green-glow:  rgba(16,185,129,0.28);
+      --red:         #ef4444;
+      --red-glow:    rgba(239,68,68,0.28);
+      --amber:       #f59e0b;
+      --amber-glow:  rgba(245,158,11,0.28);
+
+      /* PRO-функции — уникальный цвет для каждой */
+      --pro-denoiser:      #06b6d4;   /* Spectral Denoiser — циан */
+      --pro-denoiser-bg:   rgba(6,182,212,0.06);
+      --pro-denoiser-glow: rgba(6,182,212,0.25);
+      --pro-deesser:       #10b981;   /* De-esser — изумрудный */
+      --pro-deesser-bg:    rgba(16,185,129,0.06);
+      --pro-deesser-glow:  rgba(16,185,129,0.25);
+      --pro-transient:     #f59e0b;   /* Transient Designer — янтарный */
+      --pro-transient-bg:  rgba(245,158,11,0.06);
+      --pro-transient-glow:rgba(245,158,11,0.25);
+      --pro-parallel:      #ef4444;   /* Parallel Compression — красный */
+      --pro-parallel-bg:   rgba(239,68,68,0.06);
+      --pro-parallel-glow: rgba(239,68,68,0.25);
+      --pro-dynEQ:         #8b5cf6;   /* Dynamic EQ — пурпурный */
+      --pro-dynEQ-bg:      rgba(139,92,246,0.06);
+      --pro-dynEQ-glow:    rgba(139,92,246,0.25);
 
       --r-sm: 8px;
-      --r:    14px;
-      --r-lg: 20px;
-      --shadow: 0 4px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04) inset;
+      --r:    12px;
+      --r-lg: 18px;
+      --shadow: 0 6px 40px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.03) inset;
+      --shadow-sm: 0 2px 16px rgba(0,0,0,0.4);
     }
 
     /* ═══════════════════════ BASE ═══════════════════════ */
@@ -235,6 +265,44 @@
     .btn-reset:hover { color:var(--red) }
     .btn-reset svg { width:13px;height:13px }
 
+    /* ═══════════════════════ BATCH ═══════════════════════ */
+    .batch-section {
+      margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);
+    }
+    .batch-hd { display: flex; align-items: baseline; gap: .5rem; margin-bottom: .5rem; flex-wrap: wrap; }
+    .batch-ttl { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); }
+    .batch-hint { font-size: .7rem; color: var(--text-dim); }
+    .btn-batch {
+      font-size: .78rem; padding: .4rem .75rem;
+      background: rgba(108,75,255,.1); border: 1px solid rgba(108,75,255,.25);
+      color: var(--accent); border-radius: var(--r-sm); cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-batch:hover { background: rgba(108,75,255,.18); border-color: rgba(108,75,255,.4); }
+    .batch-file-list {
+      font-size: .75rem; color: var(--text-soft); margin-top: .5rem;
+      max-height: 80px; overflow-y: auto;
+    }
+    .batch-file-list span { display: block; padding: .15rem 0; }
+    .btn-batch-run { margin-top: .5rem; }
+    .batch-panel {
+      margin-top: 1rem; padding: 1rem;
+      background: rgba(0,0,0,.2); border: 1px solid var(--border); border-radius: var(--r);
+    }
+    .batch-panel-title { font-size: .7rem; font-weight: 700; letter-spacing: .06em; color: var(--text-dim); margin-bottom: .6rem; }
+    .batch-job-row {
+      display: flex; align-items: center; gap: .6rem; padding: .4rem 0;
+      border-bottom: 1px solid rgba(255,255,255,.05); font-size: .8rem;
+    }
+    .batch-job-row:last-child { border-bottom: none; }
+    .batch-job-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-soft); }
+    .batch-job-progress { width: 60px; text-align: right; color: var(--text-dim); font-size: .75rem; }
+    .batch-job-dl {
+      font-size: .72rem; color: var(--accent); cursor: pointer; text-decoration: none;
+    }
+    .batch-job-dl:hover { text-decoration: underline; }
+    .batch-job-dl.done { color: var(--green); }
+
     /* ═══════════════════════ VU METER ═══════════════════════ */
     .meter-wrap { margin-top:1.2rem }
     .meter-top  { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.55rem }
@@ -410,6 +478,11 @@
       border:1px solid var(--border);margin-top:.9rem;
     }
     .btn-secondary:hover:not(:disabled) { background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.13) }
+    .btn-sm { font-size:.78rem; padding:.4rem .7rem; margin-top:.4rem }
+    .btn-report { margin-left:.5rem; display:inline-flex; align-items:center; gap:.35rem }
+    .report-actions { display:inline-flex; align-items:center; gap:.4rem; margin-left:.5rem }
+    .btn-report-json { font-size:.7rem; padding:.25rem .5rem; background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:6px; color:var(--text-soft); cursor:pointer }
+    .btn-report-json:hover { background:rgba(255,255,255,0.1); color:var(--text) }
 
     .btn-primary {
       background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
@@ -516,6 +589,7 @@
     .foot-txt { font-size:.73rem;color:var(--text-dim);line-height:1.6 }
     .foot-link { color:var(--accent); text-decoration:none }
     .foot-link:hover { text-decoration:underline }
+    .foot-version { color:var(--text-dim); font-size:.7rem; font-family:'JetBrains Mono',monospace; }
 
     /* ═══════════════════════ STYLE CARDS ═══════════════════════ */
     .style-grid {
@@ -561,9 +635,16 @@
 
     /* ═══════════════════════ A/B TOGGLE ═══════════════════════ */
     .ab-wrap {
-      display:none; gap:.3rem; margin-left:.2rem;
+      display:none; gap:.35rem; margin-left:.2rem; align-items:center;
     }
     .ab-wrap.visible { display:flex }
+    .ab-item { display:flex; align-items:center; gap:.25rem; flex-shrink:0 }
+    .ab-lufs {
+      font-family:'JetBrains Mono',monospace; font-size:.6rem; color:var(--text-dim);
+      min-width:3.2em; white-space:nowrap;
+    }
+    .ab-item:first-child .ab-lufs { color:rgba(108,75,255,.9) }
+    .ab-item:last-child .ab-lufs { color:var(--green) }
     .btn-ab {
       width:26px; height:26px; border-radius:6px; border:1px solid var(--border);
       background:rgba(255,255,255,0.05); cursor:pointer;
@@ -790,10 +871,180 @@
       display:inline-flex; align-items:center; gap:.45rem;
     }
     .vectorscope-ttl svg { width:14px; height:14px; color:var(--accent-2) }
+    .vectorscope-hint {
+      font-size:.65rem; color:var(--text-dim); line-height:1.35;
+      padding:.35rem 1rem .5rem; margin:0; max-width:420px;
+    }
     .vectorscope-canvas {
       display:block; width:200px; height:200px; margin:0 auto .75rem;
       background:rgba(0,0,0,0.4); border-radius:50%;
     }
+
+    /* ═══════════════════════ STREAMING PREVIEW ═══════════════════════ */
+    .streaming-preview {
+      margin-top:.9rem; padding:.75rem 1rem;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--r); box-shadow:var(--shadow);
+    }
+    .streaming-preview-title {
+      display:flex; align-items:center; gap:.4rem;
+      font-size:.68rem; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--text-dim); margin-bottom:.6rem;
+    }
+    .streaming-preview-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:.45rem;
+    }
+    .sp-item {
+      display:flex; flex-direction:column; gap:.15rem;
+      padding:.45rem .6rem; border-radius:8px;
+      border:1px solid var(--border); background:rgba(255,255,255,.03);
+    }
+    .sp-item.optimal { border-color:rgba(34,197,94,.35); background:rgba(34,197,94,.07) }
+    .sp-item.ok      { border-color:rgba(251,191,36,.35); background:rgba(251,191,36,.07) }
+    .sp-item.loud    { border-color:rgba(239,68,68,.35);  background:rgba(239,68,68,.07) }
+    .sp-platform { font-size:.7rem; font-weight:600; color:var(--text); }
+    .sp-lufs     { font-size:.65rem; color:var(--text-dim); }
+    .sp-penalty  { font-size:.72rem; font-weight:700; }
+    .sp-item.optimal .sp-penalty { color:#22c55e }
+    .sp-item.ok      .sp-penalty { color:#fbbf24 }
+    .sp-item.loud    .sp-penalty { color:#ef4444 }
+
+    /* ═══════════════════════ REFERENCE TRACK ═══════════════════════ */
+    .reference-track-wrap {
+      display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+    }
+    .btn-reference {
+      display:inline-flex; align-items:center; gap:.3rem;
+      padding:.3rem .65rem; border-radius:6px;
+      background:rgba(108,75,255,.12); border:1px solid rgba(108,75,255,.3);
+      color:#a78bfa; font-size:.72rem; font-weight:600; cursor:pointer;
+      transition:background .15s;
+    }
+    .btn-reference:hover { background:rgba(108,75,255,.2) }
+    .ref-file-name { font-size:.7rem; color:var(--text-dim); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .btn-ref-clear { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:.8rem; padding:.1rem .3rem; }
+    .btn-ref-clear:hover { color:#ef4444 }
+    .ref-strength-wrap { display:flex; align-items:center; gap:.5rem; margin-top:.4rem; width:100%; }
+    .f-lbl-sm { font-size:.65rem; color:var(--text-dim); white-space:nowrap; }
+    .ref-strength-wrap input[type=range] { flex:1; }
+    .ref-strength-wrap span { font-size:.7rem; color:#a78bfa; min-width:2.5rem; text-align:right; }
+    .badge-new {
+      display:inline-block; padding:.1rem .35rem; border-radius:4px;
+      background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.3);
+      color:#22c55e; font-size:.58rem; font-weight:700; letter-spacing:.05em;
+      text-transform:uppercase; vertical-align:middle; margin-left:.3rem;
+    }
+
+    /* ═══════════════════════ PRO MODULES — уникальные функции ═══════════════════════ */
+    .pro-section-wrap {
+      margin-top: .9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .pro-section-head {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .6rem .9rem;
+      background: var(--surface-2);
+      cursor: pointer; user-select: none;
+      transition: background .15s;
+    }
+    .pro-section-head:hover { background: var(--surface-3); }
+    .pro-section-icon { color: var(--accent-2); flex-shrink: 0; }
+    .pro-section-icon svg { width: 14px; height: 14px; }
+    .pro-section-title {
+      font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-soft); flex: 1;
+    }
+    .pro-section-badge {
+      font-size: .54rem; font-weight: 800; letter-spacing: .1em;
+      padding: .12rem .4rem; border-radius: 4px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: #fff; text-transform: uppercase;
+    }
+    .pro-section-chevron { color: var(--text-dim); transition: transform .2s; }
+    .pro-section-chevron svg { width: 14px; height: 14px; }
+    .pro-section-chevron.open { transform: rotate(180deg); }
+    .pro-section-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; background: var(--surface); }
+    .pro-section-body.open { max-height: 800px; }
+    .pro-modules-list { padding: .5rem .7rem .7rem; display: flex; flex-direction: column; gap: .5rem; }
+
+    /* Каждый PRO-модуль */
+    .pro-module {
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .pro-module:hover { box-shadow: 0 0 0 1px rgba(255,255,255,0.04); }
+    .pro-module-head {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .5rem .7rem;
+      cursor: pointer;
+    }
+    .pro-module-icon { width: 28px; height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .pro-module-icon svg { width: 14px; height: 14px; }
+    .pro-module-info { flex: 1; min-width: 0; }
+    .pro-module-name { font-size: .78rem; font-weight: 600; color: var(--text); line-height: 1.2; }
+    .pro-module-desc { font-size: .64rem; color: var(--text-dim); margin-top: .1rem; line-height: 1.3; }
+    .pro-module-toggle { position: relative; flex-shrink: 0; }
+    .pro-module-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .pro-toggle-track {
+      display: block; width: 32px; height: 18px; border-radius: 9px;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
+      cursor: pointer; transition: background .2s, border-color .2s; position: relative;
+    }
+    .pro-toggle-track::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--text-dim); transition: left .2s, background .2s;
+    }
+    .pro-module-toggle input:checked + .pro-toggle-track { background: var(--pro-color, var(--accent)); border-color: var(--pro-color, var(--accent)); }
+    .pro-module-toggle input:checked + .pro-toggle-track::after { left: 16px; background: #fff; }
+
+    .pro-module-body { padding: 0 .7rem .65rem; display: none; }
+    .pro-module.expanded .pro-module-body { display: block; }
+
+    /* Слайдеры внутри модулей */
+    .pro-slider-row { display: flex; align-items: center; gap: .5rem; margin-top: .4rem; }
+    .pro-slider-label { font-size: .64rem; color: var(--text-dim); white-space: nowrap; min-width: 4rem; }
+    .pro-slider-row input[type=range] { flex: 1; accent-color: var(--pro-color, var(--accent)); height: 14px; }
+    .pro-slider-val { font-size: .68rem; font-weight: 600; color: var(--pro-color, var(--accent)); min-width: 2.8rem; text-align: right; font-family: var(--text-mono); }
+
+    /* Уникальные цвета для каждого модуля */
+    .pro-module[data-pro="denoiser"]  { --pro-color: var(--pro-denoiser);  border-left: 3px solid var(--pro-denoiser);  background: var(--pro-denoiser-bg); }
+    .pro-module[data-pro="deesser"]   { --pro-color: var(--pro-deesser);   border-left: 3px solid var(--pro-deesser);   background: var(--pro-deesser-bg); }
+    .pro-module[data-pro="transient"] { --pro-color: var(--pro-transient); border-left: 3px solid var(--pro-transient); background: var(--pro-transient-bg); }
+    .pro-module[data-pro="parallel"]  { --pro-color: var(--pro-parallel);  border-left: 3px solid var(--pro-parallel);  background: var(--pro-parallel-bg); }
+    .pro-module[data-pro="dynEQ"]     { --pro-color: var(--pro-dynEQ);     border-left: 3px solid var(--pro-dynEQ);     background: var(--pro-dynEQ-bg); }
+
+    .pro-module[data-pro="denoiser"]  .pro-module-icon { background: var(--pro-denoiser-bg); color: var(--pro-denoiser); }
+    .pro-module[data-pro="deesser"]   .pro-module-icon { background: var(--pro-deesser-bg);  color: var(--pro-deesser); }
+    .pro-module[data-pro="transient"] .pro-module-icon { background: var(--pro-transient-bg);color: var(--pro-transient); }
+    .pro-module[data-pro="parallel"]  .pro-module-icon { background: var(--pro-parallel-bg); color: var(--pro-parallel); }
+    .pro-module[data-pro="dynEQ"]     .pro-module-icon { background: var(--pro-dynEQ-bg);    color: var(--pro-dynEQ); }
+
+    /* При включении — свечение по полосе */
+    .pro-module[data-pro="denoiser"].active  { box-shadow: -3px 0 12px var(--pro-denoiser-glow); }
+    .pro-module[data-pro="deesser"].active   { box-shadow: -3px 0 12px var(--pro-deesser-glow); }
+    .pro-module[data-pro="transient"].active { box-shadow: -3px 0 12px var(--pro-transient-glow); }
+    .pro-module[data-pro="parallel"].active  { box-shadow: -3px 0 12px var(--pro-parallel-glow); }
+    .pro-module[data-pro="dynEQ"].active     { box-shadow: -3px 0 12px var(--pro-dynEQ-glow); }
+
+    /* Spectrum MID/SIDE tabs */
+    .spec-tab-wrap { display: flex; gap: .25rem; margin-left: auto; }
+    .spec-tab {
+      font-size: .6rem; font-weight: 700; padding: .18rem .5rem;
+      border-radius: 5px; border: 1px solid var(--border);
+      background: none; color: var(--text-dim); cursor: pointer;
+      letter-spacing: .05em; transition: all .15s;
+    }
+    .spec-tab:hover { border-color: rgba(255,255,255,0.15); color: var(--text-soft); }
+    .spec-tab.active[data-mode="mono"]  { background: rgba(6,182,212,0.15);  border-color: var(--pro-denoiser); color: var(--pro-denoiser); }
+    .spec-tab.active[data-mode="mid"]   { background: rgba(139,92,246,0.15); border-color: var(--pro-dynEQ);    color: var(--pro-dynEQ); }
+    .spec-tab.active[data-mode="side"]  { background: rgba(245,158,11,0.15); border-color: var(--pro-transient);color: var(--pro-transient); }
 
     /* ═══════════════════════ CHAIN MODULES CARD ═══════════════════════ */
     .chain-modules-card {
@@ -857,15 +1108,223 @@
       cursor:pointer; flex-shrink:0;
     }
     .chain-mod-item .cm-oversample:focus { outline:none; border-color:var(--accent) }
+    .chain-presets-wrap { padding:.5rem .85rem .75rem; border-top:1px solid var(--border); margin-top:.25rem; }
+    .chain-presets-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.4rem; }
+    .chain-presets-row:last-child { margin-bottom:0 }
+    .chain-preset-name { flex:1; min-width:0; font-size:.75rem; padding:.35rem .5rem; border-radius:var(--r-sm); background:rgba(0,0,0,0.35); border:1px solid var(--border); color:var(--text-soft); }
+    .chain-preset-select { flex:1; min-width:0; font-size:.75rem; padding:.35rem .5rem; border-radius:var(--r-sm); background:rgba(0,0,0,0.35); border:1px solid var(--border); color:var(--text-soft); }
+    .chain-preset-btn { font-size:.7rem; padding:.3rem .55rem; white-space:nowrap; }
+    .chain-preset-delete { opacity:.8; color:var(--text-dim); }
 
-    /* ═══════════════════════ RESPONSIVE ═══════════════════════ */
-    @media(max-width:480px) {
-      .header { padding:2rem 0 1.5rem }
-      .h-title { font-size:1.55rem }
-      .card { padding:1.25rem }
-      .two-col { grid-template-columns:1fr }
-      .result-grid { grid-template-columns:1fr auto 1fr }
-      .result-block-val { font-size:1.25rem }
+    /* ═══════════════════════ TIER BADGE ═══════════════════════ */
+    .tier-row {
+      display: flex; align-items: center; justify-content: center; gap: .55rem;
+      margin: .55rem 0 0;
+    }
+    .tier-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .7rem; font-weight: 700; letter-spacing: .04em;
+      color: var(--accent);
+      background: rgba(108,75,255,.1);
+      border: 1px solid rgba(108,75,255,.22);
+      border-radius: 99px; padding: 3px 11px;
+      transition: all .2s;
+    }
+    .tier-badge .tb-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+      box-shadow: 0 0 5px var(--accent);
+    }
+    .tier-badge.warn  { color: var(--amber); background: rgba(251,191,36,.1);  border-color: rgba(251,191,36,.22); }
+    .tier-badge.warn .tb-dot  { background: var(--amber); box-shadow: 0 0 5px var(--amber); }
+    .tier-badge.empty { color: var(--red);   background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.22); }
+    .tier-badge.empty .tb-dot { background: var(--red);   box-shadow: 0 0 5px var(--red);   }
+    .tier-badge.debug-badge {
+      color: var(--amber); background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.3);
+    }
+    .tier-badge.debug-badge .tb-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+    .tier-upgrade-link {
+      font-size: .68rem; color: var(--text-dim); text-decoration: none;
+      transition: color .15s;
+    }
+    .tier-upgrade-link:hover { color: var(--accent); }
+
+    /* ─── Auth state row ─── */
+    .auth-row {
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      flex-wrap: wrap; margin-top: .35rem;
+    }
+    .auth-email {
+      font-size: .7rem; font-weight: 600; color: var(--text-soft);
+      max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .auth-priority-hint { font-size: .6rem; color: var(--text-dim); margin-left: .35rem; }
+    .auth-pro-badge {
+      font-size: .62rem; font-weight: 700; letter-spacing: .08em;
+      color: var(--accent2); background: rgba(168,85,247,.12);
+      border: 1px solid rgba(168,85,247,.25); border-radius: 99px;
+      padding: 1px 7px; text-transform: uppercase;
+    }
+    .btn-logout {
+      font-size: .68rem; color: var(--text-dim); background: none; border: none;
+      cursor: pointer; padding: 0; text-decoration: underline;
+      transition: color .15s;
+    }
+    .btn-logout:hover { color: var(--red); }
+    .btn-login-link {
+      font-size: .68rem; color: var(--accent); text-decoration: none;
+      font-weight: 600; transition: opacity .15s;
+    }
+    .btn-login-link:hover { opacity: .75; }
+
+    /* ═══════════════════════ LOCKED STYLE CARDS ═══════════════════════ */
+    .style-card.locked {
+      opacity: .48;
+      cursor: default;
+      position: relative;
+    }
+    .style-card.locked::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.18);
+      border-radius: inherit;
+    }
+    .style-card.locked .sc-lock {
+      display: flex !important;
+    }
+    .sc-lock {
+      display: none;
+      position: absolute; top: 5px; right: 6px; z-index: 2;
+      background: rgba(0,0,0,.55);
+      border-radius: 4px; padding: 1px 4px;
+      font-size: .6rem; color: var(--amber);
+      align-items: center; gap: 2px;
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════ LOCKED FORMAT OPTIONS ═══════════════════════ */
+    .pro-select-note {
+      font-size: .65rem; color: var(--text-dim); margin-top: .3rem; display: block;
+    }
+
+    /* ═══════════════════════ UPGRADE MODAL ═══════════════════════ */
+    .upgrade-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .upgrade-overlay.open {
+      opacity: 1; pointer-events: all;
+    }
+    .upgrade-box {
+      background: var(--surface-2);
+      border: 1px solid rgba(108,75,255,.3);
+      border-radius: var(--r-lg);
+      padding: 2rem 1.75rem 1.75rem;
+      max-width: 360px; width: calc(100% - 2rem);
+      text-align: center;
+      box-shadow: 0 0 0 1px rgba(108,75,255,.1), 0 24px 64px rgba(0,0,0,.7);
+      transform: translateY(12px); transition: transform .22s;
+      position: relative;
+    }
+    .upgrade-overlay.open .upgrade-box { transform: translateY(0); }
+    .upgrade-close {
+      position: absolute; top: .9rem; right: .9rem;
+      background: none; border: none; color: var(--text-dim);
+      cursor: pointer; font-size: 1rem; line-height: 1;
+      padding: 4px; border-radius: 6px; transition: color .15s, background .15s;
+    }
+    .upgrade-close:hover { color: var(--text); background: rgba(255,255,255,.06); }
+    .upgrade-icon {
+      width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 1rem;
+      background: linear-gradient(135deg, rgba(108,75,255,.2), rgba(168,85,247,.15));
+      border: 1px solid rgba(108,75,255,.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+    }
+    .upgrade-title {
+      font-size: 1.1rem; font-weight: 700; letter-spacing: -.02em;
+      margin: 0 0 .55rem; color: var(--text);
+    }
+    .upgrade-desc {
+      font-size: .82rem; color: var(--text-soft); line-height: 1.55;
+      margin: 0 0 1.35rem;
+    }
+    .upgrade-features {
+      display: flex; flex-direction: column; gap: .3rem;
+      margin-bottom: 1.35rem; text-align: left;
+    }
+    .upgrade-feature {
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .78rem; color: var(--text-soft);
+    }
+    .upgrade-feature::before { content: '✓'; color: var(--accent); font-weight: 700; }
+    .upgrade-btns {
+      display: flex; flex-direction: column; gap: .6rem;
+    }
+    .btn-go-pro {
+      display: block; width: 100%; padding: .75rem 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; font-weight: 700; font-size: .88rem;
+      border: none; border-radius: var(--r-sm); cursor: pointer;
+      text-decoration: none; transition: opacity .15s;
+    }
+    .btn-go-pro:hover { opacity: .88; }
+    .btn-stay-free {
+      background: none; border: none; color: var(--text-dim);
+      font-size: .78rem; cursor: pointer; padding: .3rem;
+      transition: color .15s;
+    }
+    .btn-stay-free:hover { color: var(--text); }
+
+    /* ═══════════════════════ RESPONSIVE (P11 — мобильная адаптация) ═══════════════════════ */
+    /* Удобные зоны нажатия для сенсорных экранов */
+    @media (pointer: coarse) {
+      .btn-primary { min-height: 44px; padding: .5rem 1.25rem; -webkit-tap-highlight-color: transparent }
+      .style-card { min-height: 44px; padding: .65rem .5rem; -webkit-tap-highlight-color: transparent }
+      .chain-modules-head { min-height: 44px; padding: .65rem .85rem; -webkit-tap-highlight-color: transparent }
+      .chain-preset-btn { min-height: 36px; padding: .4rem .65rem }
+      .btn-ab { min-width: 36px; min-height: 36px }
+    }
+    @media (max-width: 640px) {
+      .page { padding-left: env(safe-area-inset-left, 0); padding-right: env(safe-area-inset-right, 0); box-sizing: border-box }
+      .header { padding: 2rem 1rem 1.5rem }
+      .h-title { font-size: 1.6rem }
+      .h-sub { font-size: .82rem; max-width: 100% }
+      .card { padding: 1.2rem 1rem; margin-left: .5rem; margin-right: .5rem; max-width: calc(100% - 1rem) }
+      .style-grid { grid-template-columns: repeat(2, 1fr); gap: .5rem }
+      .two-col { grid-template-columns: 1fr }
+      .result-grid { grid-template-columns: 1fr; gap: .6rem }
+      .result-grid .result-block { text-align: center }
+      .chain-modules-body.open { max-height: 380px }
+      .chain-mod-item { flex-wrap: wrap }
+      .chain-mod-item .cm-label { min-width: 0 }
+      .chain-presets-row { flex-wrap: wrap }
+      .chain-preset-select { min-width: 0 }
+      .auth-row { flex-wrap: wrap; justify-content: center; gap: .4rem }
+      .tier-row { flex-wrap: wrap; justify-content: center }
+    }
+    @media (max-width: 480px) {
+      .header { padding: 1.75rem .75rem 1.25rem }
+      .h-title { font-size: 1.45rem }
+      .card { padding: 1rem .85rem; margin-left: .4rem; margin-right: .4rem; max-width: calc(100% - .8rem) }
+      .style-grid { grid-template-columns: 1fr; gap: .4rem }
+      .two-col { grid-template-columns: 1fr }
+      .result-grid { grid-template-columns: 1fr; text-align: center }
+      .result-block-val { font-size: 1.2rem }
+      .chain-modules-body.open { max-height: 420px }
+      .chain-mod-item .cm-amount-wrap { width: 100%; justify-content: flex-start }
+      .chain-presets-row { flex-direction: column; align-items: stretch }
+      .chain-preset-name { width: 100% }
+      .chain-preset-select { width: 100% }
+      .toast-wrap { left: .75rem; right: .75rem; bottom: max(1rem, env(safe-area-inset-bottom)); max-width: none }
+    }
+    @media (max-width: 360px) {
+      .logo-name { font-size: 1.1rem }
+      .h-title { font-size: 1.3rem }
+      .card { padding: .9rem .7rem }
     }
   </style>
 </head>
@@ -876,16 +1335,41 @@
   <!-- ──── HEADER ──── -->
   <header class="header">
     <div class="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-        </svg>
+      <a href="/" class="logo-back" style="display:inline-flex;align-items:center;gap:.35rem;color:var(--text-dim);font-size:.78rem;text-decoration:none;margin-bottom:.5rem;transition:color .15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        На главную
+      </a>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+          </svg>
+        </div>
+        <span class="logo-name">Magic Master</span>
+        <span class="logo-badge">Pro</span>
       </div>
-      <span class="logo-name">Magic Master</span>
-      <span class="logo-badge">Pro</span>
     </div>
     <h1 class="h-title">Мастеринг в два клика</h1>
     <p class="h-sub">Профессиональная нормализация LUFS · True Peak ≤ −1 dBTP · Studio EQ · TPDF Dithering</p>
+    <div class="tier-row" id="tierRow">
+      <div class="tier-badge" id="tierBadge">
+        <span class="tb-dot"></span>
+        Free · <span id="tierRemaining">3</span> мастеринга осталось
+      </div>
+      <a href="/pricing" class="tier-upgrade-link" id="upgradeLink">Перейти на Pro →</a>
+    </div>
+    <!-- Auth state: показывается когда залогинен -->
+    <div class="auth-row" id="authRow" style="display:none">
+      <span class="auth-pro-badge">✦ Pro</span>
+      <span class="auth-priority-hint" id="authPriorityHint" style="display:none" title="До 2 задач мастеринга одновременно (Free: 1)">Приоритетная очередь</span>
+      <span class="auth-email" id="authEmail"></span>
+      <a href="/dashboard" class="btn-login-link" style="font-size:.66rem;opacity:.7">Дашборд</a>
+      <button class="btn-logout" id="btnLogout" title="Выйти из аккаунта">Выйти</button>
+    </div>
+    <!-- Auth row: когда не залогинен -->
+    <div class="auth-row" id="authRowGuest" style="display:none">
+      <a href="/login" class="btn-login-link">Войти / Зарегистрироваться →</a>
+    </div>
     <div class="wdeco" id="wdeco">
       <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
       <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
@@ -935,6 +1419,22 @@
       </div>
     </div>
 
+    <!-- Пакетная обработка (Pro / режим отладки) -->
+    <div class="batch-section" id="batchSection" style="display:none">
+      <div class="batch-hd">
+        <span class="batch-ttl">Пакетная обработка</span>
+        <span class="batch-hint">до 10 файлов, одни параметры</span>
+      </div>
+      <input type="file" id="batchFileInput" accept=".wav,.mp3,.flac,audio/*" multiple style="display:none">
+      <button type="button" class="btn btn-batch" id="btnSelectBatch">Выбрать файлы</button>
+      <div class="batch-file-list" id="batchFileList"></div>
+      <button type="button" class="btn btn-primary btn-batch-run" id="btnBatchMaster" style="display:none" disabled>Запустить мастеринг (<span id="batchCount">0</span> файлов)</button>
+      <div class="batch-panel" id="batchPanel" style="display:none">
+        <div class="batch-panel-title">Обработка</div>
+        <div class="batch-jobs" id="batchJobs"></div>
+      </div>
+    </div>
+
     <!-- ─ Waveform Player ─ -->
     <div class="player" id="player">
       <div class="wave-wrap" id="waveWrap">
@@ -948,10 +1448,16 @@
         <span class="t-elapsed" id="tElapsed">0:00</span>
         <div class="t-scrub" id="tScrub"><div class="t-scrub-fill" id="tFill"></div></div>
         <span class="t-total"  id="tTotal">0:00</span>
-        <!-- A/B comparison buttons -->
+        <!-- A/B comparison buttons + LUFS (P12) -->
         <div class="ab-wrap" id="abWrap">
-          <button class="btn-ab active" id="btnAB-a" title="Оригинал">A</button>
-          <button class="btn-ab"        id="btnAB-b" title="После мастеринга">B</button>
+          <div class="ab-item">
+            <button class="btn-ab active" id="btnAB-a" title="Оригинал">A</button>
+            <span class="ab-lufs" id="abLufsA" aria-label="LUFS оригинала">—</span>
+          </div>
+          <div class="ab-item">
+            <button class="btn-ab" id="btnAB-b" title="После мастеринга">B</button>
+            <span class="ab-lufs" id="abLufsB" aria-label="LUFS мастера">—</span>
+          </div>
         </div>
       </div>
       <div class="audio-meta" id="audioMeta">
@@ -981,12 +1487,28 @@
       </div>
     </div>
 
+    <!-- Streaming Loudness Preview Panel -->
+    <div class="streaming-preview" id="streamingPreview" style="display:none;">
+      <div class="streaming-preview-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        Streaming Preview
+      </div>
+      <div class="streaming-preview-grid" id="streamingPreviewGrid"></div>
+    </div>
+
     <button type="button" class="btn btn-secondary" id="btnMeasure" disabled>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
       </svg>
       <span>Измерить громкость</span>
     </button>
+    <span class="report-actions" id="reportActions" style="display:none;">
+      <button type="button" class="btn btn-sm btn-report" id="btnDownloadReport" title="Скачать отчёт (TXT)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Скачать отчёт</span>
+      </button>
+      <button type="button" class="btn-report-json" id="btnDownloadReportJson" title="Скачать отчёт в формате JSON">JSON</button>
+    </span>
     <div class="status" id="stMeasure"></div>
   </div>
 
@@ -1015,42 +1537,48 @@
             <div class="sc-name">Stream</div>
             <div class="sc-lufs">−14 LUFS</div>
           </div>
-          <div class="style-card" data-style="edm" data-lufs="-9"
+          <div class="style-card" data-style="edm" data-lufs="-9" data-tier="pro"
                style="--sc-color:rgba(34,211,238,.08);--sc-active-border:#22d3ee;--sc-bg:rgba(34,211,238,.1);--sc-glow:rgba(34,211,238,.25)">
             <div class="sc-icon">⚡</div>
             <div class="sc-name">EDM</div>
             <div class="sc-lufs">−9 LUFS</div>
+            <div class="sc-lock">🔒 Pro</div>
           </div>
-          <div class="style-card" data-style="hiphop" data-lufs="-13"
+          <div class="style-card" data-style="hiphop" data-lufs="-13" data-tier="pro"
                style="--sc-color:rgba(251,191,36,.08);--sc-active-border:#fbbf24;--sc-bg:rgba(251,191,36,.1);--sc-glow:rgba(251,191,36,.25)">
             <div class="sc-icon">🎤</div>
             <div class="sc-name">Hip-Hop</div>
             <div class="sc-lufs">−13 LUFS</div>
+            <div class="sc-lock">🔒 Pro</div>
           </div>
-          <div class="style-card" data-style="classical" data-lufs="-18"
+          <div class="style-card" data-style="classical" data-lufs="-18" data-tier="pro"
                style="--sc-color:rgba(167,139,250,.08);--sc-active-border:#a78bfa;--sc-bg:rgba(167,139,250,.1);--sc-glow:rgba(167,139,250,.25)">
             <div class="sc-icon">🎻</div>
             <div class="sc-name">Classical</div>
             <div class="sc-lufs">−18 LUFS</div>
+            <div class="sc-lock">🔒 Pro</div>
           </div>
-          <div class="style-card" data-style="podcast" data-lufs="-16"
+          <div class="style-card" data-style="podcast" data-lufs="-16" data-tier="pro"
                style="--sc-color:rgba(52,211,153,.08);--sc-active-border:#34d399;--sc-bg:rgba(52,211,153,.1);--sc-glow:rgba(52,211,153,.25)">
             <div class="sc-icon">🎙</div>
             <div class="sc-name">Podcast</div>
             <div class="sc-lufs">−16 LUFS</div>
+            <div class="sc-lock">🔒 Pro</div>
           </div>
-          <div class="style-card" data-style="lofi" data-lufs="-18"
+          <div class="style-card" data-style="lofi" data-lufs="-18" data-tier="pro"
                style="--sc-color:rgba(248,113,113,.07);--sc-active-border:#f87171;--sc-bg:rgba(248,113,113,.09);--sc-glow:rgba(248,113,113,.22)">
             <div class="sc-icon">🌙</div>
             <div class="sc-name">Lo-fi</div>
             <div class="sc-lufs">−18 LUFS</div>
+            <div class="sc-lock">🔒 Pro</div>
           </div>
-          <div class="style-card" data-style="house_basic" data-lufs="-10"
+          <div class="style-card" data-style="house_basic" data-lufs="-10" data-tier="pro"
                style="--sc-color:rgba(251,146,60,.08);--sc-active-border:#fb923c;--sc-bg:rgba(251,146,60,.1);--sc-glow:rgba(251,146,60,.28)">
             <div class="sc-icon">🏠</div>
             <div class="sc-name">House</div>
             <div class="sc-lufs">−10 LUFS</div>
             <div class="sc-ozone-badge">Ozone 5</div>
+            <div class="sc-lock">🔒 Pro</div>
           </div>
         </div>
       </div>
@@ -1063,11 +1591,173 @@
                  title="Задаётся автоматически по стилю. Можно изменить вручную.">
           <select id="outFormat">
             <option value="wav">WAV — без потерь</option>
-            <option value="mp3">MP3 — 320 kbps</option>
-            <option value="flac">FLAC — без потерь</option>
+            <option value="mp3" data-tier="pro">MP3 — 320 kbps 🔒</option>
+            <option value="flac" data-tier="pro">FLAC — без потерь 🔒</option>
           </select>
         </div>
       </div>
+      <!-- Reference Track Mastering -->
+      <div class="field">
+        <span class="f-lbl">Reference Track <span class="badge-new">NEW</span></span>
+        <div class="reference-track-wrap">
+          <label class="btn btn-sm btn-reference" id="btnRefLabel" title="Загрузите эталонный трек для подгонки спектрального баланса">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Загрузить эталон
+            <input type="file" id="refFileInput" accept=".wav,.mp3,.flac" style="display:none;">
+          </label>
+          <span class="ref-file-name" id="refFileName">не выбран</span>
+          <button type="button" class="btn-ref-clear" id="btnRefClear" style="display:none;" title="Убрать эталон">✕</button>
+        </div>
+        <div class="ref-strength-wrap" id="refStrengthWrap" style="display:none;">
+          <label class="f-lbl-sm">Интенсивность</label>
+          <input type="range" id="refStrength" min="0" max="100" value="80" step="5">
+          <span id="refStrengthVal">80%</span>
+        </div>
+      </div>
+
+      <!-- ═══ PRO PROCESSING MODULES ═══ -->
+      <div class="pro-section-wrap" id="proSectionWrap">
+        <div class="pro-section-head" id="proSectionHead">
+          <span class="pro-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          <span class="pro-section-title">Дополнительная обработка</span>
+          <span class="pro-section-badge">PRO</span>
+          <span class="pro-section-chevron" id="proSectionChevron">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </div>
+        <div class="pro-section-body" id="proSectionBody">
+          <div class="pro-modules-list">
+
+            <!-- Spectral Denoiser -->
+            <div class="pro-module" data-pro="denoiser" id="modDenoiser">
+              <div class="pro-module-head">
+                <div class="pro-module-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                </div>
+                <div class="pro-module-info">
+                  <div class="pro-module-name">Spectral Denoiser</div>
+                  <div class="pro-module-desc">Wiener-фильтр: удаляет шум фона без артефактов</div>
+                </div>
+                <label class="pro-module-toggle" title="Включить шумоподавление">
+                  <input type="checkbox" id="denoiserEnabled">
+                  <span class="pro-toggle-track"></span>
+                </label>
+              </div>
+              <div class="pro-module-body" id="denoiserBody">
+                <div class="pro-slider-row">
+                  <span class="pro-slider-label">Сила</span>
+                  <input type="range" id="denoiserStrength" min="0" max="100" value="40" step="5">
+                  <span class="pro-slider-val" id="denoiserStrVal">40%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- De-esser -->
+            <div class="pro-module" data-pro="deesser" id="modDeesser">
+              <div class="pro-module-head">
+                <div class="pro-module-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 9h.01M15 9h.01M9.5 15.5s1.5 2 3 0"/></svg>
+                </div>
+                <div class="pro-module-info">
+                  <div class="pro-module-name">De-esser</div>
+                  <div class="pro-module-desc">Контроль сибилянтности 5–9 кГц (ss, ff, tt)</div>
+                </div>
+                <label class="pro-module-toggle" title="Включить де-эссер">
+                  <input type="checkbox" id="deesserEnabled">
+                  <span class="pro-toggle-track"></span>
+                </label>
+              </div>
+              <div class="pro-module-body" id="deesserBody">
+                <div class="pro-slider-row">
+                  <span class="pro-slider-label">Порог</span>
+                  <input type="range" id="deesserThreshold" min="-30" max="-5" value="-10" step="1">
+                  <span class="pro-slider-val" id="deesserThrVal">−10 dB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transient Designer -->
+            <div class="pro-module" data-pro="transient" id="modTransient">
+              <div class="pro-module-head">
+                <div class="pro-module-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div class="pro-module-info">
+                  <div class="pro-module-name">Transient Designer</div>
+                  <div class="pro-module-desc">Независимый контроль атаки и сустейна</div>
+                </div>
+                <label class="pro-module-toggle" title="Включить Transient Designer">
+                  <input type="checkbox" id="transientEnabled">
+                  <span class="pro-toggle-track"></span>
+                </label>
+              </div>
+              <div class="pro-module-body" id="transientBody">
+                <div class="pro-slider-row">
+                  <span class="pro-slider-label">Атака</span>
+                  <input type="range" id="transientAttack" min="50" max="200" value="100" step="5">
+                  <span class="pro-slider-val" id="transientAttackVal">1.0×</span>
+                </div>
+                <div class="pro-slider-row">
+                  <span class="pro-slider-label">Сустейн</span>
+                  <input type="range" id="transientSustain" min="50" max="200" value="100" step="5">
+                  <span class="pro-slider-val" id="transientSustainVal">1.0×</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Parallel Compression -->
+            <div class="pro-module" data-pro="parallel" id="modParallel">
+              <div class="pro-module-head">
+                <div class="pro-module-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
+                <div class="pro-module-info">
+                  <div class="pro-module-name">Parallel Compression</div>
+                  <div class="pro-module-desc">NY-компрессия: гущина без потери динамики</div>
+                </div>
+                <label class="pro-module-toggle" title="Включить параллельную компрессию">
+                  <input type="checkbox" id="parallelEnabled">
+                  <span class="pro-toggle-track"></span>
+                </label>
+              </div>
+              <div class="pro-module-body" id="parallelBody">
+                <div class="pro-slider-row">
+                  <span class="pro-slider-label">Mix</span>
+                  <input type="range" id="parallelMix" min="0" max="100" value="30" step="5">
+                  <span class="pro-slider-val" id="parallelMixVal">30%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic EQ -->
+            <div class="pro-module" data-pro="dynEQ" id="modDynEQ">
+              <div class="pro-module-head">
+                <div class="pro-module-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16c2-2 4-8 6-8s4 6 6 8"/></svg>
+                </div>
+                <div class="pro-module-info">
+                  <div class="pro-module-name">Dynamic EQ</div>
+                  <div class="pro-module-desc">8-полосный EQ, реагирующий на уровень сигнала</div>
+                </div>
+                <label class="pro-module-toggle" title="Включить Dynamic EQ">
+                  <input type="checkbox" id="dynEQEnabled">
+                  <span class="pro-toggle-track"></span>
+                </label>
+              </div>
+              <div class="pro-module-body" id="dynEQBody">
+                <div style="font-size:.64rem;color:var(--text-dim);line-height:1.5;padding:.1rem 0;">
+                  Автоматически обрабатывает 8 полос: 60, 120, 250, 500, 1k, 3k, 8k, 16k Гц.
+                  Мягко подавляет резонансы и подчёркивает детали только там, где это нужно.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
       <!-- Export: dither (WAV/16-bit), auto-blank -->
       <div class="field export-opts">
         <span class="f-lbl">Экспорт (WAV/16-bit)</span>
@@ -1102,6 +1792,20 @@
       </div>
       <div class="chain-modules-body" id="chainModulesBody">
         <div class="chain-modules-list" id="chainModulesList"></div>
+        <!-- P10: сохранённые пресеты (только для залогиненных) -->
+        <div class="chain-presets-wrap" id="chainPresetsWrap" style="display:none;">
+          <div class="chain-presets-row">
+            <input type="text" id="chainPresetName" class="chain-preset-name" placeholder="Имя пресета" maxlength="120">
+            <button type="button" id="btnChainPresetSave" class="btn btn-sm chain-preset-btn">Сохранить пресет</button>
+          </div>
+          <div class="chain-presets-row">
+            <select id="chainPresetSelect" class="chain-preset-select" title="Выберите пресет для загрузки">
+              <option value="">— Загрузить пресет —</option>
+            </select>
+            <button type="button" id="btnChainPresetLoad" class="btn btn-sm chain-preset-btn">Загрузить</button>
+            <button type="button" id="btnChainPresetDelete" class="btn btn-sm chain-preset-btn chain-preset-delete" title="Удалить выбранный пресет">Удалить</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1221,7 +1925,7 @@
 
     <!-- Spectrum analyzer (log scale 20 Hz – 20 kHz) -->
     <div class="spectrum-card" id="spectrumCard">
-      <div class="spectrum-head">
+      <div class="spectrum-head" id="spectrumHead" style="display:flex;align-items:center;">
         <span class="spectrum-ttl">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Спектр
@@ -1242,6 +1946,7 @@
           Векторскоп
         </span>
       </div>
+      <p class="vectorscope-hint">Показывает соотношение левого и правого каналов (L–R). Узкая диагональ — близко к моно; широкое облако — широкое стерео. Помогает оценить ширину сцены и фазу.</p>
       <canvas class="vectorscope-canvas" id="vectorscopeCanvas" width="200" height="200"></canvas>
     </div>
 
@@ -1277,7 +1982,7 @@
       <div class="spec"><span class="spec-v">Studio EQ</span><span class="spec-k">Pipeline</span></div>
       <div class="spec"><span class="spec-v">Sony/Warner</span><span class="spec-k">Standard</span></div>
     </div>
-    <p class="foot-txt">Magic Master · Профессиональный аудиомастеринг в браузере · <a href="/api/progress" target="_blank" rel="noopener" class="foot-link">Статус плана</a></p>
+    <p class="foot-txt">Magic Master <span id="appVersion" class="foot-version"></span> · Профессиональный аудиомастеринг в браузере · <a href="/progress.html" target="_blank" rel="noopener" class="foot-link">Статус плана</a> · <a href="/docs" target="_blank" rel="noopener" class="foot-link">API</a></p>
   </footer>
 
 </div><!-- /page -->
@@ -1293,6 +1998,26 @@
     </svg>
     <div class="drop-overlay-txt">Отпустите файл</div>
     <div class="drop-overlay-hint">WAV · MP3 · FLAC</div>
+  </div>
+</div>
+
+<!-- Upgrade Modal -->
+<div class="upgrade-overlay" id="upgradeOverlay" role="dialog" aria-modal="true" aria-labelledby="upgradeTitle">
+  <div class="upgrade-box">
+    <button class="upgrade-close" id="upgradeClose" aria-label="Закрыть">✕</button>
+    <div class="upgrade-icon" id="upgradeModalIcon">⚡</div>
+    <h3 class="upgrade-title" id="upgradeTitle">Это функция Pro</h3>
+    <p class="upgrade-desc" id="upgradeDesc">Жанровые пресеты EDM, Hip-Hop, Classical, Podcast, Lo-fi, House и экспорт MP3/FLAC доступны в тарифах Pro и Studio.</p>
+    <div class="upgrade-features">
+      <div class="upgrade-feature">Все жанровые пресеты (7 стилей)</div>
+      <div class="upgrade-feature">Экспорт MP3 и FLAC</div>
+      <div class="upgrade-feature">Безлимитное количество мастерингов</div>
+      <div class="upgrade-feature">Расширенный редактор цепочки</div>
+    </div>
+    <div class="upgrade-btns">
+      <a href="/pricing" class="btn-go-pro">Смотреть тарифы Pro →</a>
+      <button type="button" class="btn-stay-free" id="upgradeCancel">Остаться на Free</button>
+    </div>
   </div>
 </div>
 

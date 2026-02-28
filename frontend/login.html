@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Войти — Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810; --bg2: #0c0c18;
+      --surface: rgba(16,16,28,0.95); --border: rgba(255,255,255,0.08);
+      --text: #e8e8f0; --text-soft: #9898b8; --text-dim: #52527a;
+      --accent: #6c4bff; --accent2: #a855f7; --accent-glow: rgba(108,75,255,0.35);
+      --green: #34d399; --red: #f87171;
+      --r: 14px; --r-sm: 8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      margin: 0; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow-x: hidden;
+    }
+    .bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(108,75,255,.14) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 80% 90%, rgba(34,211,238,.07) 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+    }
+    .bg::after {
+      content: ''; position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.014) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    .card {
+      position: relative; z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      width: 100%; max-width: 400px;
+      margin: 1.5rem;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(108,75,255,.08);
+      backdrop-filter: blur(16px);
+    }
+
+    .logo {
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      margin-bottom: 1.75rem; text-decoration: none; color: var(--text);
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 18px var(--accent-glow);
+    }
+    .logo-icon svg { width: 18px; height: 18px; color: #fff; }
+    .logo-name { font-weight: 700; font-size: 1.1rem; }
+
+    h1 {
+      font-size: 1.45rem; font-weight: 700; letter-spacing: -.03em;
+      text-align: center; margin: 0 0 .35rem;
+    }
+    .sub {
+      font-size: .82rem; color: var(--text-soft); text-align: center;
+      margin: 0 0 1.75rem; line-height: 1.5;
+    }
+
+    .field { margin-bottom: 1rem; }
+    label {
+      display: block; font-size: .72rem; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: .4rem;
+    }
+    input[type="email"], input[type="password"], input[type="text"] {
+      width: 100%; padding: .72rem 1rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm); color: var(--text);
+      font-family: inherit; font-size: .9rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    input:focus {
+      border-color: rgba(108,75,255,.5);
+      box-shadow: 0 0 0 3px rgba(108,75,255,.15);
+    }
+    input::placeholder { color: var(--text-dim); }
+    input.invalid { border-color: var(--red); }
+    input.valid   { border-color: var(--green); }
+
+    .error-msg {
+      font-size: .75rem; color: var(--red); margin-top: .35rem;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    .btn-submit {
+      width: 100%; padding: .78rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 700; font-size: .9rem;
+      border: none; border-radius: var(--r-sm); cursor: pointer;
+      transition: opacity .15s, transform .12s;
+      margin-top: .5rem;
+    }
+    .btn-submit:hover { opacity: .88; }
+    .btn-submit:active { transform: scale(.97); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+    .divider {
+      display: flex; align-items: center; gap: .75rem;
+      margin: 1.25rem 0; color: var(--text-dim); font-size: .75rem;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .alt-link {
+      text-align: center; font-size: .82rem; color: var(--text-soft);
+    }
+    .alt-link a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .alt-link a:hover { text-decoration: underline; }
+
+    .alert {
+      padding: .75rem 1rem; border-radius: var(--r-sm);
+      font-size: .82rem; margin-bottom: 1rem;
+      display: none;
+    }
+    .alert.error   { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.25); color: var(--red); display: block; }
+    .alert.success { background: rgba(52,211,153,.1);  border: 1px solid rgba(52,211,153,.25);  color: var(--green); display: block; }
+
+    .loading { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: .4rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .back-link {
+      display: flex; align-items: center; justify-content: center; gap: .3rem;
+      margin-bottom: 1.25rem; font-size: .75rem; color: var(--text-dim);
+      text-decoration: none; transition: color .15s;
+    }
+    .back-link:hover { color: var(--text-soft); }
+
+    .pro-note {
+      background: rgba(108,75,255,.08); border: 1px solid rgba(108,75,255,.18);
+      border-radius: var(--r-sm); padding: .65rem .9rem;
+      font-size: .76rem; color: var(--text-soft);
+      margin-bottom: 1.25rem; line-height: 1.5;
+    }
+    .pro-note strong { color: var(--accent2); }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="card">
+  <a href="/" class="back-link">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    На главную
+  </a>
+
+  <a href="/" class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+    </div>
+    <span class="logo-name">Magic Master</span>
+  </a>
+
+  <h1>Войти в аккаунт</h1>
+  <p class="sub">Зарегистрированные пользователи получают <strong style="color:var(--accent2)">Pro</strong> доступ в бета-период</p>
+
+  <div class="pro-note">
+    <strong>✦ Бета-период:</strong> все зарегистрированные пользователи получают Pro тариф бесплатно — безлимитные мастеринги, все жанры, MP3/FLAC экспорт.
+  </div>
+
+  <div id="alertBox" class="alert"></div>
+
+  <form id="loginForm" autocomplete="on">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+      <div class="error-msg" id="emailErr"></div>
+    </div>
+    <div class="field">
+      <label for="password">Пароль</label>
+      <input type="password" id="password" name="password" placeholder="Минимум 6 символов" autocomplete="current-password" required>
+      <div class="error-msg" id="passErr"></div>
+    </div>
+    <button type="submit" class="btn-submit" id="submitBtn">Войти</button>
+  </form>
+
+  <div class="divider">или</div>
+
+  <p class="alt-link">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+</div>
+
+<script>
+  // Если уже залогинен — редирект
+  (function() {
+    const token = localStorage.getItem('mm_token');
+    if (token) {
+      const redirect = new URLSearchParams(window.location.search).get('next') || '/app';
+      window.location.replace(redirect);
+    }
+  })();
+
+  const form      = document.getElementById('loginForm');
+  const alertBox  = document.getElementById('alertBox');
+  const submitBtn = document.getElementById('submitBtn');
+  const emailInput = document.getElementById('email');
+  const passInput  = document.getElementById('password');
+
+  function showAlert(msg, type) {
+    alertBox.textContent = msg;
+    alertBox.className = 'alert ' + type;
+  }
+  function clearAlert() {
+    alertBox.className = 'alert';
+  }
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    clearAlert();
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="loading"></span>Входим…';
+
+    const email    = emailInput.value.trim();
+    const password = passInput.value;
+
+    if (!email || !password) {
+      showAlert('Заполните все поля', 'error');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Войти';
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        showAlert(data.detail || 'Ошибка входа', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Войти';
+        return;
+      }
+
+      // Сохраняем токен и данные пользователя
+      localStorage.setItem('mm_token', data.access_token);
+      localStorage.setItem('mm_user_email', data.email);
+      localStorage.setItem('mm_user_tier', data.tier);
+
+      showAlert('✓ Вход выполнен! Переходим…', 'success');
+      setTimeout(function() {
+        const next = new URLSearchParams(window.location.search).get('next') || '/app';
+        window.location.replace(next);
+      }, 800);
+
+    } catch(err) {
+      showAlert('Ошибка сети. Проверьте соединение.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Войти';
+    }
+  });
+</script>
+</body>
+</html>

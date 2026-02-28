@@ -25,7 +25,8 @@ tar --exclude='backend/venv' \
     start.sh \
     pack_for_deploy.sh \
     README.md \
-    DEPLOY.md
+    DEPLOY.md \
+    PROGRESS.md
 
 echo ""
 echo "Готово: $ROOT/$ARCHIVE"

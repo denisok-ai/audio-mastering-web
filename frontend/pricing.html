@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тарифы — Magic Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #040408; --bg2: #08080f;
+      --surface: rgba(10,10,18,0.96); --surface2: rgba(16,16,28,0.98);
+      --border: rgba(255,255,255,0.06);
+      --text: #eeeef8; --text-soft: #8888aa; --text-dim: #44445e;
+      --accent: #7c3aed; --accent2: #a855f7; --accent-glow: rgba(124,58,237,0.4);
+      --cyan: #06b6d4; --green: #10b981; --amber: #f59e0b; --red: #ef4444;
+      --pro-ref:       #db2777;
+      --pro-dynEQ:     #8b5cf6;
+      --pro-transient: #f59e0b;
+      --pro-denoiser:  #06b6d4;
+      --pro-parallel:  #ef4444;
+      --pro-deesser:   #10b981;
+      --r: 12px; --r-lg: 18px; --r-sm: 8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      margin: 0; min-height: 100vh; overflow-x: hidden;
+    }
+
+    /* ── Background ── */
+    .bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, rgba(108,75,255,.12) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(34,211,238,.07) 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+    }
+    .bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.014) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,16,.7); backdrop-filter: blur(14px);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: .5rem;
+      text-decoration: none; color: var(--text);
+    }
+    .nav-logo-icon {
+      width: 30px; height: 30px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+    .nav-logo-icon svg { width: 15px; height: 15px; color: #fff; }
+    .nav-logo-name { font-weight: 700; font-size: 1rem; }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-links a {
+      color: var(--text-soft); text-decoration: none; font-size: .85rem;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff !important; font-weight: 700; font-size: .8rem !important;
+      padding: .45rem 1rem; border-radius: 8px;
+      transition: opacity .15s !important;
+    }
+    .nav-cta:hover { opacity: .85; }
+
+    /* ── Main ── */
+    main {
+      position: relative; z-index: 1;
+      max-width: 1080px; margin: 0 auto;
+      padding: 4rem 1.5rem 6rem;
+    }
+
+    /* ── Hero ── */
+    .pricing-hero { text-align: center; margin-bottom: 3.5rem; }
+    .pricing-hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem); font-weight: 700;
+      letter-spacing: -.04em; margin: 0 0 .75rem;
+      background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,.55) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .pricing-hero p {
+      font-size: 1rem; color: var(--text-soft); max-width: 480px;
+      margin: 0 auto 1.5rem; line-height: 1.6;
+    }
+    .toggle-row {
+      display: inline-flex; align-items: center; gap: .75rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 99px; padding: 4px 6px;
+    }
+    .tog-btn {
+      font-size: .78rem; font-weight: 600; padding: .35rem .85rem;
+      border-radius: 99px; border: none; cursor: pointer;
+      background: none; color: var(--text-dim); transition: all .2s;
+    }
+    .tog-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; box-shadow: 0 2px 10px var(--accent-glow);
+    }
+    .save-badge {
+      font-size: .68rem; font-weight: 700; color: var(--green);
+      background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25);
+      border-radius: 99px; padding: 2px 8px;
+    }
+
+    /* ── Plans grid ── */
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 4rem;
+    }
+    .plan-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 1.75rem;
+      position: relative;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .plan-card:hover {
+      border-color: rgba(108,75,255,.3);
+      box-shadow: 0 0 0 1px rgba(108,75,255,.1), 0 16px 48px rgba(0,0,0,.5);
+    }
+    .plan-card.popular {
+      border-color: rgba(108,75,255,.45);
+      box-shadow: 0 0 0 1px rgba(108,75,255,.2), 0 8px 40px rgba(108,75,255,.15);
+    }
+    .popular-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-size: .65rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; padding: 3px 12px; border-radius: 99px;
+      box-shadow: 0 4px 12px var(--accent-glow);
+      white-space: nowrap;
+    }
+    .plan-name {
+      font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin: 0 0 .75rem;
+    }
+    .plan-price {
+      display: flex; align-items: baseline; gap: .25rem;
+      margin-bottom: .25rem;
+    }
+    .plan-price .amount {
+      font-size: 2.5rem; font-weight: 700; letter-spacing: -.04em; color: var(--text);
+    }
+    .plan-price .currency { font-size: 1rem; color: var(--text-soft); margin-top: .4rem; }
+    .plan-price .period  { font-size: .8rem; color: var(--text-dim); }
+    .plan-orig {
+      font-size: .75rem; color: var(--text-dim);
+      text-decoration: line-through; margin-bottom: .85rem;
+    }
+    .plan-desc {
+      font-size: .82rem; color: var(--text-soft); line-height: 1.5;
+      margin-bottom: 1.25rem;
+    }
+    .plan-btn {
+      display: block; width: 100%; padding: .72rem;
+      border-radius: var(--r-sm); font-weight: 700; font-size: .85rem;
+      text-align: center; text-decoration: none; cursor: pointer; border: none;
+      transition: opacity .15s, transform .12s;
+    }
+    .plan-btn:active { transform: scale(.97); }
+    .plan-btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .plan-btn.outline {
+      background: none; border: 1px solid var(--border); color: var(--text);
+    }
+    .plan-btn:hover { opacity: .85; }
+    .plan-divider {
+      border: none; border-top: 1px solid var(--border); margin: 1.25rem 0;
+    }
+    .plan-features { list-style: none; padding: 0; margin: 0; }
+    .plan-features li {
+      display: flex; align-items: flex-start; gap: .5rem;
+      font-size: .8rem; color: var(--text-soft);
+      padding: .28rem 0;
+    }
+    .plan-features li .ico { flex-shrink: 0; margin-top: 1px; }
+    .ico-yes  { color: var(--green); }
+    .ico-no   { color: var(--text-dim); }
+    .ico-pro  { color: var(--accent2); }
+
+    /* ── Compare table ── */
+    .compare-section { margin-bottom: 4rem; }
+    .compare-title {
+      font-size: 1.35rem; font-weight: 700; letter-spacing: -.03em;
+      margin: 0 0 1.5rem; text-align: center;
+    }
+    .compare-table {
+      width: 100%; border-collapse: collapse;
+      background: var(--surface); border-radius: var(--r-lg);
+      overflow: hidden; border: 1px solid var(--border);
+    }
+    .compare-table th, .compare-table td {
+      padding: .75rem 1rem; text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: .82rem;
+    }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table th {
+      font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-dim);
+      background: rgba(255,255,255,.025);
+    }
+    .compare-table td:first-child { color: var(--text-soft); }
+    .compare-table td.val-yes  { color: var(--green); font-weight: 600; }
+    .compare-table td.val-no   { color: var(--text-dim); }
+    .compare-table td.val-pro  { color: var(--accent2); font-weight: 600; }
+    .compare-table tr:hover td { background: rgba(255,255,255,.015); }
+
+    /* ── FAQ ── */
+    .faq-section { max-width: 680px; margin: 0 auto 4rem; }
+    .faq-title { font-size: 1.35rem; font-weight: 700; letter-spacing: -.03em; margin: 0 0 1.5rem; text-align: center; }
+    .faq-item {
+      border: 1px solid var(--border); border-radius: var(--r);
+      margin-bottom: .6rem; overflow: hidden;
+    }
+    .faq-q {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem; cursor: pointer;
+      font-size: .88rem; font-weight: 600; color: var(--text);
+      user-select: none;
+    }
+    .faq-q:hover { background: rgba(255,255,255,.025); }
+    .faq-arrow { font-size: .7rem; transition: transform .2s; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      font-size: .82rem; color: var(--text-soft); line-height: 1.6;
+      transition: max-height .3s ease, padding .3s;
+      padding: 0 1.25rem;
+    }
+    .faq-item.open .faq-a { max-height: 400px; padding: 0 1.25rem 1rem; }
+
+    /* ── CTA ── */
+    .cta-section {
+      background: linear-gradient(135deg, rgba(108,75,255,.12), rgba(168,85,247,.08));
+      border: 1px solid rgba(108,75,255,.2);
+      border-radius: var(--r-lg); padding: 3rem 2rem;
+      text-align: center; margin-bottom: 3rem;
+    }
+    .cta-section h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.03em; margin: 0 0 .6rem; }
+    .cta-section p { color: var(--text-soft); margin: 0 0 1.5rem; font-size: .9rem; }
+    .cta-btns { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .btn-cta-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 700; padding: .75rem 1.75rem;
+      border-radius: var(--r-sm); text-decoration: none; font-size: .9rem;
+      box-shadow: 0 4px 16px var(--accent-glow); transition: opacity .15s;
+    }
+    .btn-cta-primary:hover { opacity: .85; }
+    .btn-cta-ghost {
+      background: none; border: 1px solid var(--border); color: var(--text);
+      font-weight: 600; padding: .75rem 1.75rem;
+      border-radius: var(--r-sm); text-decoration: none; font-size: .9rem;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-cta-ghost:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2rem; text-align: center;
+      font-size: .78rem; color: var(--text-dim);
+      position: relative; z-index: 1;
+    }
+    footer a { color: var(--text-dim); text-decoration: none; transition: color .15s; }
+    footer a:hover { color: var(--text-soft); }
+
+    @media(max-width:640px) {
+      nav { padding: 1rem; }
+      .nav-links { display: none; }
+      main { padding: 2.5rem 1rem 4rem; }
+      .plans { grid-template-columns: 1fr; }
+      .compare-table { font-size: .75rem; }
+      .compare-table th, .compare-table td { padding: .55rem .7rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+    </div>
+    <span class="nav-logo-name">Magic Master</span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Главная</a>
+    <a href="/app">Приложение</a>
+    <a href="/progress.html">Прогресс</a>
+    <a href="/app" class="nav-cta">Мастерить бесплатно →</a>
+  </div>
+</nav>
+
+<main>
+  <!-- Hero -->
+  <div class="pricing-hero">
+    <h1>Простые тарифы,<br>без сюрпризов</h1>
+    <p>Начните бесплатно. Переходите на Pro, когда вам нужно больше.</p>
+    <div class="toggle-row">
+      <button class="tog-btn active" id="togMonthly">Ежемесячно</button>
+      <button class="tog-btn" id="togAnnual">Ежегодно</button>
+      <span class="save-badge">Экономия 25%</span>
+    </div>
+  </div>
+
+  <!-- Plans -->
+  <div class="plans">
+    <!-- Free -->
+    <div class="plan-card">
+      <p class="plan-name">Free</p>
+      <div class="plan-price">
+        <span class="currency">$</span>
+        <span class="amount">0</span>
+        <span class="period">/ мес</span>
+      </div>
+      <p class="plan-desc">Попробуйте без регистрации. 3 мастеринга в день.</p>
+      <a href="/app" class="plan-btn outline">Начать бесплатно</a>
+      <hr class="plan-divider">
+      <ul class="plan-features">
+        <li><span class="ico ico-yes">✓</span> 3 мастеринга в день</li>
+        <li><span class="ico ico-yes">✓</span> Анализ LUFS, Peak, спектр</li>
+        <li><span class="ico ico-yes">✓</span> Жанр Stream (−14 LUFS)</li>
+        <li><span class="ico ico-yes">✓</span> Экспорт WAV 24-bit</li>
+        <li><span class="ico ico-yes">✓</span> Векторскоп + DAW-сравнение</li>
+        <li><span class="ico ico-no">—</span> Жанровые пресеты (EDM, Hip-Hop…)</li>
+        <li><span class="ico ico-no">—</span> Экспорт MP3 / FLAC</li>
+        <li><span class="ico ico-no">—</span> Редактор цепочки модулей</li>
+        <li><span class="ico ico-no">—</span> Сохранение проектов</li>
+      </ul>
+    </div>
+
+    <!-- Pro -->
+    <div class="plan-card popular">
+      <div class="popular-badge">Популярный</div>
+      <p class="plan-name">Pro</p>
+      <div class="plan-price">
+        <span class="currency">$</span>
+        <span class="amount" id="proAmount">9</span>
+        <span class="period" id="proPeriod">/ мес</span>
+      </div>
+      <p class="plan-orig" id="proOrig" style="visibility:hidden">$12 / мес</p>
+      <p class="plan-desc">Для музыкантов и продюсеров. Все инструменты + уникальные PRO-модули.</p>
+      <a href="/app" class="plan-btn primary">Выбрать Pro →</a>
+      <hr class="plan-divider">
+      <ul class="plan-features">
+        <li><span class="ico ico-pro">✦</span> Безлимитные мастеринги</li>
+        <li><span class="ico ico-pro">✦</span> Все 7 жанровых пресетов</li>
+        <li><span class="ico ico-pro">✦</span> Экспорт WAV, MP3, FLAC</li>
+        <li><span class="ico ico-pro">✦</span> Редактор цепочки модулей</li>
+        <li><span class="ico ico-pro">✦</span> M/S EQ, 4-band Imager, Reverb</li>
+        <li style="color:var(--pro-ref);font-size:.78rem;padding:.28rem 0;">◆ Reference Track Mastering</li>
+        <li style="color:var(--pro-dynEQ);font-size:.78rem;padding:.28rem 0;">◆ Dynamic EQ — 8 полос</li>
+        <li style="color:var(--pro-transient);font-size:.78rem;padding:.28rem 0;">◆ Transient Designer</li>
+        <li style="color:var(--pro-denoiser);font-size:.78rem;padding:.28rem 0;">◆ Spectral Denoiser</li>
+        <li style="color:var(--pro-parallel);font-size:.78rem;padding:.28rem 0;">◆ Parallel Compression + De-esser</li>
+        <li><span class="ico ico-pro">✦</span> Streaming Loudness Preview</li>
+        <li><span class="ico ico-no">—</span> Batch-обработка (до 50 файлов)</li>
+        <li><span class="ico ico-no">—</span> API-ключ</li>
+      </ul>
+    </div>
+
+    <!-- Studio -->
+    <div class="plan-card">
+      <p class="plan-name">Studio</p>
+      <div class="plan-price">
+        <span class="currency">$</span>
+        <span class="amount" id="studioAmount">29</span>
+        <span class="period" id="studioPeriod">/ мес</span>
+      </div>
+      <p class="plan-orig" id="studioOrig" style="visibility:hidden">$39 / мес</p>
+      <p class="plan-desc">Для профессиональных студий. Пакетная обработка и API.</p>
+      <a href="#" class="plan-btn outline" onclick="return false;">Выбрать Studio</a>
+      <hr class="plan-divider">
+      <ul class="plan-features">
+        <li><span class="ico ico-yes">✓</span> Всё из Pro</li>
+        <li><span class="ico ico-yes">✓</span> Batch: до 50 файлов за раз</li>
+        <li><span class="ico ico-yes">✓</span> Приоритетная обработка</li>
+        <li><span class="ico ico-yes">✓</span> REST API-ключ</li>
+        <li><span class="ico ico-yes">✓</span> История проектов (30 дней)</li>
+        <li><span class="ico ico-yes">✓</span> Сохранение кастомных пресетов</li>
+        <li><span class="ico ico-yes">✓</span> Расширенные отчёты</li>
+        <li><span class="ico ico-yes">✓</span> Приоритетная поддержка</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PRO Modules highlight -->
+  <div style="margin-bottom:3rem;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(168,85,247,.05));border:1px solid rgba(124,58,237,.2);border-radius:var(--r-lg);padding:2rem 1.75rem;">
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.25rem;">
+      <span style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Только в Pro и Studio</span>
+      <span style="font-size:.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:2px 8px;border-radius:4px;">5 уникальных модулей</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.65rem;">
+      <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.2);border-radius:8px;">
+        <span style="color:var(--pro-ref);font-size:1rem;">◆</span>
+        <div>
+          <div style="font-size:.76rem;font-weight:700;color:var(--text);">Reference Track</div>
+          <div style="font-size:.65rem;color:var(--text-dim);">FFT спектральный матчинг</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:8px;">
+        <span style="color:var(--pro-dynEQ);font-size:1rem;">◆</span>
+        <div>
+          <div style="font-size:.76rem;font-weight:700;color:var(--text);">Dynamic EQ</div>
+          <div style="font-size:.65rem;color:var(--text-dim);">8 полос, envelope follower</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;">
+        <span style="color:var(--pro-transient);font-size:1rem;">◆</span>
+        <div>
+          <div style="font-size:.76rem;font-weight:700;color:var(--text);">Transient Designer</div>
+          <div style="font-size:.65rem;color:var(--text-dim);">Атака + сустейн независимо</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:8px;">
+        <span style="color:var(--pro-denoiser);font-size:1rem;">◆</span>
+        <div>
+          <div style="font-size:.76rem;font-weight:700;color:var(--text);">Spectral Denoiser</div>
+          <div style="font-size:.65rem;color:var(--text-dim);">Wiener-фильтр, без артефактов</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;">
+        <span style="color:var(--pro-parallel);font-size:1rem;">◆</span>
+        <div>
+          <div style="font-size:.76rem;font-weight:700;color:var(--text);">Parallel Compression</div>
+          <div style="font-size:.65rem;color:var(--text-dim);">NY-техника, mix параметр</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:.78rem;color:var(--text-dim);margin-top:1rem;line-height:1.5;">
+      Все уникальные модули доступны бесплатно в период бета-тестирования. Зарегистрируйтесь для Pro-доступа.
+    </p>
+  </div>
+
+  <!-- Compare table -->
+  <div class="compare-section">
+    <h2 class="compare-title">Подробное сравнение</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Функция</th>
+          <th>Free</th>
+          <th>Pro</th>
+          <th>Studio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Мастерингов в день</td>
+          <td>3</td>
+          <td class="val-yes">∞</td>
+          <td class="val-yes">∞</td>
+        </tr>
+        <tr>
+          <td>Макс. размер файла</td>
+          <td>50 МБ</td>
+          <td class="val-pro">200 МБ</td>
+          <td class="val-pro">500 МБ</td>
+        </tr>
+        <tr>
+          <td>Жанровые пресеты</td>
+          <td>Stream</td>
+          <td class="val-pro">7 пресетов</td>
+          <td class="val-pro">7 пресетов</td>
+        </tr>
+        <tr>
+          <td>Форматы экспорта</td>
+          <td>WAV</td>
+          <td class="val-pro">WAV, MP3, FLAC</td>
+          <td class="val-pro">WAV, MP3, FLAC</td>
+        </tr>
+        <tr>
+          <td>Редактор цепочки</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>M/S EQ per-band</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>Reverb M/S (5 типов)</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>Oversampling Exciter</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>LUFS-пресеты (Spotify, YT…)</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr style="background:rgba(219,39,119,.04);">
+          <td style="color:var(--pro-ref);font-weight:600;">◆ Reference Track Mastering</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr style="background:rgba(139,92,246,.04);">
+          <td style="color:var(--pro-dynEQ);font-weight:600;">◆ Dynamic EQ — 8 полос</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr style="background:rgba(245,158,11,.04);">
+          <td style="color:var(--pro-transient);font-weight:600;">◆ Transient Designer</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr style="background:rgba(6,182,212,.04);">
+          <td style="color:var(--pro-denoiser);font-weight:600;">◆ Spectral Denoiser</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr style="background:rgba(239,68,68,.04);">
+          <td style="color:var(--pro-parallel);font-weight:600;">◆ Parallel Compression</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr style="background:rgba(16,185,129,.04);">
+          <td style="color:var(--pro-deesser);font-weight:600;">◆ De-esser (5–9 кГц)</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>Streaming Loudness Preview</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>M/S Spectrum (MID/SIDE)</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>Batch-обработка</td>
+          <td class="val-no">—</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">До 50 файлов</td>
+        </tr>
+        <tr>
+          <td>API-ключ</td>
+          <td class="val-no">—</td>
+          <td class="val-no">—</td>
+          <td class="val-yes">✓</td>
+        </tr>
+        <tr>
+          <td>История проектов</td>
+          <td>Только браузер</td>
+          <td>Только браузер</td>
+          <td class="val-pro">30 дней на сервере</td>
+        </tr>
+        <tr>
+          <td>Поддержка</td>
+          <td>—</td>
+          <td>Стандартная</td>
+          <td class="val-pro">Приоритетная</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2 class="faq-title">Вопросы и ответы</h2>
+
+    <div class="faq-item">
+      <div class="faq-q">Нужна ли регистрация для Free тарифа?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">Нет! Просто перетащите файл на страницу и нажмите «Запустить мастеринг». Никакого email, пароля или карточки. Free-тариф работает без регистрации.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Что значит «3 мастеринга в день»?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">На Free тарифе вы можете обработать до 3 файлов в сутки с одного IP-адреса. Счётчик сбрасывается в полночь по UTC. Без регистрации это лучший способ попробовать сервис.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Когда появится возможность оплатить Pro?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">Pro и Studio тарифы находятся в разработке. Сейчас все функции Pro доступны бесплатно в рамках бета-периода — пользуйтесь! Мы уведомим о запуске оплаты.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Какое качество у Free-мастеринга?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">Абсолютно то же самое DSP-ядро. Free ограничен только жанром (Stream, −14 LUFS) и форматом (WAV). Алгоритм Studio EQ, M/S Dynamics, Maximizer, Dithering — полные, без деградации.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Мои файлы хранятся на сервере?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">Нет. Загруженные файлы обрабатываются в памяти и автоматически удаляются после скачивания результата (обычно < 5 минут). Мы не храним ваши треки на диске.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Есть ли API для автоматизации?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">Да! REST API доступен по адресу <a href="/docs" style="color:var(--accent)" target="_blank">/docs</a>. API-ключ для автоматизации в рамках Studio тарифа — в разработке. Сейчас API открыт без аутентификации.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Что такое уникальные PRO-модули?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">Magic Master включает 5 функций, которых нет у LANDR и eMastered: Reference Track Mastering (подгонка спектра под эталонный трек), Dynamic EQ (8-полосный EQ реагирующий на уровень), Transient Designer (контроль атаки и сустейна), Spectral Denoiser (Wiener-фильтр для удаления шума) и Parallel Compression (NY-техника для музыкальной плотности). Все модули доступны в бета-период бесплатно.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Что даёт Reference Track Mastering?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">Вы загружаете любой трек-эталон (например, ваш любимый релиз). Система анализирует его спектральный баланс через FFT и строит корректирующую EQ-кривую для вашего трека. Результат: ваш мастер звучит с таким же спектральным характером как эталон, сохраняя при этом уникальность оригинала.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Что такое Streaming Loudness Preview?
+        <span class="faq-arrow">▼</span>
+      </div>
+      <div class="faq-a">После анализа трека система показывает как каждая стриминговая платформа (Spotify, YouTube, Apple Music, Tidal, Amazon, Broadcast) нормализует ваш трек. Зелёный — уровень оптимален, жёлтый — платформа немного понизит громкость, красный — значительно приглушит. Это позволяет выбрать правильный целевой LUFS ещё до мастеринга.</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Начните сейчас — это бесплатно</h2>
+    <p>Профессиональный мастеринг без регистрации. 3 трека в день — без карточки.</p>
+    <div class="cta-btns">
+      <a href="/app" class="btn-cta-primary">Мастерить бесплатно →</a>
+      <a href="/docs" target="_blank" class="btn-cta-ghost">API документация</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>Magic Master <span id="footVersion"></span> · Профессиональный аудиомастеринг · 
+    <a href="/">Главная</a> · <a href="/app">Приложение</a> · 
+    <a href="/progress.html">Прогресс</a> · <a href="/docs">API</a>
+  </p>
+</footer>
+
+<script>
+  // Toggle monthly/annual prices
+  const proAmounts    = { monthly: '9',  annual: '7'  };
+  const studioAmounts = { monthly: '29', annual: '22' };
+  const proOrigs      = { monthly: '',   annual: '$9/мес' };
+  const studioOrigs   = { monthly: '',   annual: '$29/мес' };
+
+  let billingMode = 'monthly';
+
+  function updatePrices() {
+    document.getElementById('proAmount').textContent     = proAmounts[billingMode];
+    document.getElementById('studioAmount').textContent  = studioAmounts[billingMode];
+    const proOrig    = document.getElementById('proOrig');
+    const studioOrig = document.getElementById('studioOrig');
+    if (billingMode === 'annual') {
+      proOrig.textContent    = proOrigs.annual;    proOrig.style.visibility    = 'visible';
+      studioOrig.textContent = studioOrigs.annual; studioOrig.style.visibility = 'visible';
+      document.getElementById('proPeriod').textContent    = '/ мес при оплате за год';
+      document.getElementById('studioPeriod').textContent = '/ мес при оплате за год';
+    } else {
+      proOrig.style.visibility    = 'hidden';
+      studioOrig.style.visibility = 'hidden';
+      document.getElementById('proPeriod').textContent    = '/ мес';
+      document.getElementById('studioPeriod').textContent = '/ мес';
+    }
+  }
+
+  document.getElementById('togMonthly').addEventListener('click', function() {
+    billingMode = 'monthly';
+    this.classList.add('active');
+    document.getElementById('togAnnual').classList.remove('active');
+    updatePrices();
+  });
+  document.getElementById('togAnnual').addEventListener('click', function() {
+    billingMode = 'annual';
+    this.classList.add('active');
+    document.getElementById('togMonthly').classList.remove('active');
+    updatePrices();
+  });
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(function(q) {
+    q.addEventListener('click', function() {
+      const item = q.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(function(i) { i.classList.remove('open'); });
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Version in footer
+  fetch('/api/version').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+    if (d && d.version) document.getElementById('footVersion').textContent = 'v' + d.version;
+  }).catch(function() {});
+</script>
+</body>
+</html>
