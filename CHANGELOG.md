@@ -7,6 +7,52 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
+### Рефакторинг архитектуры (2026-03-01)
+
+#### Деплой без Docker — systemd + Nginx
+- **deploy/systemd/magic-master.service**: unit-файл для запуска через systemd с лимитами памяти (MemoryMax=10G), CPU affinity и security directives.
+- **deploy/deploy.sh**: скрипт автоматического деплоя на Ubuntu 22.04 (пакеты, venv, systemd, Nginx, log rotation).
+- **deploy/nginx/magic-master.conf**: upstream переключён на 127.0.0.1:8000, добавлен keepalive 32, gzip-компрессия.
+- **deploy/nginx/magic-master-proxy.inc**: выделенный include с proxy-настройками, SSE-локейшном и security headers.
+
+#### Разбивка main.py на роутеры
+- **backend/app/routers/misc.py**: публичные вспомогательные эндпоинты (`/api/news`, `/api/limits`, `/api/presets`, `/api/styles`, `/api/measure` и др.).
+- **backend/app/routers/ai_router.py**: все AI-эндпоинты (`/api/ai/limits`, `/api/ai/recommend`, `/api/ai/report`, `/api/ai/nl-config`, `/api/ai/chat`).
+- **backend/app/routers/auth.py**: аутентификация и профиль пользователя (register, login, me, profile, history, API-ключи, пресеты, смена/сброс пароля).
+- **backend/app/routers/mastering.py**: весь цикл мастеринга (POST /api/v2/master, /api/v2/batch, /api/v2/analyze, /api/v2/reference-match, статус, результат, прогресс SSE).
+- **backend/app/routers/__init__.py**: маркер пакета.
+- **backend/app/main.py**: сокращён с ~2986 до ~560 строк — только инициализация, middleware, health, metrics, статика.
+
+#### Слой сервисов для admin.py
+- **backend/app/services/user_service.py**: бизнес-логика управления пользователями (CRUD, подписки, bulk-действия).
+- **backend/app/services/stats_service.py**: агрегация статистики для дашборда.
+- **backend/app/services/reports_service.py**: генерация аналитических отчётов.
+- **backend/app/services/__init__.py**: маркер пакета.
+- **backend/app/admin.py**: упрощён до «тонкого» контроллера, вызывающего сервисы.
+
+#### Общие зависимости и утилиты
+- **backend/app/deps.py**: централизованные FastAPI-зависимости и rate-limit хранилища (`_rate_limits`, `_auth_attempts`, `_FREE_DAILY_LIMIT`, `_AUTH_LIMIT_PER_MINUTE`).
+- **backend/app/helpers.py**: добавлены `json_safe_float` и `safe_content_disposition_filename`.
+- **backend/app/jobs_store.py**: SQLite-персистентность задач мастеринга с in-memory кэшем, семафоры для очереди приоритетов.
+
+#### Оптимизация DSP
+- **backend/app/pipeline.py**: JIT-компиляция через `numba` (`_envelope_follower_core`, `_comb_filter_core`, `_allpass_filter_core`).
+- **backend/requirements.txt**: добавлен `numba>=0.59.0`.
+
+#### Исправление тестов
+- **backend/tests/test_api.py**, **test_auth.py**, **test_admin.py**: импорты `_rate_limits`, `_auth_attempts`, `_AUTH_LIMIT_PER_MINUTE`, `_FREE_DAILY_LIMIT`, `_check_audio_magic_bytes`, `_reset_tokens` перенаправлены из `app.main` в `app.deps`, `app.helpers`, `app.routers.auth`.
+
+### Расширение i18n (бэклог)
+
+- **frontend/locales/ru.json**, **en.json**: добавлены ключи для шапки (подзаголовок, тема, тёмная/светлая), тир-бейджа (мастеринга осталось, Перейти на Pro), авторизации (Профиль, Дашборд, Выйти, Войти/Регистрация, Приоритетная очередь), зоны загрузки (перетащите файл, или нажмите), пакетной обработки, параметров (Параметры, Жанр/Стиль, Целевой LUFS, Цепочка модулей, Доп. обработка), кнопок (Сохранить/Загрузить/Удалить пресет, Запустить мастеринг, Обработка…, файлов), A/B (Прослушать до/после, Сравнение до/после).
+- **frontend/index.html**: атрибуты `data-i18n` проставлены на соответствующие элементы; при переключении RU/EN обновляется весь интерфейс.
+- **frontend/app.js**: текст кнопки мастеринга («Запустить мастеринг», «Обработка…») выставляется через `__t('app.master')` и `__t('app.processing')` с учётом текущей локали.
+
+### Точечные доработки (аудит и валидация)
+
+- **backend/app/admin.py**: валидация PATCH настроек через Pydantic `Field` — `max_upload_mb` (1–500), `default_target_lufs` (−60…−1), `jobs_done_ttl_seconds` (0–30 дней), `global_rate_limit` (1–10000), `ai_limit_*`, `llm_guard_max_length_*`, SMTP `port` (1–65535). Согласованность с ограничениями на фронте.
+- **doc/AUDIT_ADMIN_REDESIGN.md**: раздел 1.3 приведён в соответствие с реализацией (maintenance_mode, флаги функций, журнал, валидация настроек отмечены как выполненные).
+
 ---
 
 ## [0.4.0] — 2026-02-28

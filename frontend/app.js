@@ -1,3 +1,30 @@
+/* ═══════ Theme (светлая/тёмная) — применяем до отрисовки ═══════ */
+(function themeInit() {
+  try {
+    var saved = localStorage.getItem('magic-master-theme');
+    if (saved === 'light') document.documentElement.classList.add('theme-light');
+  } catch (e) {}
+  var themeDark = document.getElementById('themeDark');
+  var themeLight = document.getElementById('themeLight');
+  function setTheme(light) {
+    if (light) {
+      document.documentElement.classList.add('theme-light');
+      if (themeDark) themeDark.classList.remove('active');
+      if (themeLight) themeLight.classList.add('active');
+    } else {
+      document.documentElement.classList.remove('theme-light');
+      if (themeDark) themeDark.classList.add('active');
+      if (themeLight) themeLight.classList.remove('active');
+    }
+    try { localStorage.setItem('magic-master-theme', light ? 'light' : 'dark'); } catch (e) {}
+  }
+  if (themeDark) themeDark.addEventListener('click', function() { setTheme(false); });
+  if (themeLight) themeLight.addEventListener('click', function() { setTheme(true); });
+  var isLight = document.documentElement.classList.contains('theme-light');
+  if (themeDark) themeDark.classList.toggle('active', !isLight);
+  if (themeLight) themeLight.classList.toggle('active', isLight);
+})();
+
 /* ═══════ DOM ═══════ */
 const API         = '';
 const wdeco       = document.getElementById('wdeco');
@@ -37,10 +64,8 @@ const btnABa        = document.getElementById('btnAB-a');
 const btnABb        = document.getElementById('btnAB-b');
 const btnMaster     = document.getElementById('btnMaster');
 const btnMasterTxt  = document.getElementById('btnMasterTxt');
-const aiActionsWrap = document.getElementById('aiActionsWrap');
 const btnAiRecommend = document.getElementById('btnAiRecommend');
 const btnAutoMaster  = document.getElementById('btnAutoMaster');
-const aiLimitsHint   = document.getElementById('aiLimitsHint');
 const btnAiReport    = document.getElementById('btnAiReport');
 const aiReportResult = document.getElementById('aiReportResult');
 const aiReportSummary= document.getElementById('aiReportSummary');
@@ -409,11 +434,13 @@ async function loadAudio(file) {
       requestAnimationFrame(() => drawVectorscope());
     }
     if (_features.ai_enabled) {
-      if (aiActionsWrap) { aiActionsWrap.style.display = 'block'; loadAiLimits(); }
+      const aiHelpersSection = document.getElementById('aiHelpersSection');
+      if (aiHelpersSection) { aiHelpersSection.style.display = 'block'; loadAiLimits(); }
       if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
       if (nlConfigWrap) nlConfigWrap.style.display = 'block';
     } else {
-      if (aiActionsWrap) aiActionsWrap.style.display = 'none';
+      const aiHelpersSection = document.getElementById('aiHelpersSection');
+      if (aiHelpersSection) aiHelpersSection.style.display = 'none';
       if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
       if (nlConfigWrap) nlConfigWrap.style.display = 'none';
     }
@@ -556,13 +583,11 @@ function drawSpectrum(barsArg) {
   const barW = W / bars.length;
   const refDb = 0;
   const minDb = -60;
-  // Цвет полос зависит от активного режима (MID=пурпурный, SIDE=янтарный, MONO=циан)
+  const isLight = document.documentElement.classList.contains('theme-light');
   const mode = lastSpectrumData ? lastSpectrumData.active : 'mono';
-  const colorMap = {
-    mono:  ['rgba(34,211,238,0.35)',  'rgba(34,211,238,0.9)'],
-    mid:   ['rgba(139,92,246,0.35)',  'rgba(139,92,246,0.9)'],
-    side:  ['rgba(245,158,11,0.35)',  'rgba(245,158,11,0.9)'],
-  };
+  const colorMap = isLight
+    ? { mono: ['rgba(8,145,178,0.5)', 'rgba(8,145,178,0.95)'],   mid: ['rgba(91,33,182,0.5)', 'rgba(91,33,182,0.95)'],   side: ['rgba(180,83,9,0.5)', 'rgba(180,83,9,0.95)'] }
+    : { mono: ['rgba(34,211,238,0.35)', 'rgba(34,211,238,0.9)'], mid: ['rgba(139,92,246,0.35)', 'rgba(139,92,246,0.9)'], side: ['rgba(245,158,11,0.35)', 'rgba(245,158,11,0.9)'] };
   const [c0, c1] = colorMap[mode] || colorMap.mono;
   for (let i = 0; i < bars.length; i++) {
     const db = bars[i];
@@ -595,10 +620,11 @@ function drawVectorscope() {
   }
   const ctx = vectorscopeCanvas.getContext('2d');
   ctx.clearRect(0, 0, W, H);
+  const isLight = document.documentElement.classList.contains('theme-light');
   const cx = W / 2;
   const cy = H / 2;
   const r = Math.min(cx, cy) * 0.92;
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, 2 * Math.PI);
@@ -606,7 +632,7 @@ function drawVectorscope() {
   const ch0 = audioBuffer.getChannelData(0);
   const ch1 = numCh >= 2 ? audioBuffer.getChannelData(1) : ch0;
   const step = Math.max(1, Math.floor(len / VECTORSCOPE_MAX_POINTS));
-  ctx.fillStyle = 'rgba(168,85,247,0.4)';
+  ctx.fillStyle = isLight ? 'rgba(91,33,182,0.75)' : 'rgba(168,85,247,0.4)';
   for (let i = 0; i < len; i += step) {
     const L = ch0[i] || 0;
     const R = ch1[i] || 0;
@@ -997,19 +1023,13 @@ function setFile(f){
   // AI-блок, секция «AI помощники», чат и NL — показываем при выборе файла, если AI включён в настройках
   const aiHelpersSection = document.getElementById('aiHelpersSection');
   if (_features.ai_enabled) {
-    if (aiActionsWrap) { aiActionsWrap.style.display = 'block'; if (typeof loadAiLimits === 'function') loadAiLimits(); }
-    if (aiHelpersSection) aiHelpersSection.style.display = 'block';
+    if (aiHelpersSection) { aiHelpersSection.style.display = 'block'; if (typeof loadAiLimits === 'function') loadAiLimits(); }
     if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
     if (nlConfigWrap) nlConfigWrap.style.display = 'block';
-    const nlConfigInlineEl = document.getElementById('nlConfigInline');
-    if (nlConfigInlineEl) nlConfigInlineEl.style.display = 'block';
   } else {
-    if (aiActionsWrap) aiActionsWrap.style.display = 'none';
     if (aiHelpersSection) aiHelpersSection.style.display = 'none';
     if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
     if (nlConfigWrap) nlConfigWrap.style.display = 'none';
-    const nlConfigInlineEl = document.getElementById('nlConfigInline');
-    if (nlConfigInlineEl) nlConfigInlineEl.style.display = 'none';
   }
   lastDawState = null;
   // P45: сброс A/B плеера
@@ -1031,14 +1051,11 @@ function resetAll(){
   drop.classList.remove('has-file');
   btnMeasure.disabled=true;
   btnMaster.disabled=true;
-  if (aiActionsWrap) aiActionsWrap.style.display = 'none';
   const aiHelpersSection = document.getElementById('aiHelpersSection');
   if (aiHelpersSection) aiHelpersSection.style.display = 'none';
   if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
   if (chatPanel) chatPanel.classList.remove('open');
   if (nlConfigWrap) nlConfigWrap.style.display = 'none';
-  const nlConfigInlineEl = document.getElementById('nlConfigInline');
-  if (nlConfigInlineEl) nlConfigInlineEl.style.display = 'none';
   setMeter(null);
   setStatus(stMeasure,'');
   setStatus(stMaster,'');
@@ -1689,7 +1706,7 @@ if (btnNlConfig && nlConfigInput) {
     if (e.key === 'Enter') btnNlConfig.click();
   });
 }
-// Дублирующий блок «Настройки голосом» в карточке Параметры — делегирует основному
+// «Настройки голосом» в блоке AI помощники — применяет текст к основному NL-config (цепочка)
 const nlConfigInputInline = document.getElementById('nlConfigInputInline');
 const btnNlConfigInline = document.getElementById('btnNlConfigInline');
 if (btnNlConfigInline && nlConfigInputInline && nlConfigInput && btnNlConfig) {
@@ -1799,7 +1816,7 @@ btnMaster.addEventListener('click', async()=>{
 
   btnMaster.disabled=true;
   btnMaster.classList.add('processing');
-  btnMasterTxt.textContent='Обработка…';
+  btnMasterTxt.textContent = (typeof window.__t === 'function' ? window.__t('app.processing') : 'Обработка…');
   wdeco.classList.add('active');
   setStatus(stMaster,'');
   resultPanel.classList.remove('visible');
@@ -1963,7 +1980,7 @@ btnMaster.addEventListener('click', async()=>{
 
   btnMaster.disabled=false;
   btnMaster.classList.remove('processing');
-  btnMasterTxt.textContent='Запустить мастеринг';
+  btnMasterTxt.textContent = (typeof window.__t === 'function' ? window.__t('app.master') : 'Запустить мастеринг');
   wdeco.classList.remove('active');
 });
 
@@ -1972,7 +1989,6 @@ if (btnAiRecommend) {
   btnAiRecommend.addEventListener('click', async () => {
     if (!currentFile) return;
     btnAiRecommend.disabled = true;
-    if (btnAiRecommendHero) btnAiRecommendHero.disabled = true;
     setStatus(stMeasure, 'AI подбирает пресет…', '');
     try {
       let res;
@@ -2009,21 +2025,13 @@ if (btnAiRecommend) {
       toast(friendlyError(e.message || 'Ошибка AI'), 'err', 4000);
     }
     btnAiRecommend.disabled = false;
-    if (btnAiRecommendHero) btnAiRecommendHero.disabled = false;
   });
 }
-
-// Дублирующие кнопки «AI помощники» в первой карточке — делегируют основным
-const btnAiRecommendHero = document.getElementById('btnAiRecommendHero');
-const btnAutoMasterHero = document.getElementById('btnAutoMasterHero');
-if (btnAiRecommendHero && btnAiRecommend) btnAiRecommendHero.addEventListener('click', () => { if (currentFile) btnAiRecommend.click(); });
-if (btnAutoMasterHero && btnMaster) btnAutoMasterHero.addEventListener('click', () => { if (currentFile) btnAutoMaster.click(); });
 
 if (btnAutoMaster) {
   btnAutoMaster.addEventListener('click', async () => {
     if (!currentFile) return;
     btnAutoMaster.disabled = true;
-    if (btnAutoMasterHero) btnAutoMasterHero.disabled = true;
     btnMaster.disabled = true;
     wdeco.classList.add('active');
     pipeline.classList.add('visible');
@@ -2080,7 +2088,6 @@ if (btnAutoMaster) {
     }
     progWrap.classList.remove('on');
     btnAutoMaster.disabled = false;
-    if (btnAutoMasterHero) btnAutoMasterHero.disabled = false;
     btnMaster.disabled = false;
     wdeco.classList.remove('active');
   });
@@ -2174,11 +2181,9 @@ async function loadAiLimits() {
     const backend = d.ai_backend || '';
     const rem = d.ai_remaining;
     const text = hintText(backend, rem);
-    if (aiLimitsHint) aiLimitsHint.textContent = text;
     const aiHelpersLimits = document.getElementById('aiHelpersLimits');
     if (aiHelpersLimits) aiHelpersLimits.textContent = text;
   } catch(e) {
-    if (aiLimitsHint) aiLimitsHint.textContent = '';
     const aiHelpersLimits = document.getElementById('aiHelpersLimits');
     if (aiHelpersLimits) aiHelpersLimits.textContent = '';
   }
@@ -2732,6 +2737,7 @@ loadTierLimits();
   let currentSrc   = 'original'; // 'original' | 'mastered'
   let savedTime    = 0;
   let blobUrls     = { original: null, mastered: null };
+  let isABPlaying  = false;       // явное состояние воспроизведения (надёжнее audio.paused при смене источника)
 
   function getSrcUrl(src) {
     const key = src === 'mastered' ? 'mastered' : 'original';
@@ -2752,7 +2758,9 @@ loadTierLimits();
     srcMast.classList.toggle('active', src === 'mastered');
     const url = getSrcUrl(src);
     if (!url) return;
-    const wasPlaying = !audio.paused;
+    const wasPlaying = isABPlaying;
+    isABPlaying = false;
+    updatePlayIcon();
     savedTime = audio.currentTime;
     audio.src = url;
     audio.volume = parseFloat(volSlider.value);
@@ -2789,12 +2797,13 @@ loadTierLimits();
     audio.volume = parseFloat(volSlider.value);
     audio.load();
     wrap.classList.add('visible');
+    isABPlaying = false;
     updatePlayIcon();
   };
 
   function updatePlayIcon() {
     if (!playIcon) return;
-    playIcon.innerHTML = audio.paused ? ICONS.play : ICONS.pause;
+    playIcon.innerHTML = isABPlaying ? ICONS.pause : ICONS.play;
   }
 
   playBtn.addEventListener('click', () => {
@@ -2802,13 +2811,16 @@ loadTierLimits();
       if (typeof toast === 'function') toast('Сначала выполните мастеринг — затем здесь можно прослушать до/после', 'err', 4000);
       return;
     }
-    if (audio.paused) audio.play().catch(() => {});
-    else audio.pause();
+    if (isABPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch(() => {});
+    }
   });
 
-  audio.addEventListener('play',  updatePlayIcon);
-  audio.addEventListener('pause', updatePlayIcon);
-  audio.addEventListener('ended', () => { updatePlayIcon(); });
+  audio.addEventListener('play',  () => { isABPlaying = true;  updatePlayIcon(); });
+  audio.addEventListener('pause', () => { isABPlaying = false; updatePlayIcon(); });
+  audio.addEventListener('ended', () => { isABPlaying = false; updatePlayIcon(); });
 
   audio.addEventListener('timeupdate', () => {
     if (!isFinite(audio.duration)) return;
@@ -2843,6 +2855,7 @@ loadTierLimits();
   // Сброс при новом мастеринге / сбросе файла
   document.addEventListener('masteringReset', () => {
     audio.pause();
+    isABPlaying = false;
     audio.src = '';
     wrap.classList.remove('visible');
     currentJobId = null;
