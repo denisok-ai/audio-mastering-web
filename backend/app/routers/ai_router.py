@@ -2,12 +2,15 @@
 # @description AI-эндпоинты: рекомендация пресета, отчёт, NL→config, чат.
 # @created 2026-03-01
 
+import logging
 import shutil
 from typing import List, Optional
 
 import numpy as np
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 from .. import ai as ai_module
 from .. import settings_store
@@ -61,29 +64,35 @@ async def api_ai_recommend(
     body: Optional[AIRecommendRequest] = None,
 ):
     """Рекомендация пресета по анализу трека (file или body.analysis)."""
-    require_feature_ai()
-    tier = get_tier_for_ai(user, request)
-    ident = get_ai_identifier(request, user)
-    limit_info = ai_module.check_ai_rate_limit(ident, tier)
-    if not limit_info["ok"]:
-        raise HTTPException(
-            429,
-            f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
-        )
+    try:
+        require_feature_ai()
+        tier = get_tier_for_ai(user, request)
+        ident = get_ai_identifier(request, user)
+        limit_info = ai_module.check_ai_rate_limit(ident, tier)
+        if not limit_info["ok"]:
+            raise HTTPException(
+                429,
+                f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
+            )
 
-    analysis = None
-    if body and body.analysis:
-        analysis = body.analysis
-    elif file and file.filename and allowed_file(file.filename):
-        analysis = await _analyze_file_for_ai(file)
+        analysis = None
+        if body and body.analysis:
+            analysis = body.analysis
+        elif file and file.filename and allowed_file(file.filename):
+            analysis = await _analyze_file_for_ai(file)
 
-    if not analysis:
-        raise HTTPException(400, "Передайте file (аудиофайл) или body.analysis.")
+        if not analysis:
+            raise HTTPException(400, "Передайте file (аудиофайл) или body.analysis.")
 
-    result = ai_module.recommend_preset(analysis)
-    ai_module.record_ai_usage(ident)
-    _log_ai(user, tier, "recommend")
-    return result
+        result = ai_module.recommend_preset(analysis)
+        ai_module.record_ai_usage(ident)
+        _log_ai(user, tier, "recommend")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_ai_recommend: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при рекомендации пресета: {e!s}") from e
 
 
 class AIReportRequest(BaseModel):
@@ -98,29 +107,35 @@ async def api_ai_report(
     body: Optional[AIReportRequest] = None,
 ):
     """Текстовый отчёт по анализу трека + рекомендации."""
-    require_feature_ai()
-    tier = get_tier_for_ai(user, request)
-    ident = get_ai_identifier(request, user)
-    limit_info = ai_module.check_ai_rate_limit(ident, tier)
-    if not limit_info["ok"]:
-        raise HTTPException(
-            429,
-            f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
-        )
+    try:
+        require_feature_ai()
+        tier = get_tier_for_ai(user, request)
+        ident = get_ai_identifier(request, user)
+        limit_info = ai_module.check_ai_rate_limit(ident, tier)
+        if not limit_info["ok"]:
+            raise HTTPException(
+                429,
+                f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
+            )
 
-    analysis = None
-    if body and body.analysis:
-        analysis = body.analysis
-    elif file and file.filename and allowed_file(file.filename):
-        analysis = await _analyze_file_for_ai(file, extended=False)
+        analysis = None
+        if body and body.analysis:
+            analysis = body.analysis
+        elif file and file.filename and allowed_file(file.filename):
+            analysis = await _analyze_file_for_ai(file, extended=False)
 
-    if not analysis:
-        raise HTTPException(400, "Передайте file (аудиофайл) или body.analysis.")
+        if not analysis:
+            raise HTTPException(400, "Передайте file (аудиофайл) или body.analysis.")
 
-    result = ai_module.report_with_recommendations(analysis)
-    ai_module.record_ai_usage(ident)
-    _log_ai(user, tier, "report")
-    return result
+        result = ai_module.report_with_recommendations(analysis)
+        ai_module.record_ai_usage(ident)
+        _log_ai(user, tier, "report")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_ai_report: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при формировании AI-отчёта: {e!s}") from e
 
 
 class AINlConfigRequest(BaseModel):
@@ -135,21 +150,27 @@ async def api_ai_nl_config(
     user: Optional[dict] = Depends(get_current_user_optional),
 ):
     """Естественный язык → параметры цепочки мастеринга и target_lufs."""
-    require_feature_ai()
-    tier = get_tier_for_ai(user, request)
-    ident = get_ai_identifier(request, user)
-    limit_info = ai_module.check_ai_rate_limit(ident, tier)
-    if not limit_info["ok"]:
-        raise HTTPException(
-            429,
-            f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
-        )
-    result = ai_module.nl_to_config(body.text or "", body.current_config)
-    if result.get("error"):
-        raise HTTPException(400, result["error"])
-    ai_module.record_ai_usage(ident)
-    _log_ai(user, tier, "nl_config")
-    return result
+    try:
+        require_feature_ai()
+        tier = get_tier_for_ai(user, request)
+        ident = get_ai_identifier(request, user)
+        limit_info = ai_module.check_ai_rate_limit(ident, tier)
+        if not limit_info["ok"]:
+            raise HTTPException(
+                429,
+                f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
+            )
+        result = ai_module.nl_to_config(body.text or "", body.current_config)
+        if result.get("error"):
+            raise HTTPException(400, result["error"])
+        ai_module.record_ai_usage(ident)
+        _log_ai(user, tier, "nl_config")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_ai_nl_config: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при разборе настроек: {e!s}") from e
 
 
 class AIChatRequest(BaseModel):
@@ -164,19 +185,25 @@ async def api_ai_chat(
     user: Optional[dict] = Depends(get_current_user_optional),
 ):
     """Чат-помощник по мастерингу."""
-    require_feature_ai()
-    tier = get_tier_for_ai(user, request)
-    ident = get_ai_identifier(request, user)
-    limit_info = ai_module.check_ai_rate_limit(ident, tier)
-    if not limit_info["ok"]:
-        raise HTTPException(
-            429,
-            f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
-        )
-    reply = ai_module.chat_assistant(body.messages or [], body.context)
-    ai_module.record_ai_usage(ident)
-    _log_ai(user, tier, "chat")
-    return {"reply": reply}
+    try:
+        require_feature_ai()
+        tier = get_tier_for_ai(user, request)
+        ident = get_ai_identifier(request, user)
+        limit_info = ai_module.check_ai_rate_limit(ident, tier)
+        if not limit_info["ok"]:
+            raise HTTPException(
+                429,
+                f"Лимит AI-запросов исчерпан: {limit_info['limit']}/день. Сброс: {limit_info['reset_at']}.",
+            )
+        reply = ai_module.chat_assistant(body.messages or [], body.context)
+        ai_module.record_ai_usage(ident)
+        _log_ai(user, tier, "chat")
+        return {"reply": reply}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_ai_chat: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера в AI-чате: {e!s}") from e
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

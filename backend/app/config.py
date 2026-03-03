@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # Семафоры одновременных задач мастеринга: Pro/Studio и Free (на мощном сервере увеличьте)
     semaphore_priority: int = 2   # MAGIC_MASTER_SEMAPHORE_PRIORITY
     semaphore_normal: int = 1     # MAGIC_MASTER_SEMAPHORE_NORMAL
-    # Режим отладки: все функции без авторизации (MAGIC_MASTER_DEBUG=1)
+    # Режим отладки: все функции без авторизации (MAGIC_MASTER_DEBUG=1 или MAGIC_MASTER_DEBUG_MODE=1)
     debug_mode: bool = Field(False, validation_alias="DEBUG")
 
     # AI agents: backend (openai | deepseek | anthropic | local), ключи и лимиты по тарифам

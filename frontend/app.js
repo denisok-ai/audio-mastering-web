@@ -240,8 +240,14 @@ async function _pollJobCompletion(jobId, onProgress) {
 
 function friendlyError(msg) {
   if (!msg) return msg;
+  /* В режиме отладки не подменяем сообщения (в т.ч. о лимитах) */
+  if (typeof _debugMode !== 'undefined' && _debugMode) return msg;
   if (msg.includes('Internal Server Error') || msg.includes('Internal S')) {
     return 'Ошибка на сервере при обработке. Попробуйте отключить часть модулей «Дополнительная обработка» или другой файл.';
+  }
+  /* Короткое сообщение при лимите мастерингов (429), чтобы не показывать длинный текст в тосте */
+  if (msg.includes('Лимит Free-тарифа исчерпан') || msg.includes('исчерпан') && msg.includes('мастеринг')) {
+    return 'Лимит мастерингов на сегодня исчерпан. Перейдите на Pro для безлимита.';
   }
   if (msg.includes('ffprobe') || msg.includes('ffmpeg') || msg.includes('ffmpeg')) {
     const base = msg.replace(/\[Errno \d+\][^.]*\.\s*/g, '').trim();
@@ -429,10 +435,14 @@ async function loadAudio(file) {
     fileMeta.textContent = fmtSize(file.size) + '  ·  ' + fmtTime(dur);
     if (spectrumCard) {
       spectrumCard.classList.add('visible');
+      const sn = document.getElementById('spectrumNoData');
+      if (sn) sn.style.display = 'none';
       requestAnimationFrame(() => drawSpectrum());
     }
     if (vectorscopeCard) {
       vectorscopeCard.classList.add('visible');
+      const vn = document.getElementById('vectorscopeNoData');
+      if (vn) vn.style.display = 'none';
       requestAnimationFrame(() => drawVectorscope());
     }
     if (_features.ai_enabled && typeof loadAiLimits === 'function') loadAiLimits();
@@ -1003,7 +1013,8 @@ function updateNoFileState() {
   const nlConfigInputInline = document.getElementById('nlConfigInputInline');
   const aiHelpersSection = document.getElementById('aiHelpersSection');
   if (btnAiRecommend) btnAiRecommend.disabled = !hasFile;
-  if (btnAutoMaster) btnAutoMaster.disabled = !hasFile;
+  const limitExhausted = _tierInfo && _tierInfo.remaining === 0 && _tierInfo.tier !== 'pro' && _tierInfo.tier !== 'studio' && !_debugMode;
+  if (btnAutoMaster) btnAutoMaster.disabled = !hasFile || limitExhausted;
   if (btnChatHelper) btnChatHelper.disabled = !hasFile;
   if (btnNlConfigInline) btnNlConfigInline.disabled = !hasFile;
   if (nlConfigInputInline) nlConfigInputInline.disabled = !hasFile;
@@ -1047,6 +1058,7 @@ function setFile(f){
   playerEl.classList.add('visible');
   playerEl.classList.remove('no-file');
   if (chatFab) chatFab.classList.remove('no-file');
+  updateNoFileState();
   // decode async
   loadAudio(f);
 }
@@ -1461,8 +1473,16 @@ btnMeasure.addEventListener('click', async()=>{
     if(durationSec!=null) { amDur.textContent=fmtTime(durationSec); audioMeta.classList.add('visible'); }
     const peakTxt = d.peak_dbfs!=null ? `  ·  Peak ${d.peak_dbfs.toFixed(1)} dB` : '';
     setStatus(stMeasure, 'Измерение завершено'+peakTxt, 'ok');
-    // M/S spectrum tabs
+    // M/S spectrum tabs и подсказки «Нет данных» в Спектр/Векторскоп
+    const spectrumNoData = document.getElementById('spectrumNoData');
+    const vectorscopeNoData = document.getElementById('vectorscopeNoData');
+    const hasSpectrum = Array.isArray(d.spectrum_bars) && d.spectrum_bars.length > 0 || d.spectrum_bars_mid || d.spectrum_bars_side;
+    const hasVectorscope = Array.isArray(d.vectorscope_points) && d.vectorscope_points.length > 0;
+    if (spectrumNoData) spectrumNoData.style.display = hasSpectrum ? 'none' : 'block';
+    if (vectorscopeNoData) vectorscopeNoData.style.display = hasVectorscope ? 'none' : 'block';
     if (d.spectrum_bars_mid || d.spectrum_bars_side) {
+      updateSpectrumTabs(d);
+    } else if (hasSpectrum && d.spectrum_bars) {
       updateSpectrumTabs(d);
     }
   }catch(e){
@@ -2036,7 +2056,11 @@ if (btnAutoMaster) {
       if ((outFormat.value === 'mp3' || outFormat.value === 'opus') && outBitrate && outBitrate.value) form.append('bitrate', outBitrate.value);
       const r = await fetch(API + '/api/v2/master/auto', { method: 'POST', body: form, headers: authHeaders() });
       const data = await safeResponseJson(r);
-      if (!r.ok) throw new Error(data.detail || r.statusText);
+      if (!r.ok) {
+        const err = new Error(data.detail || r.statusText);
+        err.is429 = r.status === 429;
+        throw err;
+      }
       const job_id = data.job_id;
       if (data.recommendation) {
         setStatus(stMaster, 'AI: ' + (data.recommendation.reason || data.recommendation.style) + ' — обработка…');
@@ -2073,8 +2097,16 @@ if (btnAutoMaster) {
       toast('Авто-мастеринг готов: ' + name, 'ok', 4000);
       loadAiLimits();
     } catch (e) {
-      setStatus(stMaster, friendlyError(e.message || 'Ошибка'), 'err');
-      toast(friendlyError(e.message || 'Ошибка авто-мастеринга'), 'err', 4000);
+      const isLimit = e.is429 || (e.message && (e.message.includes('Лимит') || e.message.includes('исчерпан')));
+      const msg = _debugMode ? (e.message || 'Ошибка') : friendlyError(e.message || 'Ошибка');
+      setStatus(stMaster, msg, 'err');
+      toast(msg, 'err', 5000);
+      if (!_debugMode && isLimit) {
+        if (typeof showUpgradeModal === 'function') {
+          showUpgradeModal('📊', 'Лимит мастерингов исчерпан', 'На тарифе Free — 3 мастеринга в день. Перейдите на Pro для безлимитного доступа.');
+        }
+        loadLimits();
+      }
       setProgress(0, '');
     }
     progWrap.classList.remove('on');
@@ -2228,6 +2260,18 @@ function applyTierUI() {
       }
       const upgradeLink = document.getElementById('upgradeLink');
       if (upgradeLink) upgradeLink.style.display = '';
+    }
+  }
+
+  // Кнопка «Авто-мастеринг»: при исчерпанном лимите Free — отключена и с подсказкой
+  const btnAutoMasterEl = document.getElementById('btnAutoMaster');
+  if (btnAutoMasterEl) {
+    if (!isPro && _tierInfo.remaining === 0) {
+      btnAutoMasterEl.disabled = true;
+      btnAutoMasterEl.title = 'Лимит мастерингов на сегодня исчерпан. Перейдите на Pro для безлимита.';
+    } else {
+      btnAutoMasterEl.title = 'Анализ → настройки → мастеринг автоматически';
+      btnAutoMasterEl.disabled = !currentFile;
     }
   }
 
@@ -2790,6 +2834,7 @@ loadTierLimits();
   const volSlider = document.getElementById('abVolSlider');
   const srcOrig   = document.getElementById('abSrcOrig');
   const srcMast   = document.getElementById('abSrcMast');
+  const upscaleBtn = document.getElementById('abUpscaleBtn');
   if (!wrap || !audio) return;
 
   const ICONS = {
@@ -2915,6 +2960,64 @@ loadTierLimits();
   // A/B переключение с сохранением позиции
   srcOrig.addEventListener('click', () => { if (currentSrc !== 'original') loadSrc('original', true); });
   srcMast.addEventListener('click', () => { if (currentSrc !== 'mastered') loadSrc('mastered', true); });
+
+  // Upscale: скачать мастер в 96 kHz
+  if (upscaleBtn) {
+    upscaleBtn.addEventListener('click', async function () {
+      let blob;
+      if (blobUrls.mastered) {
+        try {
+          const r = await fetch(blobUrls.mastered);
+          if (!r.ok) throw new Error(r.statusText);
+          blob = await r.blob();
+        } catch (e) {
+          if (typeof toast === 'function') toast('Не удалось прочитать мастер для upscale', 'err', 3000);
+          return;
+        }
+      } else if (currentJobId) {
+        try {
+          const r = await fetch(API + '/api/master/result/' + currentJobId, { headers: typeof authHeaders === 'function' ? authHeaders() : {} });
+          if (!r.ok) throw new Error(r.statusText);
+          blob = await r.blob();
+        } catch (e) {
+          if (typeof toast === 'function') toast('Не удалось загрузить результат мастеринга для upscale', 'err', 3000);
+          return;
+        }
+      } else {
+        if (typeof toast === 'function') toast('Сначала выполните мастеринг — затем можно скачать upscale 96k', 'err', 4000);
+        return;
+      }
+      upscaleBtn.disabled = true;
+      try {
+        const form = new FormData();
+        const name = (typeof currentFile !== 'undefined' && currentFile && currentFile.name) ? currentFile.name.replace(/\.[^.]+$/, '') + '_mastered.wav' : 'mastered.wav';
+        form.append('file', blob, name);
+        form.append('target_sr', '96000');
+        const res = await fetch(API + '/api/v2/upscale', { method: 'POST', body: form, headers: typeof authHeaders === 'function' ? authHeaders() : {} });
+        if (!res.ok) {
+          const d = await res.json().catch(function () { return {}; });
+          throw new Error(d.detail || res.statusText);
+        }
+        const outBlob = await res.blob();
+        const disp = res.headers.get('Content-Disposition');
+        let outName = 'mastered_upscale_96k.wav';
+        if (disp) {
+          const m = /filename="?([^";\n]+)"?/.exec(disp);
+          if (m) outName = m[1].trim();
+        }
+        const url = URL.createObjectURL(outBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = outName;
+        a.click();
+        URL.revokeObjectURL(url);
+        if (typeof toast === 'function') toast('Скачан: ' + outName, 'ok', 3000);
+      } catch (e) {
+        if (typeof toast === 'function') toast(e.message || 'Ошибка upscale', 'err', 4000);
+      }
+      upscaleBtn.disabled = false;
+    });
+  }
 
   // Сброс при новом мастеринге / сбросе файла
   document.addEventListener('masteringReset', () => {

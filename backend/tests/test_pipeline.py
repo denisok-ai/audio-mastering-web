@@ -267,3 +267,50 @@ def test_denoise_presets():
     out = apply_spectral_denoise(audio, 44100, strength=0.5, noise_percentile=15.0)
     assert out.shape == audio.shape
     assert not np.any(np.isnan(out))
+
+
+def test_run_mastering_pipeline_sine_no_clip_nan(mono_2sec_44k):
+    """Пайплайн на синусе: выход без клиппинга и NaN, LUFS в разумных границах."""
+    from app.pipeline import run_mastering_pipeline, measure_lufs
+    audio, sr = mono_2sec_44k
+    out = run_mastering_pipeline(audio, sr, target_lufs=-14.0, style="standard")
+    assert out.shape == audio.shape
+    assert not np.any(np.isnan(out))
+    assert not np.any(np.isinf(out))
+    assert np.max(np.abs(out)) <= 1.01
+    lufs = measure_lufs(out, sr)
+    assert not np.isnan(lufs)
+    assert -50 < lufs < 0
+
+
+def test_run_mastering_pipeline_vocal_like():
+    """Вокало-подобный сигнал (микс синусов 200–2k Hz + малый шум): пайплайн не падает, выход конечный."""
+    from app.pipeline import run_mastering_pipeline
+    sr = 44100
+    n = sr * 2  # 2 сек
+    t = np.linspace(0, n / sr, n, dtype=np.float32)
+    # Микс синусов в вокальном диапазоне + малый шум
+    vocal = (
+        0.08 * np.sin(2 * np.pi * 400 * t)
+        + 0.05 * np.sin(2 * np.pi * 800 * t)
+        + 0.03 * np.sin(2 * np.pi * 1200 * t)
+        + 0.01 * (np.random.rand(n).astype(np.float32) - 0.5)
+    )
+    stereo = np.column_stack((vocal, vocal * 0.95))
+    out = run_mastering_pipeline(stereo, sr, target_lufs=-14.0, style="standard")
+    assert out.shape == stereo.shape
+    assert not np.any(np.isnan(out))
+    assert not np.any(np.isinf(out))
+    assert np.max(np.abs(out)) <= 1.01
+
+
+def test_export_audio_wav_no_nan(stereo_2sec_44k):
+    """Экспорт WAV 16-bit: декодированные сэмплы без NaN/Inf, в диапазоне [-1, 1]."""
+    import soundfile as sf
+    from app.pipeline import export_audio
+    audio, sr = stereo_2sec_44k
+    wav_bytes = export_audio(audio, sr, channels=2, out_format="wav", dither_type="tpdf")
+    decoded, sr_out = sf.read(io.BytesIO(wav_bytes))
+    assert not np.any(np.isnan(decoded))
+    assert not np.any(np.isinf(decoded))
+    assert np.all(decoded >= -1.01) and np.all(decoded <= 1.01)

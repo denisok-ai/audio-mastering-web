@@ -3,9 +3,12 @@
 # @created 2026-03-01
 
 import json
+import logging
 import shutil
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -200,34 +203,40 @@ def get_styles():
 @router.post("/api/measure")
 async def api_measure(file: UploadFile = File(...)):
     """Загрузить файл и вернуть текущую громкость в LUFS. Форматы: WAV, MP3, FLAC."""
-    if not allowed_file(file.filename or ""):
-        raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
-    fname = file.filename or ""
-    if fname.lower().endswith(".mp3") and not shutil.which("ffmpeg"):
-        raise HTTPException(
-            400,
-            "Чтение MP3 требует ffmpeg, который не найден на сервере. "
-            "Установите: sudo apt-get install -y ffmpeg",
-        )
-    data = await file.read()
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
-    if len(data) > max_mb * 1024 * 1024:
-        raise HTTPException(400, f"Файл больше {max_mb} МБ.")
-    if not check_audio_magic_bytes(data, fname):
-        raise HTTPException(400, "Содержимое файла не соответствует формату. Ожидается WAV, MP3 или FLAC.")
     try:
-        audio, sr = load_audio_from_bytes(data, fname or "wav")
+        if not allowed_file(file.filename or ""):
+            raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
+        fname = file.filename or ""
+        if fname.lower().endswith(".mp3") and not shutil.which("ffmpeg"):
+            raise HTTPException(
+                400,
+                "Чтение MP3 требует ffmpeg, который не найден на сервере. "
+                "Установите: sudo apt-get install -y ffmpeg",
+            )
+        data = await file.read()
+        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        if len(data) > max_mb * 1024 * 1024:
+            raise HTTPException(400, f"Файл больше {max_mb} МБ.")
+        if not check_audio_magic_bytes(data, fname):
+            raise HTTPException(400, "Содержимое файла не соответствует формату. Ожидается WAV, MP3 или FLAC.")
+        try:
+            audio, sr = load_audio_from_bytes(data, fname or "wav")
+        except Exception as e:
+            raise HTTPException(400, f"Не удалось прочитать аудио: {e}") from e
+        lufs = measure_lufs(audio, sr)
+        peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+        peak_dbfs = float(20 * np.log10(max(peak, 1e-12)))
+        duration = float(len(audio) / sr)
+        channels = 1 if audio.ndim == 1 else int(audio.shape[1])
+        return {
+            "lufs": json_safe_float(lufs),
+            "sample_rate": sr,
+            "peak_dbfs": round(peak_dbfs, 2),
+            "duration": round(duration, 3),
+            "channels": channels,
+        }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(400, f"Не удалось прочитать аудио: {e}")
-    lufs = measure_lufs(audio, sr)
-    peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
-    peak_dbfs = float(20 * np.log10(max(peak, 1e-12)))
-    duration = float(len(audio) / sr)
-    channels = 1 if audio.ndim == 1 else int(audio.shape[1])
-    return {
-        "lufs": json_safe_float(lufs),
-        "sample_rate": sr,
-        "peak_dbfs": round(peak_dbfs, 2),
-        "duration": round(duration, 3),
-        "channels": channels,
-    }
+        logger.exception("api_measure: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при измерении громкости: {e!s}") from e

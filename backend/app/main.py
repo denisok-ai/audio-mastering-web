@@ -259,7 +259,8 @@ async def handler_404(request: _SR, exc: _SHTTPException):
 @app.exception_handler(429)
 async def handler_429(request: _SR, exc):
     detail = str(getattr(exc, "detail", "Too Many Requests"))
-    retry = getattr(exc, "headers", {}).get("Retry-After", "60") if hasattr(exc, "headers") else "60"
+    headers = getattr(exc, "headers", None) or {}
+    retry = headers.get("Retry-After", "60")
     if request.url.path.startswith("/api/"):
         return Response(
             json.dumps({"detail": detail}),

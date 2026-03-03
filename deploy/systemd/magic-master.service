@@ -26,11 +26,11 @@ LimitNPROC=4096
 MemoryMax=10G
 CPUAffinity=0-5
 
-# Безопасность
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ReadWritePaths=/opt/magic-master /tmp/masterflow
+# Безопасность (ослаблено для совместимости с VPS/контейнерами — 226/NAMESPACE)
+# При необходимости можно включить: NoNewPrivileges=true, PrivateTmp=true, ProtectSystem=strict
+ReadWritePaths=/opt/magic-master /tmp
+ProtectSystem=false
+PrivateTmp=false
 
 [Install]
 WantedBy=multi-user.target

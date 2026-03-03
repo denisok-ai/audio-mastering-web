@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import shutil
 import time
 import uuid
@@ -55,6 +56,7 @@ from ..pipeline import (
     load_audio_from_bytes,
     measure_lufs,
     measure_stereo_correlation,
+    resample_audio,
     run_mastering_pipeline,
 )
 from .. import jobs_store as _jobs_store
@@ -105,9 +107,16 @@ def _user_id_from_user(user: Optional[dict]) -> Optional[int]:
 
 # ─── Вспомогательные функции rate-limit ───────────────────────────────────────
 
+def _is_debug_mode() -> bool:
+    """Режим отладки: из settings или MAGIC_MASTER_DEBUG=1 (как в main.py для HTML)."""
+    if getattr(settings, "debug_mode", False):
+        return True
+    return os.environ.get("MAGIC_MASTER_DEBUG", "").strip().lower() in ("1", "true", "yes", "on")
+
+
 def _check_mastering_rate_limit(user, request: Request) -> None:
-    """Поднимает 429 если гость исчерпал дневной лимит."""
-    if not user and not getattr(settings, "debug_mode", False):
+    """Поднимает 429 если гость исчерпал дневной лимит. В режиме отладки лимит не проверяется."""
+    if not user and not _is_debug_mode():
         ip = _get_client_ip(request)
         limit_info = _check_rate_limit(ip)
         if not limit_info["ok"]:
@@ -384,7 +393,7 @@ async def api_master(
     except Exception as e:
         raise HTTPException(400, f"Не удалось прочитать аудио: {e}")
 
-    if not user and not getattr(settings, "debug_mode", False):
+    if not user and not _is_debug_mode():
         _record_usage(_get_client_ip(request))
 
     _prune()
@@ -465,7 +474,7 @@ async def api_master_v2(
             except json.JSONDecodeError as e:
                 raise HTTPException(400, f"Неверный JSON в config: {e}") from e
 
-        if not user and not getattr(settings, "debug_mode", False):
+        if not user and not _is_debug_mode():
             _record_usage(_get_client_ip(request))
 
         _prune()
@@ -555,7 +564,7 @@ async def api_v2_batch(
         except (ValueError, TypeError):
             bitrate_val = None
 
-        is_pro = user or getattr(settings, "debug_mode", False)
+        is_pro = user or _is_debug_mode()
         if not is_pro:
             ip = _get_client_ip(request)
             limit_info = _check_rate_limit(ip)
@@ -653,113 +662,119 @@ async def api_v2_master_auto(
     Авто-мастеринг: анализ трека → AI подбор пресета/настроек → мастеринг.
     Принимает file, опционально out_format. Возвращает job_id.
     """
-    if not file.filename or not _allowed_file(file.filename):
-        raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
-    if out_format.lower() not in ("wav", "mp3", "flac", "opus", "aac"):
-        raise HTTPException(400, "Формат экспорта: wav, mp3, flac, opus или aac.")
-    if out_format.lower() in ("mp3", "opus", "aac") and not shutil.which("ffmpeg"):
-        raise HTTPException(400, "Экспорт в MP3/OPUS/AAC требует ffmpeg.")
-
-    _check_mastering_rate_limit(user, request)
-
-    tier = _get_tier_for_ai(user, request)
-    ident = _get_ai_identifier(request, user)
-    ai_limit_info = ai_module.check_ai_rate_limit(ident, tier)
-    if not ai_limit_info["ok"]:
-        raise HTTPException(
-            429,
-            f"Лимит AI-запросов исчерпан: {ai_limit_info['limit']}/день. Сброс: {ai_limit_info['reset_at']}.",
-        )
-
-    data = await file.read()
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
-    _validate_upload(data, file.filename or "", max_mb)
-    fname = file.filename or "audio.wav"
     try:
-        audio, sr = load_audio_from_bytes(data, fname)
-    except Exception as e:
-        raise HTTPException(400, f"Не удалось прочитать аудио: {e}")
+        if not file.filename or not _allowed_file(file.filename):
+            raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
+        if out_format.lower() not in ("wav", "mp3", "flac", "opus", "aac"):
+            raise HTTPException(400, "Формат экспорта: wav, mp3, flac, opus или aac.")
+        if out_format.lower() in ("mp3", "opus", "aac") and not shutil.which("ffmpeg"):
+            raise HTTPException(400, "Экспорт в MP3/OPUS/AAC требует ffmpeg.")
 
-    try:
-        lufs = measure_lufs(audio, sr)
-    except Exception:
-        lufs = float("nan")
-    peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
-    peak_dbfs = float(20 * np.log10(max(peak, 1e-12)))
-    duration_sec = float(len(audio) / sr)
-    channels = 1 if audio.ndim == 1 else int(audio.shape[1])
-    correlation = None
-    if channels == 2 and audio.ndim == 2:
-        correlation = measure_stereo_correlation(audio)
-    analysis = {
-        "lufs": round(lufs, 2) if not np.isnan(lufs) else None,
-        "peak_dbfs": round(peak_dbfs, 2),
-        "duration_sec": round(duration_sec, 3),
-        "sample_rate": sr,
-        "channels": channels,
-        "stereo_correlation": round(correlation, 4) if correlation is not None else None,
-    }
-    if audio.size >= 4096:
-        try:
-            analysis["spectrum_bars"] = compute_spectrum_bars(audio, sr)
-        except Exception:
-            pass
+        _check_mastering_rate_limit(user, request)
 
-    rec = ai_module.recommend_preset(analysis)
-    style_key = (rec.get("style") or "standard").lower()
-    if style_key not in STYLE_CONFIGS:
-        style_key = "standard"
-    target_lufs = float(rec.get("target_lufs", -14))
-    target_lufs = max(-24, min(-6, target_lufs))
-    chain_config = rec.get("chain_config")
-
-    if not user and not getattr(settings, "debug_mode", False):
-        _record_usage(_get_client_ip(request))
-    ai_module.record_ai_usage(ident)
-
-    _prune()
-    job_id = str(uuid.uuid4())
-    _jobs_store.all_jobs()[job_id] = {
-        "status": "running",
-        "progress": 0,
-        "message": "Авто-мастеринг…",
-        "created_at": time.time(),
-        "result_bytes": None,
-        "filename": None,
-        "error": None,
-        "before_lufs": None,
-        "after_lufs": None,
-        "target_lufs": target_lufs,
-        "style": style_key,
-    }
-    try:
-        log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
-    except Exception:  # noqa: BLE001
-        pass
-
-    sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
-
-    async def run_auto_job() -> None:
-        async with sem:
-            await asyncio.to_thread(
-                _run_mastering_job_v2,
-                job_id, data, fname,
-                target_lufs, out_format.lower(), style_key,
-                chain_config, pro_params={},
+        tier = _get_tier_for_ai(user, request)
+        ident = _get_ai_identifier(request, user)
+        ai_limit_info = ai_module.check_ai_rate_limit(ident, tier)
+        if not ai_limit_info["ok"]:
+            raise HTTPException(
+                429,
+                f"Лимит AI-запросов исчерпан: {ai_limit_info['limit']}/день. Сброс: {ai_limit_info['reset_at']}.",
             )
 
-    background_tasks.add_task(run_auto_job)
-    return {
-        "job_id": job_id,
-        "status": "running",
-        "version": "v2",
-        "auto": True,
-        "recommendation": {
-            "style": style_key,
+        data = await file.read()
+        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        _validate_upload(data, file.filename or "", max_mb)
+        fname = file.filename or "audio.wav"
+        try:
+            audio, sr = load_audio_from_bytes(data, fname)
+        except Exception as e:
+            raise HTTPException(400, f"Не удалось прочитать аудио: {e}") from e
+
+        try:
+            lufs = measure_lufs(audio, sr)
+        except Exception:
+            lufs = float("nan")
+        peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+        peak_dbfs = float(20 * np.log10(max(peak, 1e-12)))
+        duration_sec = float(len(audio) / sr)
+        channels = 1 if audio.ndim == 1 else int(audio.shape[1])
+        correlation = None
+        if channels == 2 and audio.ndim == 2:
+            correlation = measure_stereo_correlation(audio)
+        analysis = {
+            "lufs": round(lufs, 2) if not np.isnan(lufs) else None,
+            "peak_dbfs": round(peak_dbfs, 2),
+            "duration_sec": round(duration_sec, 3),
+            "sample_rate": sr,
+            "channels": channels,
+            "stereo_correlation": round(correlation, 4) if correlation is not None else None,
+        }
+        if audio.size >= 4096:
+            try:
+                analysis["spectrum_bars"] = compute_spectrum_bars(audio, sr)
+            except Exception:
+                pass
+
+        rec = ai_module.recommend_preset(analysis)
+        style_key = (rec.get("style") or "standard").lower()
+        if style_key not in STYLE_CONFIGS:
+            style_key = "standard"
+        target_lufs = float(rec.get("target_lufs", -14))
+        target_lufs = max(-24, min(-6, target_lufs))
+        chain_config = rec.get("chain_config")
+
+        if not user and not _is_debug_mode():
+            _record_usage(_get_client_ip(request))
+        ai_module.record_ai_usage(ident)
+
+        _prune()
+        job_id = str(uuid.uuid4())
+        _jobs_store.all_jobs()[job_id] = {
+            "status": "running",
+            "progress": 0,
+            "message": "Авто-мастеринг…",
+            "created_at": time.time(),
+            "result_bytes": None,
+            "filename": None,
+            "error": None,
+            "before_lufs": None,
+            "after_lufs": None,
             "target_lufs": target_lufs,
-            "reason": rec.get("reason"),
-        },
-    }
+            "style": style_key,
+        }
+        try:
+            log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
+        except Exception:  # noqa: BLE001
+            pass
+
+        sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
+
+        async def run_auto_job() -> None:
+            async with sem:
+                await asyncio.to_thread(
+                    _run_mastering_job_v2,
+                    job_id, data, fname,
+                    target_lufs, out_format.lower(), style_key,
+                    chain_config, pro_params={},
+                )
+
+        background_tasks.add_task(run_auto_job)
+        return {
+            "job_id": job_id,
+            "status": "running",
+            "version": "v2",
+            "auto": True,
+            "recommendation": {
+                "style": style_key,
+                "target_lufs": target_lufs,
+                "reason": rec.get("reason"),
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_v2_master_auto: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при авто-мастеринге: {e!s}") from e
 
 
 @router.get("/api/v2/chain/default")
@@ -792,95 +807,101 @@ async def api_v2_analyze(file: UploadFile = File(...), extended: bool = Form(Fal
     Загрузить файл и вернуть анализ: LUFS, peak dBFS, длительность, sample rate, stereo_correlation.
     extended=true: дополнительно spectrum_bars, lufs_timeline, vectorscope_points.
     """
-    if not _allowed_file(file.filename or ""):
-        raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
-    fname = file.filename or ""
-    if fname.lower().endswith(".mp3") and not shutil.which("ffmpeg"):
-        raise HTTPException(400, "Чтение MP3 требует ffmpeg. Установите: sudo apt-get install -y ffmpeg")
-    data = await file.read()
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
-    _validate_upload(data, fname, max_mb)
     try:
-        audio, sr = load_audio_from_bytes(data, fname)
-    except Exception as e:
-        raise HTTPException(400, f"Не удалось прочитать аудио: {e}")
+        if not _allowed_file(file.filename or ""):
+            raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
+        fname = file.filename or ""
+        if fname.lower().endswith(".mp3") and not shutil.which("ffmpeg"):
+            raise HTTPException(400, "Чтение MP3 требует ffmpeg. Установите: sudo apt-get install -y ffmpeg")
+        data = await file.read()
+        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        _validate_upload(data, fname, max_mb)
+        try:
+            audio, sr = load_audio_from_bytes(data, fname)
+        except Exception as e:
+            raise HTTPException(400, f"Не удалось прочитать аудио: {e}") from e
 
-    try:
-        lufs = measure_lufs(audio, sr)
-    except Exception:
-        lufs = float("nan")
-    peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
-    peak_dbfs = float(20 * np.log10(max(peak, 1e-12)))
-    duration_sec = float(len(audio) / sr)
-    channels = 1 if audio.ndim == 1 else int(audio.shape[1])
-    correlation = None
-    if channels == 2 and audio.ndim == 2:
-        correlation = measure_stereo_correlation(audio)
+        try:
+            lufs = measure_lufs(audio, sr)
+        except Exception:
+            lufs = float("nan")
+        peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+        peak_dbfs = float(20 * np.log10(max(peak, 1e-12)))
+        duration_sec = float(len(audio) / sr)
+        channels = 1 if audio.ndim == 1 else int(audio.shape[1])
+        correlation = None
+        if channels == 2 and audio.ndim == 2:
+            correlation = measure_stereo_correlation(audio)
 
-    out: dict = {
-        "version": "v2",
-        "lufs": round(lufs, 2) if not np.isnan(lufs) else None,
-        "peak_dbfs": round(peak_dbfs, 2),
-        "duration_sec": round(duration_sec, 3),
-        "sample_rate": sr,
-        "channels": channels,
-    }
-    if correlation is not None:
-        out["stereo_correlation"] = round(correlation, 4)
-
-    if not np.isnan(lufs):
-        _streaming_platforms = {
-            "Spotify":              -14.0,
-            "YouTube":              -14.0,
-            "Apple Music":          -16.0,
-            "Tidal":                -14.0,
-            "Amazon Music":         -14.0,
-            "Broadcast (EBU R128)": -23.0,
+        out: dict = {
+            "version": "v2",
+            "lufs": round(lufs, 2) if not np.isnan(lufs) else None,
+            "peak_dbfs": round(peak_dbfs, 2),
+            "duration_sec": round(duration_sec, 3),
+            "sample_rate": sr,
+            "channels": channels,
         }
-        streaming_preview = {}
-        for platform, target in _streaming_platforms.items():
-            penalty = round(max(0.0, lufs - target), 2)
-            gain_applied = round(min(0.0, target - lufs), 2)
-            if penalty > 6.0:
-                status = "loud"
-            elif penalty > 1.0:
-                status = "ok"
-            else:
-                status = "optimal"
-            streaming_preview[platform] = {
-                "target_lufs": target,
-                "penalty_db": penalty,
-                "gain_applied_db": gain_applied,
-                "status": status,
-            }
-        out["streaming_preview"] = streaming_preview
+        if correlation is not None:
+            out["stereo_correlation"] = round(correlation, 4)
 
-    if extended:
-        if audio.size >= 4096:
+        if not np.isnan(lufs):
+            _streaming_platforms = {
+                "Spotify":              -14.0,
+                "YouTube":              -14.0,
+                "Apple Music":          -16.0,
+                "Tidal":                -14.0,
+                "Amazon Music":         -14.0,
+                "Broadcast (EBU R128)": -23.0,
+            }
+            streaming_preview = {}
+            for platform, target in _streaming_platforms.items():
+                penalty = round(max(0.0, lufs - target), 2)
+                gain_applied = round(min(0.0, target - lufs), 2)
+                if penalty > 6.0:
+                    status = "loud"
+                elif penalty > 1.0:
+                    status = "ok"
+                else:
+                    status = "optimal"
+                streaming_preview[platform] = {
+                    "target_lufs": target,
+                    "penalty_db": penalty,
+                    "gain_applied_db": gain_applied,
+                    "status": status,
+                }
+            out["streaming_preview"] = streaming_preview
+
+        if extended:
+            if audio.size >= 4096:
+                try:
+                    out["spectrum_bars"] = compute_spectrum_bars(audio, sr)
+                except Exception:
+                    pass
+                if channels == 2 and audio.ndim == 2:
+                    try:
+                        mid = ((audio[:, 0] + audio[:, 1]) * 0.5).astype(np.float32)
+                        side = ((audio[:, 0] - audio[:, 1]) * 0.5).astype(np.float32)
+                        out["spectrum_bars_mid"] = compute_spectrum_bars(mid, sr)
+                        out["spectrum_bars_side"] = compute_spectrum_bars(side, sr)
+                    except Exception:
+                        pass
             try:
-                out["spectrum_bars"] = compute_spectrum_bars(audio, sr)
+                lufs_timeline, timeline_step_sec = compute_lufs_timeline(audio, sr)
+                out["lufs_timeline"] = [_json_safe_float(x) for x in (lufs_timeline or [])]
+                out["timeline_step_sec"] = _json_safe_float(timeline_step_sec)
             except Exception:
                 pass
             if channels == 2 and audio.ndim == 2:
                 try:
-                    mid = ((audio[:, 0] + audio[:, 1]) * 0.5).astype(np.float32)
-                    side = ((audio[:, 0] - audio[:, 1]) * 0.5).astype(np.float32)
-                    out["spectrum_bars_mid"] = compute_spectrum_bars(mid, sr)
-                    out["spectrum_bars_side"] = compute_spectrum_bars(side, sr)
+                    out["vectorscope_points"] = compute_vectorscope_points(audio, max_points=1000)
                 except Exception:
                     pass
-        try:
-            lufs_timeline, timeline_step_sec = compute_lufs_timeline(audio, sr)
-            out["lufs_timeline"] = [_json_safe_float(x) for x in (lufs_timeline or [])]
-            out["timeline_step_sec"] = _json_safe_float(timeline_step_sec)
-        except Exception:
-            pass
-        if channels == 2 and audio.ndim == 2:
-            try:
-                out["vectorscope_points"] = compute_vectorscope_points(audio, max_points=1000)
-            except Exception:
-                pass
-    return out
+        return out
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_v2_analyze: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при анализе файла: {e!s}") from e
 
 
 @router.post("/api/v2/reference-match")
@@ -938,6 +959,48 @@ async def api_v2_reference_match(
         media_type=media,
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )
+
+
+_UPSCALE_ALLOWED_SR = (48000, 96000, 192000)
+
+
+@router.post("/api/v2/upscale")
+async def api_v2_upscale(
+    file: UploadFile = File(...),
+    target_sr: int = Form(96000),
+):
+    """
+    Upscale: ресемплинг аудио в более высокий sample rate (48k / 96k / 192k).
+    Принимает file (WAV/FLAC/MP3), target_sr. Возвращает WAV 16-bit.
+    """
+    try:
+        if not _allowed_file(file.filename or ""):
+            raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
+        if target_sr not in _UPSCALE_ALLOWED_SR:
+            raise HTTPException(400, f"target_sr допускает только: {_UPSCALE_ALLOWED_SR}.")
+        fname = file.filename or "audio.wav"
+        data = await file.read()
+        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        _validate_upload(data, fname, max_mb)
+        audio, sr = load_audio_from_bytes(data, fname)
+        if target_sr <= sr:
+            raise HTTPException(400, f"Upscale: target_sr ({target_sr}) должен быть больше текущего sample rate ({sr}).")
+        up = resample_audio(audio, sr, target_sr)
+        channels = 1 if up.ndim == 1 else int(up.shape[1])
+        out_bytes = export_audio(up, target_sr, channels, "wav", dither_type="tpdf")
+        base = (fname or "audio").rsplit(".", 1)[0]
+        out_name = f"{base}_upscale_{target_sr // 1000}k.wav"
+        safe_name = _safe_content_disposition_filename(out_name, "upscale.wav")
+        return Response(
+            content=out_bytes,
+            media_type="audio/wav",
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_v2_upscale: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка при upscale: {e!s}") from e
 
 
 @router.get("/api/master/status/{job_id}")

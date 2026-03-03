@@ -729,6 +729,8 @@
     .ab-switch-btn.active:hover{box-shadow:0 4px 14px rgba(108,75,255,0.35)}
     .ab-vol-wrap{display:flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--text-soft)}
     .ab-vol-wrap input[type=range]{width:64px;accent-color:#6c4bff;cursor:pointer}
+    .ab-upscale-btn{padding:.3rem .6rem;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text-soft);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+    .ab-upscale-btn:hover{background:rgba(6,182,212,.15);border-color:var(--cyan);color:var(--cyan)}
     .result-title {
       font-size:.875rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
       color:var(--green);margin-bottom:.75rem;
@@ -1012,10 +1014,12 @@
       background: rgba(251,146,60,.12); color: #fb923c;
       border: 1px solid rgba(251,146,60,.3);
     }
+    /* Фон кнопок стиля — как у блока Спектр: градиент surface → surface-2 */
     .style-card {
       border: 1px solid var(--border); border-radius: var(--r-sm);
       padding: .6rem .5rem .55rem; cursor: pointer; text-align: center;
-      background: rgba(0,0,0,0.2); transition: all .18s, box-shadow .2s; user-select: none;
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      transition: all .18s, box-shadow .2s; user-select: none;
       position: relative; overflow: hidden;
     }
     .style-card::before {
@@ -1027,10 +1031,13 @@
     .style-card:hover::before { opacity:1 }
     .style-card.active {
       border-color: var(--sc-active-border, var(--accent));
-      background: var(--sc-bg, rgba(108,75,255,.1));
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
       box-shadow: 0 0 0 2px var(--sc-glow, var(--accent-glow));
     }
-    .style-card.active::before { opacity:1 }
+    .style-card.active::before {
+      opacity: 1;
+      background: var(--sc-bg, rgba(108,75,255,.12));
+    }
     .sc-icon { font-size:1.3rem; line-height:1; margin-bottom:.22rem }
     .sc-name {
       font-size:.72rem; font-weight:700; letter-spacing:.02em; color:var(--text);
@@ -1261,6 +1268,10 @@
     .spectrum-ruler {
       display:flex; justify-content:space-between; padding:2px 8px 0;
       font-family:'JetBrains Mono',monospace; font-size:.58rem; color:var(--text-dim);
+    }
+    .spectrum-no-data,
+    .vectorscope-no-data {
+      font-size:.7rem; color:var(--text-dim); padding:.4rem 1rem; margin:0;
     }
     .spectrum-canvas {
       display:block; width:100%; height:80px; background:rgba(0,0,0,0.4);
@@ -2464,6 +2475,7 @@
           <button class="ab-switch-btn active" id="abSrcOrig" title="Оригинал до мастеринга">A — оригинал</button>
           <button class="ab-switch-btn" id="abSrcMast" title="После мастеринга">B — мастер</button>
         </div>
+        <button type="button" class="ab-upscale-btn" id="abUpscaleBtn" title="Скачать мастер в высоком разрешении (96 kHz)">Upscale 96k</button>
       </div>
       <!-- Native audio element (hidden) — управляется JS -->
       <audio id="abAudio" preload="auto" style="display:none"></audio>
@@ -2514,6 +2526,7 @@
         <span>20 Hz</span>
         <span>20 kHz</span>
       </div>
+      <p class="spectrum-no-data" id="spectrumNoData" style="display:none;">Нет данных. Загрузите файл и нажмите «Измерить громкость».</p>
       <canvas class="spectrum-canvas" id="spectrumCanvas" width="400" height="80"></canvas>
     </div>
 
@@ -2526,6 +2539,7 @@
         </span>
       </div>
       <p class="vectorscope-hint">Показывает соотношение левого и правого каналов (L–R). Узкая диагональ — близко к моно; широкое облако — широкое стерео. Помогает оценить ширину сцены и фазу.</p>
+      <p class="vectorscope-no-data" id="vectorscopeNoData" style="display:none;">Нет данных. Загрузите файл и нажмите «Измерить громкость».</p>
       <canvas class="vectorscope-canvas" id="vectorscopeCanvas" width="200" height="200"></canvas>
     </div>
 

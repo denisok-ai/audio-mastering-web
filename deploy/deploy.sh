@@ -36,12 +36,17 @@ do_install() {
         exit 1
     fi
 
-    # Системные пакеты
-    if ! command -v python3.11 &>/dev/null && ! command -v python3.10 &>/dev/null; then
-        log "Установка python3-venv, ffmpeg..."
-        apt-get update -qq
-        apt-get install -y -qq ffmpeg libatomic1 python3-venv python3-pip nginx certbot python3-certbot-nginx
+    # Системные пакеты (всегда ставим python3-venv и ffmpeg; для python3.11 — свой venv-пакет)
+    log "Установка системных пакетов (ffmpeg, python3-venv, nginx...)"
+    apt-get update -qq
+    apt-get install -y -qq ffmpeg libatomic1 python3-venv python3-pip
+    if command -v python3.11 &>/dev/null; then
+        apt-get install -y -qq python3.11-venv 2>/dev/null || true
     fi
+    if command -v python3.10 &>/dev/null && ! command -v python3.11 &>/dev/null; then
+        apt-get install -y -qq python3.10-venv 2>/dev/null || true
+    fi
+    apt-get install -y -qq nginx certbot python3-certbot-nginx 2>/dev/null || true
 
     # Каталог приложения
     mkdir -p "$INSTALL_DIR"
@@ -67,10 +72,14 @@ do_install() {
         useradd --system --gid "$APP_GROUP" --home-dir "$INSTALL_DIR" --no-create-home "$APP_USER"
     fi
 
-    # venv
-    if [ ! -d "$VENV_DIR" ]; then
+    # venv: создать или пересоздать, если нет pip
+    if [ ! -d "$VENV_DIR" ] || [ ! -x "$VENV_DIR/bin/pip" ]; then
+        if [ -d "$VENV_DIR" ]; then
+            log "Удаление битого/пустого venv и пересоздание"
+            rm -rf "$VENV_DIR"
+        fi
         log "Создание venv в $VENV_DIR"
-        python3 -m venv "$VENV_DIR"
+        python3 -m venv "$VENV_DIR" || { echo "Ошибка: установите пакет python3-venv (или python3.11-venv): apt-get install python3-venv" >&2; exit 1; }
         "$VENV_DIR/bin/pip" install --upgrade pip
     fi
 
@@ -99,15 +108,24 @@ do_install() {
         log "systemd: magic-master включён и запущен"
     fi
 
-    # nginx
+    # nginx (только если каталог есть — nginx установлен; иначе создаём каталоги и пробуем)
     if [ -f "$INSTALL_DIR/deploy/nginx/magic-master.conf" ]; then
-        cp "$INSTALL_DIR/deploy/nginx/magic-master.conf" /etc/nginx/sites-available/magic-master
-        [ -f "$INSTALL_DIR/deploy/nginx/magic-master-proxy.inc" ] && \
-            cp "$INSTALL_DIR/deploy/nginx/magic-master-proxy.inc" /etc/nginx/sites-available/
-        ln -sf /etc/nginx/sites-available/magic-master /etc/nginx/sites-enabled/magic-master
-        rm -f /etc/nginx/sites-enabled/default
-        nginx -t && systemctl reload nginx
-        log "nginx: конфиг установлен и перезагружен"
+        if [ ! -d /etc/nginx/sites-available ]; then
+            log "Каталог /etc/nginx/sites-available отсутствует. Установите nginx: apt-get install -y nginx"
+            mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled 2>/dev/null || true
+        fi
+        if [ -d /etc/nginx/sites-available ]; then
+            cp "$INSTALL_DIR/deploy/nginx/magic-master.conf" /etc/nginx/sites-available/magic-master
+            [ -f "$INSTALL_DIR/deploy/nginx/magic-master-proxy.inc" ] && \
+                cp "$INSTALL_DIR/deploy/nginx/magic-master-proxy.inc" /etc/nginx/sites-available/
+            ln -sf /etc/nginx/sites-available/magic-master /etc/nginx/sites-enabled/magic-master
+            rm -f /etc/nginx/sites-enabled/default
+            if command -v nginx &>/dev/null; then
+                nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null && log "nginx: конфиг установлен и перезагружен" || log "nginx: конфиг скопирован, перезагрузите nginx вручную после установки"
+            else
+                log "nginx не установлен; конфиг скопирован в /etc/nginx/sites-available/. После установки nginx выполните: ln -sf /etc/nginx/sites-available/magic-master /etc/nginx/sites-enabled/ && systemctl reload nginx"
+            fi
+        fi
     fi
 
     log "Установка завершена. Проверка: curl http://127.0.0.1:8000/api/health"

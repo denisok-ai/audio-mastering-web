@@ -865,6 +865,25 @@ def _auto_blank_end(samples: np.ndarray, sr: int, threshold_dbfs: float = -60.0,
     return samples[:idx]
 
 
+def resample_audio(audio: np.ndarray, sr: int, target_sr: int) -> np.ndarray:
+    """Ресемплинг в target_sr (scipy.signal.resample). Для upscale: target_sr > sr."""
+    if target_sr <= 0 or sr <= 0:
+        raise ValueError("Invalid sample rate")
+    if target_sr == sr:
+        return np.asarray(audio, dtype=np.float32)
+    from scipy import signal as sg
+    audio = np.asarray(audio, dtype=np.float64)
+    if audio.ndim == 1:
+        n_out = int(round(audio.shape[0] * target_sr / sr))
+        out = sg.resample(audio, n_out).astype(np.float32)
+        return out
+    n_out = int(round(audio.shape[0] * target_sr / sr))
+    out = np.empty((n_out, audio.shape[1]), dtype=np.float32)
+    for c in range(audio.shape[1]):
+        out[:, c] = sg.resample(audio[:, c], n_out).astype(np.float32)
+    return out
+
+
 def export_audio(
     samples: np.ndarray,
     sr: int,
@@ -1328,9 +1347,9 @@ def apply_style_eq(audio: np.ndarray, sr: int, style: str = "standard") -> np.nd
 
 
 # Пресеты Spectral Denoiser: (strength 0–1, noise_percentile для оценки шума)
-# light — мягкое подавление; medium — сбалансированно; aggressive — сильное.
+# light — мягкое подавление (снижена агрессивность для вокала); medium / aggressive — выше.
 DENOISE_PRESETS: dict[str, tuple[float, float]] = {
-    "light": (0.25, 20.0),
+    "light": (0.20, 22.0),
     "medium": (0.5, 15.0),
     "aggressive": (0.75, 10.0),
 }

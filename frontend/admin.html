@@ -46,7 +46,8 @@ a{color:inherit;text-decoration:none}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .topbar{height:56px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;padding:0 1.5rem;box-shadow:0 1px 0 rgba(0,0,0,.04)}
 .topbar-title{font-weight:600;font-size:1.05rem;color:var(--text)}
-.topbar-auth{margin-left:auto;font-size:.9rem;color:var(--text-soft)}
+.topbar-auth{margin-left:auto;font-size:.9rem;color:var(--text-soft);display:flex;align-items:center;gap:.75rem}
+.topbar-logout{margin-left:.25rem}
 .content{flex:1;overflow-y:auto;padding:1.5rem}
 
 /* Cards */
@@ -742,7 +743,15 @@ async function checkAuth() {
     if (!me.is_admin) { _token = ''; localStorage.removeItem('admin_token'); showLogin(); return; }
     _adminEmail = me.email;
     document.getElementById('loginOverlay').style.display = 'none';
-    document.getElementById('topbarAuth').textContent = me.email;
+    const topbarAuth = document.getElementById('topbarAuth');
+    topbarAuth.textContent = '';
+    topbarAuth.appendChild(document.createTextNode(me.email));
+    const logoutBtn = document.createElement('button');
+    logoutBtn.type = 'button';
+    logoutBtn.className = 'btn btn-ghost btn-sm topbar-logout';
+    logoutBtn.textContent = 'Выйти';
+    logoutBtn.addEventListener('click', doLogout);
+    topbarAuth.appendChild(logoutBtn);
     document.getElementById('navBottom').textContent = me.email;
     loadPage('dashboard');
   } catch {
@@ -751,6 +760,12 @@ async function checkAuth() {
 }
 
 function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
+
+function doLogout() {
+  _token = '';
+  localStorage.removeItem('admin_token');
+  showLogin();
+}
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
