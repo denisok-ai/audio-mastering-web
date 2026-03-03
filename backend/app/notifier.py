@@ -20,6 +20,7 @@ import datetime
 from typing import Optional
 
 from .config import settings
+from . import settings_store
 
 
 def _is_configured() -> bool:
@@ -143,6 +144,73 @@ def notify_user_blocked(email: str, admin_email: str) -> None:
         f"🔒 <b>Пользователь заблокирован</b>\n"
         f"Email: <code>{email}</code>\n"
         f"Администратор: <code>{admin_email}</code>\n"
+        f"🕐 {_ts()}"
+    )
+    notify(msg)
+
+
+# ─── Алерты мониторинга (очередь 3.3) ─────────────────────────────────────────
+_alert_last_sent: dict[str, float] = {}
+_ALERT_KEY_QUEUE = "queue"
+_ALERT_KEY_HEALTH = "health"
+
+
+def _alert_setting(name: str, default: Optional[object]) -> Optional[object]:
+    """Читает настройку алертов: сначала из БД (админка), затем из config."""
+    val = settings_store.get_setting(name)
+    if val is not None:
+        if name == "alert_monitoring_enabled":
+            return val is True or (isinstance(val, str) and val.strip().lower() in ("1", "true", "yes", "on"))
+        if name == "alert_queue_threshold":
+            try:
+                return int(val) if val is not None else 0
+            except (TypeError, ValueError):
+                return 0
+        if name == "alert_throttle_minutes":
+            try:
+                return int(val) if val is not None else 60
+            except (TypeError, ValueError):
+                return 60
+    return getattr(settings, name, default)
+
+
+def _should_send_alert(key: str) -> bool:
+    """Отправлять не чаще чем раз в alert_throttle_minutes."""
+    if not _alert_setting("alert_monitoring_enabled", False):
+        return False
+    mins = _alert_setting("alert_throttle_minutes", 60) or 60
+    now = time.time()
+    last = _alert_last_sent.get(key, 0)
+    if now - last < mins * 60:
+        return False
+    _alert_last_sent[key] = now
+    return True
+
+
+def notify_alert_queue_threshold(jobs_total: int, jobs_running: int) -> None:
+    """Превышен порог очереди задач (отправка не чаще раз в throttle)."""
+    if not _is_configured() or not _should_send_alert(_ALERT_KEY_QUEUE):
+        return
+    threshold = _alert_setting("alert_queue_threshold", 0) or 0
+    if threshold <= 0 or jobs_total < threshold:
+        return
+    msg = (
+        f"⚠️ <b>Очередь мастеринга</b>\n"
+        f"Задач в кэше: <b>{jobs_total}</b> (порог: {threshold})\n"
+        f"В работе: <b>{jobs_running}</b>\n"
+        f"🕐 {_ts()}"
+    )
+    notify(msg)
+
+
+def notify_alert_health_degraded(reason: str, details: Optional[str] = None) -> None:
+    """Health-check в состоянии degraded/error (отправка не чаще раз в throttle)."""
+    if not _is_configured() or not _should_send_alert(_ALERT_KEY_HEALTH):
+        return
+    detail_line = f"\nДетали: <code>{details[:150]}</code>" if details else ""
+    msg = (
+        f"⚠️ <b>Health деградация</b>\n"
+        f"Причина: {reason}{detail_line}\n"
         f"🕐 {_ts()}"
     )
     notify(msg)

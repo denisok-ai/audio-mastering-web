@@ -12,7 +12,7 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .auth import extract_bearer_token, decode_token
 from fastapi import Request as _Request
@@ -54,6 +54,23 @@ from .database import (
 )
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+# ─── Сервисный слой ───────────────────────────────────────────────────────────
+from .services.user_service import (
+    user_to_dict as _user_to_dict,
+    tx_to_dict as _tx_to_dict,
+    list_users as _svc_list_users,
+    get_user_detail as _svc_get_user_detail,
+    patch_user as _svc_patch_user,
+    delete_user as _svc_delete_user,
+    bulk_action as _svc_bulk_action,
+    set_subscription as _svc_set_subscription,
+)
+from .services.stats_service import get_dashboard_stats as _svc_get_dashboard_stats
+from .services.reports_service import (
+    REPORTS_META,
+    run_report as _svc_run_report,
+)
 
 
 # ─── Auth dependency ──────────────────────────────────────────────────────────
@@ -125,14 +142,14 @@ class CampaignCreate(BaseModel):
 
 
 class SettingsAppUpdate(BaseModel):
-    max_upload_mb: Optional[int] = None
+    max_upload_mb: Optional[int] = Field(None, ge=1, le=500, description="1–500 МБ")
     allowed_extensions: Optional[List[str]] = None
     temp_dir: Optional[str] = None
-    default_target_lufs: Optional[float] = None
-    jobs_done_ttl_seconds: Optional[int] = None
+    default_target_lufs: Optional[float] = Field(None, ge=-60, le=-1)
+    jobs_done_ttl_seconds: Optional[int] = Field(None, ge=0, le=86400 * 30)
     debug_mode: Optional[bool] = None
     require_email_verify: Optional[bool] = None
-    global_rate_limit: Optional[int] = None
+    global_rate_limit: Optional[int] = Field(None, ge=1, le=10000)
     cors_origins: Optional[str] = None
     feature_ai_enabled: Optional[bool] = None
     feature_batch_enabled: Optional[bool] = None
@@ -141,11 +158,15 @@ class SettingsAppUpdate(BaseModel):
     notify_email_on_register: Optional[bool] = None
     notify_telegram_on_payment: Optional[bool] = None
     default_locale: Optional[str] = None
+    # Алерты мониторинга (очередь 3.3)
+    alert_monitoring_enabled: Optional[bool] = None
+    alert_queue_threshold: Optional[int] = Field(None, ge=0, le=10000, description="0 = выкл")
+    alert_throttle_minutes: Optional[int] = Field(None, ge=1, le=1440)
 
 
 class SettingsSmtpUpdate(BaseModel):
     host: Optional[str] = None
-    port: Optional[int] = None
+    port: Optional[int] = Field(None, ge=1, le=65535)
     user: Optional[str] = None
     password: Optional[str] = None  # пусто = не менять
     from_: Optional[str] = None
@@ -171,13 +192,13 @@ class SettingsLlmUpdate(BaseModel):
     deepseek_api_key: Optional[str] = None
     deepseek_base_url: Optional[str] = None
     deepseek_model: Optional[str] = None
-    ai_limit_free: Optional[int] = None
-    ai_limit_pro: Optional[int] = None
-    ai_limit_studio: Optional[int] = None
+    ai_limit_free: Optional[int] = Field(None, ge=0, le=1000)
+    ai_limit_pro: Optional[int] = Field(None, ge=0, le=10000)
+    ai_limit_studio: Optional[int] = Field(None, ge=0, le=100000)
     # Защита от LLM-инъекций
     llm_guard_enabled: Optional[bool] = None
-    llm_guard_max_length_chat: Optional[int] = None
-    llm_guard_max_length_nl: Optional[int] = None
+    llm_guard_max_length_chat: Optional[int] = Field(None, ge=100, le=100000)
+    llm_guard_max_length_nl: Optional[int] = Field(None, ge=50, le=5000)
     llm_guard_forbidden_substrings: Optional[list[str]] = None  # JSON array
     llm_guard_forbidden_regex: Optional[str] = None
     llm_guard_truncate_on_long: Optional[bool] = None
@@ -203,34 +224,7 @@ class PromptActivate(BaseModel):
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
-
-def _user_to_dict(u: "User") -> dict:
-    return {
-        "id": u.id,
-        "email": u.email,
-        "tier": u.tier,
-        "is_admin": bool(getattr(u, "is_admin", False)),
-        "is_blocked": bool(getattr(u, "is_blocked", False)),
-        "subscription_status": getattr(u, "subscription_status", "none"),
-        "subscription_expires_at": getattr(u, "subscription_expires_at", None),
-        "created_at": u.created_at,
-        "last_login_at": getattr(u, "last_login_at", None),
-    }
-
-
-def _tx_to_dict(t: "Transaction") -> dict:
-    return {
-        "id": t.id,
-        "user_id": t.user_id,
-        "amount": t.amount,
-        "currency": t.currency,
-        "tier": t.tier,
-        "payment_system": t.payment_system,
-        "external_id": t.external_id,
-        "status": t.status,
-        "description": t.description,
-        "created_at": t.created_at,
-    }
+# _user_to_dict и _tx_to_dict импортированы из services/user_service.py
 
 
 def _news_to_dict(p: "NewsPost") -> dict:
@@ -269,112 +263,7 @@ def admin_stats(
     db=Depends(_get_db),
 ):
     """Метрики для Dashboard: пользователи, транзакции, мастеринги. P43: расширенная аналитика."""
-    import datetime as _dt
-
-    users = db.query(User).all()
-    tier_counts: dict = {}
-    for u in users:
-        tier_counts[u.tier] = tier_counts.get(u.tier, 0) + 1
-
-    total_users = len(users)
-    blocked_count = sum(1 for u in users if getattr(u, "is_blocked", False))
-    unverified_count = sum(1 for u in users if not getattr(u, "is_verified", True))
-
-    # Новые пользователи за 30 и 7 дней
-    now = time.time()
-    month_start = now - 30 * 86400
-    week_start = now - 7 * 86400
-    new_users_month = sum(1 for u in users if u.created_at and u.created_at >= month_start)
-    new_users_week = sum(1 for u in users if u.created_at and u.created_at >= week_start)
-
-    # Новые пользователи по дням (последние 7 дней) — для sparkline
-    today_date = _dt.date.today()
-    new_users_by_day = []
-    for i in range(6, -1, -1):
-        day = today_date - _dt.timedelta(days=i)
-        day_ts_start = _dt.datetime.combine(day, _dt.time.min).timestamp()
-        day_ts_end = _dt.datetime.combine(day, _dt.time.max).timestamp()
-        count = sum(1 for u in users if u.created_at and day_ts_start <= u.created_at <= day_ts_end)
-        new_users_by_day.append({"date": day.isoformat(), "count": count})
-
-    # Транзакции (выручка)
-    all_txs = db.query(Transaction).filter(Transaction.status == "succeeded").all()
-    revenue_total = round(sum(getattr(t, "amount", 0) or 0 for t in all_txs), 2)
-    txs_month = [t for t in all_txs if t.created_at and t.created_at >= month_start]
-    revenue_month = round(sum(getattr(t, "amount", 0) or 0 for t in txs_month), 2)
-    tx_count_month = len(txs_month)
-
-    # Выручка по дням (7 дней) — для sparkline
-    revenue_by_day = []
-    for i in range(6, -1, -1):
-        day = today_date - _dt.timedelta(days=i)
-        day_ts_start = _dt.datetime.combine(day, _dt.time.min).timestamp()
-        day_ts_end = _dt.datetime.combine(day, _dt.time.max).timestamp()
-        amount = sum(
-            getattr(t, "amount", 0) or 0
-            for t in all_txs
-            if t.created_at and day_ts_start <= t.created_at <= day_ts_end
-        )
-        revenue_by_day.append({"date": day.isoformat(), "amount": round(amount, 2)})
-
-    # Мастеринги
-    day_start = now - 86400
-    masters_today = db.query(MasteringRecord).filter(MasteringRecord.created_at >= day_start).count()
-    masters_month = db.query(MasteringRecord).filter(MasteringRecord.created_at >= month_start).count()
-    masters_total = db.query(MasteringRecord).count()
-
-    # Мастеринги по дням (7 дней) — для sparkline
-    masters_by_day = []
-    for i in range(6, -1, -1):
-        day = today_date - _dt.timedelta(days=i)
-        day_ts_start = _dt.datetime.combine(day, _dt.time.min).timestamp()
-        day_ts_end = _dt.datetime.combine(day, _dt.time.max).timestamp()
-        count = db.query(MasteringRecord).filter(
-            MasteringRecord.created_at >= day_ts_start,
-            MasteringRecord.created_at <= day_ts_end,
-        ).count()
-        masters_by_day.append({"date": day.isoformat(), "count": count})
-
-    # Новости
-    news_total = db.query(NewsPost).count()
-    news_published = db.query(NewsPost).filter(NewsPost.is_published == True).count()  # noqa: E712
-
-    # Активные подписки
-    active_subs = sum(
-        1 for u in users
-        if getattr(u, "subscription_status", "none") == "active"
-        and getattr(u, "subscription_expires_at", None)
-        and u.subscription_expires_at > now
-    )
-
-    return {
-        "users": {
-            "total": total_users,
-            "blocked": blocked_count,
-            "unverified": unverified_count,
-            "by_tier": tier_counts,
-            "new_month": new_users_month,
-            "new_week": new_users_week,
-            "by_day": new_users_by_day,
-            "active_subscriptions": active_subs,
-        },
-        "revenue": {
-            "total_rub": revenue_total,
-            "month_rub": revenue_month,
-            "transactions_month": tx_count_month,
-            "by_day": revenue_by_day,
-        },
-        "masterings": {
-            "today": masters_today,
-            "month": masters_month,
-            "total": masters_total,
-            "by_day": masters_by_day,
-        },
-        "news": {
-            "total": news_total,
-            "published": news_published,
-        },
-    }
+    return _svc_get_dashboard_stats(db)
 
 
 # ─── User management ─────────────────────────────────────────────────────────
@@ -390,21 +279,7 @@ def admin_list_users(
     db=Depends(_get_db),
 ):
     """Список пользователей с поиском и фильтрацией."""
-    q = db.query(User)
-    if search:
-        q = q.filter(User.email.ilike(f"%{search}%"))
-    if tier:
-        q = q.filter(User.tier == tier)
-    if blocked is not None:
-        q = q.filter(User.is_blocked == blocked)
-    total = q.count()
-    users = q.order_by(User.created_at.desc()).offset(offset).limit(limit).all()
-    return {
-        "total": total,
-        "offset": offset,
-        "limit": limit,
-        "users": [_user_to_dict(u) for u in users],
-    }
+    return _svc_list_users(db, search=search, tier=tier, blocked=blocked, limit=limit, offset=offset)
 
 
 @router.get("/users/{user_id}")
@@ -414,41 +289,7 @@ def admin_get_user(
     db=Depends(_get_db),
 ):
     """Детали пользователя + последние записи мастеринга."""
-    u = db.query(User).filter(User.id == user_id).first()
-    if not u:
-        raise HTTPException(404, "Пользователь не найден")
-    records = (
-        db.query(MasteringRecord)
-        .filter(MasteringRecord.user_id == user_id)
-        .order_by(MasteringRecord.created_at.desc())
-        .limit(20)
-        .all()
-    )
-    presets = db.query(SavedPreset).filter(SavedPreset.user_id == user_id).count()
-    txs = (
-        db.query(Transaction)
-        .filter(Transaction.user_id == user_id)
-        .order_by(Transaction.created_at.desc())
-        .limit(10)
-        .all()
-    )
-    return {
-        **_user_to_dict(u),
-        "mastering_count": len(records),
-        "preset_count": presets,
-        "recent_records": [
-            {
-                "id": r.id,
-                "filename": r.filename,
-                "style": r.style,
-                "before_lufs": r.before_lufs,
-                "after_lufs": r.after_lufs,
-                "created_at": r.created_at,
-            }
-            for r in records
-        ],
-        "recent_transactions": [_tx_to_dict(t) for t in txs],
-    }
+    return _svc_get_user_detail(db, user_id)
 
 
 @router.patch("/users/{user_id}")
@@ -460,31 +301,12 @@ def admin_patch_user(
     db=Depends(_get_db),
 ):
     """Изменить tier, is_blocked или is_admin пользователя."""
-    u = db.query(User).filter(User.id == user_id).first()
-    if not u:
-        raise HTTPException(404, "Пользователь не найден")
-    changes = []
-    if body.tier is not None:
-        if body.tier not in ("free", "pro", "studio"):
-            raise HTTPException(400, "tier должен быть free, pro или studio")
-        changes.append(f"tier: {u.tier} → {body.tier}")
-        u.tier = body.tier
-    if body.is_blocked is not None:
-        changes.append(f"blocked: {u.is_blocked} → {body.is_blocked}")
-        u.is_blocked = body.is_blocked
-    if body.is_admin is not None:
-        changes.append(f"is_admin: {u.is_admin} → {body.is_admin}")
-        u.is_admin = body.is_admin
-    db.commit()
-    db.refresh(u)
-    # P55: запись в журнал
-    write_audit_log(
-        db, int(admin.get("sub", 0) or 0), admin.get("email", ""),
-        action="patch_user", target_type="user", target_id=user_id,
-        details="; ".join(changes) or "no changes",
-        ip=request.client.host if request.client else "",
+    return _svc_patch_user(
+        db, user_id,
+        tier=body.tier, is_blocked=body.is_blocked, is_admin=body.is_admin,
+        admin_payload=admin,
+        client_ip=request.client.host if request.client else "",
     )
-    return _user_to_dict(u)
 
 
 @router.delete("/users/{user_id}")
@@ -495,22 +317,10 @@ def admin_delete_user(
     db=Depends(_get_db),
 ):
     """Удалить пользователя и все его данные (CASCADE)."""
-    u = db.query(User).filter(User.id == user_id).first()
-    if not u:
-        raise HTTPException(404, "Пользователь не найден")
-    if str(user_id) == str(admin.get("sub")):
-        raise HTTPException(400, "Нельзя удалить собственную учётную запись через API")
-    user_email = u.email
-    db.delete(u)
-    db.commit()
-    # P55: запись в журнал
-    write_audit_log(
-        db, int(admin.get("sub", 0) or 0), admin.get("email", ""),
-        action="delete_user", target_type="user", target_id=user_id,
-        details=f"email: {user_email}",
-        ip=request.client.host if request.client else "",
+    return _svc_delete_user(
+        db, user_id, admin_payload=admin,
+        client_ip=request.client.host if request.client else "",
     )
-    return {"deleted": True, "user_id": user_id}
 
 
 class BulkActionRequest(BaseModel):
@@ -533,55 +343,11 @@ def admin_bulk_action(
     action=delete   — удалить (нельзя удалить самого себя)
     action=set_tier — изменить тариф (требует tier)
     """
-    if not body.user_ids:
-        raise HTTPException(400, "user_ids не может быть пустым")
-    if body.action not in ("block", "unblock", "delete", "set_tier"):
-        raise HTTPException(400, "action: block | unblock | delete | set_tier")
-    if body.action == "set_tier":
-        if body.tier not in ("free", "pro", "studio"):
-            raise HTTPException(400, "tier должен быть free, pro или studio")
-
-    admin_id = str(admin.get("sub"))
-    affected = 0
-    skipped  = 0
-    errors: list = []
-
-    for uid in body.user_ids:
-        if body.action == "delete" and str(uid) == admin_id:
-            skipped += 1
-            continue
-        u = db.query(User).filter(User.id == uid).first()
-        if not u:
-            skipped += 1
-            continue
-        try:
-            if body.action == "block":
-                u.is_blocked = True
-            elif body.action == "unblock":
-                u.is_blocked = False
-            elif body.action == "set_tier":
-                u.tier = body.tier
-            elif body.action == "delete":
-                db.delete(u)
-            affected += 1
-        except Exception as e:
-            errors.append({"user_id": uid, "error": str(e)[:100]})
-            skipped += 1
-
-    db.commit()
-    # P55: запись в журнал
-    write_audit_log(
-        db, int(admin.get("sub", 0) or 0), admin.get("email", ""),
-        action=f"bulk_{body.action}", target_type="user",
-        details=f"ids={body.user_ids[:20]}; affected={affected}; tier={body.tier or ''}",
-        ip=request.client.host if request.client else "",
+    return _svc_bulk_action(
+        db, user_ids=body.user_ids, action=body.action, tier=body.tier,
+        admin_payload=admin,
+        client_ip=request.client.host if request.client else "",
     )
-    return {
-        "action": body.action,
-        "affected": affected,
-        "skipped": skipped,
-        "errors": errors,
-    }
 
 
 @router.post("/users/{user_id}/subscription")
@@ -592,39 +358,11 @@ def admin_set_subscription(
     db=Depends(_get_db),
 ):
     """Назначить подписку пользователю вручную и создать транзакцию."""
-    u = db.query(User).filter(User.id == user_id).first()
-    if not u:
-        raise HTTPException(404, "Пользователь не найден")
-    if body.tier not in ("free", "pro", "studio"):
-        raise HTTPException(400, "tier должен быть free, pro или studio")
-    u.tier = body.tier
-    u.subscription_expires_at = body.expires_at
-    u.subscription_status = "active" if body.tier != "free" else "none"
-    db.commit()
-
-    tx = create_transaction(
-        db,
-        user_id=user_id,
-        amount=body.amount,
-        tier=body.tier,
-        payment_system="manual",
-        status="succeeded",
-        description=body.description or f"Ручное назначение тарифа {body.tier}",
+    return _svc_set_subscription(
+        db, user_id,
+        tier=body.tier, expires_at=body.expires_at,
+        amount=body.amount, description=body.description,
     )
-    db.refresh(u)
-    # Письмо об активации подписки (P22)
-    try:
-        from .mailer import send_subscription_activated_email
-        import asyncio as _asyncio
-        _asyncio.get_event_loop().run_in_executor(
-            None, send_subscription_activated_email, u.email, body.tier, body.expires_at
-        )
-    except Exception:  # noqa: BLE001
-        pass
-    return {
-        "user": _user_to_dict(u),
-        "transaction": _tx_to_dict(tx) if tx else None,
-    }
 
 
 # ─── Transactions ─────────────────────────────────────────────────────────────
@@ -975,6 +713,9 @@ def admin_settings(admin: dict = Depends(_get_current_admin)):
             "notify_email_on_register": _effective_setting("notify_email_on_register", False),
             "notify_telegram_on_payment": _effective_setting("notify_telegram_on_payment", False),
             "default_locale": _str("default_locale", "ru"),
+            "alert_monitoring_enabled": _effective_setting("alert_monitoring_enabled", False),
+            "alert_queue_threshold": _effective_setting("alert_queue_threshold", 0),
+            "alert_throttle_minutes": _effective_setting("alert_throttle_minutes", 60),
         },
         "smtp": {
             "host": _str("smtp_host"),
@@ -1077,7 +818,7 @@ def admin_prompts_list(admin: dict = Depends(_get_current_admin), db=Depends(_ge
             "effective_body": effective,
             "effective_preview": (effective[:200] + "…") if len(effective) > 200 else effective,
             "history": [
-                {"id": h.id, "version": h.version, "created_at": h.created_at, "created_by": h.created_by, "preview": (h.body or "")[:120] + ("…" if len(h.body or "") > 120 else "")}
+                {"id": h.id, "version": h.version, "name": (getattr(h, "name", None) or "") or f"v{h.version}", "created_at": h.created_at, "created_by": h.created_by, "preview": (h.body or "")[:120] + ("…" if len(h.body or "") > 120 else "")}
                 for h in history
             ],
         }
@@ -1107,7 +848,18 @@ def admin_prompts_history(slug: str, admin: dict = Depends(_get_current_admin), 
     if slug not in _PROMPT_SLUGS:
         raise HTTPException(404, "Неверный slug")
     history = get_prompt_history(db, slug, limit=50)
-    return {"slug": slug, "items": [{"id": h.id, "version": h.version, "created_at": h.created_at, "preview": (h.body or "")[:200]} for h in history]}
+    return {"slug": slug, "items": [{"id": h.id, "version": h.version, "name": (getattr(h, "name", None) or "") or f"v{h.version}", "created_at": h.created_at, "preview": (h.body or "")[:200]} for h in history]}
+
+
+@router.get("/prompts/{slug}/version/{version_id}")
+def admin_prompts_version(slug: str, version_id: int, admin: dict = Depends(_get_current_admin), db=Depends(_get_db)):
+    """Тело одной версии промпта (для кнопки «Применить шаблон»)."""
+    if slug not in _PROMPT_SLUGS:
+        raise HTTPException(404, "Неверный slug")
+    row = db.query(PromptTemplate).filter(PromptTemplate.slug == slug, PromptTemplate.id == version_id).first()
+    if not row:
+        raise HTTPException(404, "Версия не найдена")
+    return {"id": row.id, "version": row.version, "name": getattr(row, "name", None) or f"v{row.version}", "body": row.body or ""}
 
 
 @router.post("/prompts/{slug}/activate")
@@ -1132,178 +884,16 @@ def admin_prompts_reset(slug: str, admin: dict = Depends(_get_current_admin), db
 
 
 # ─── Reports ───────────────────────────────────────────────────────────────────
+# REPORTS_META и _run_report перенесены в services/reports_service.py
+# (REPORTS_META и _svc_run_report импортированы в начале файла)
 
-REPORTS_META = [
-    {"id": "registrations_by_day", "name": "Регистрации по дням", "description": "Число новых пользователей по дате", "params": ["date_from", "date_to"]},
-    {"id": "tier_distribution", "name": "Распределение по тарифам", "description": "Количество пользователей по tier", "params": []},
-    {"id": "revenue_by_period", "name": "Выручка за период", "description": "Сумма успешных транзакций по дням", "params": ["date_from", "date_to"]},
-    {"id": "masterings_by_day", "name": "Мастеринги по дням", "description": "Число завершённых задач по дате", "params": ["date_from", "date_to"]},
-    {"id": "avg_lufs_by_style", "name": "Средний LUFS по стилю", "description": "До/после по стилю мастеринга", "params": []},
-    {"id": "ai_usage_by_type", "name": "Использование AI по типу и тарифу", "description": "Запросы AI по типу (recommend, report, chat и т.д.)", "params": ["date_from", "date_to"]},
-    {"id": "errors_failures", "name": "Ошибки мастеринга", "description": "Задачи со статусом error", "params": ["date_from", "date_to"]},
-    {"id": "popular_styles", "name": "Популярные стили", "description": "Топ стилей по количеству использований", "params": []},
-    {"id": "user_activity", "name": "Активность пользователей", "description": "Уникальные пользователи по дням (мастеринг/AI)", "params": ["date_from", "date_to"]},
-    {"id": "export_raw", "name": "Экспорт для аналитики", "description": "Сырые данные для внешнего BI (CSV)", "params": ["date_from", "date_to"]},
-]
+from .services.reports_service import parse_dates as _parse_dates
 
 
-def _parse_dates(date_from: Optional[str], date_to: Optional[str]):
-    """Вернуть (ts_from, ts_to) в секундах или (None, None)."""
-    def parse(s):
-        if not s:
-            return None
-        try:
-            dt = datetime.strptime(s[:10], "%Y-%m-%d")
-            return time.mktime(dt.timetuple())
-        except Exception:
-            return None
-    return parse(date_from), parse(date_to)
-
-
-def _run_report(db, report_id: str, date_from: Optional[str] = None, date_to: Optional[str] = None) -> dict:
-    """Выполнить отчёт по id. Возвращает dict с полями отчёта."""
-    ts_from, ts_to = _parse_dates(date_from, date_to)
-    if report_id == "registrations_by_day":
-        q = db.query(User).filter(User.created_at != None)
-        if ts_from:
-            q = q.filter(User.created_at >= ts_from)
-        if ts_to:
-            q = q.filter(User.created_at <= ts_to + 86400)
-        users = q.all()
-        by_day: dict = {}
-        for u in users:
-            day = datetime.fromtimestamp(u.created_at).strftime("%Y-%m-%d")
-            by_day[day] = by_day.get(day, 0) + 1
-        rows = [{"date": k, "count": v} for k, v in sorted(by_day.items())]
-        return {"rows": rows, "total": len(users)}
-    if report_id == "tier_distribution":
-        q = db.query(User.tier).distinct()
-        tiers = [r[0] for r in q.all()]
-        out = []
-        for t in tiers or ["free", "pro", "studio"]:
-            cnt = db.query(User).filter(User.tier == t).count()
-            out.append({"tier": t, "count": cnt})
-        return {"rows": out}
-    if report_id == "revenue_by_period":
-        q = db.query(Transaction).filter(Transaction.status == "succeeded")
-        if ts_from:
-            q = q.filter(Transaction.created_at >= ts_from)
-        if ts_to:
-            q = q.filter(Transaction.created_at <= ts_to + 86400)
-        txs = q.all()
-        by_day: dict = {}
-        for t in txs:
-            day = datetime.fromtimestamp(t.created_at).strftime("%Y-%m-%d")
-            by_day[day] = by_day.get(day, 0) + t.amount
-        rows = [{"date": k, "amount": round(v, 2)} for k, v in sorted(by_day.items())]
-        return {"rows": rows, "total_amount": round(sum(t.amount for t in txs), 2)}
-    if report_id == "masterings_by_day":
-        by_day: dict = {}
-        if DB_AVAILABLE and MasteringJobEvent is not None:
-            q = db.query(MasteringJobEvent).filter(MasteringJobEvent.status == "done", MasteringJobEvent.completed_at != None)
-            if ts_from:
-                q = q.filter(MasteringJobEvent.completed_at >= ts_from)
-            if ts_to:
-                q = q.filter(MasteringJobEvent.completed_at <= ts_to + 86400)
-            for r in q.all():
-                day = datetime.fromtimestamp(r.completed_at).strftime("%Y-%m-%d")
-                by_day[day] = by_day.get(day, 0) + 1
-        q = db.query(MasteringRecord).filter(MasteringRecord.created_at != None)
-        if ts_from:
-            q = q.filter(MasteringRecord.created_at >= ts_from)
-        if ts_to:
-            q = q.filter(MasteringRecord.created_at <= ts_to + 86400)
-        for r in q.all():
-            day = datetime.fromtimestamp(r.created_at).strftime("%Y-%m-%d")
-            by_day[day] = by_day.get(day, 0) + 1
-        rows = [{"date": k, "count": v} for k, v in sorted(by_day.items())]
-        return {"rows": rows}
-    if report_id == "avg_lufs_by_style":
-        q = db.query(MasteringRecord).filter(MasteringRecord.before_lufs != None, MasteringRecord.after_lufs != None)
-        recs = q.all()
-        by_style: dict = {}
-        for r in recs:
-            s = r.style or "standard"
-            if s not in by_style:
-                by_style[s] = {"before": [], "after": [], "target": []}
-            by_style[s]["before"].append(r.before_lufs)
-            by_style[s]["after"].append(r.after_lufs)
-            if r.target_lufs is not None:
-                by_style[s]["target"].append(r.target_lufs)
-        rows = []
-        for style, data in by_style.items():
-            rows.append({
-                "style": style,
-                "avg_before_lufs": round(sum(data["before"]) / len(data["before"]), 2) if data["before"] else None,
-                "avg_after_lufs": round(sum(data["after"]) / len(data["after"]), 2) if data["after"] else None,
-                "count": len(data["before"]),
-            })
-        return {"rows": sorted(rows, key=lambda x: -x["count"])}
-    if report_id == "ai_usage_by_type":
-        if not DB_AVAILABLE or AiUsageLog is None:
-            return {"rows": [], "message": "Таблица ai_usage_log недоступна"}
-        q = db.query(AiUsageLog).filter(AiUsageLog.type != None)
-        if ts_from:
-            q = q.filter(AiUsageLog.created_at >= ts_from)
-        if ts_to:
-            q = q.filter(AiUsageLog.created_at <= ts_to + 86400)
-        logs = q.all()
-        by_type_tier: dict = {}
-        for L in logs:
-            key = (L.type or "unknown", L.tier or "free")
-            by_type_tier[key] = by_type_tier.get(key, 0) + 1
-        rows = [{"type": k[0], "tier": k[1], "count": v} for k, v in sorted(by_type_tier.items(), key=lambda x: -x[1])]
-        return {"rows": rows, "total": len(logs)}
-    if report_id == "errors_failures":
-        if not DB_AVAILABLE or MasteringJobEvent is None:
-            return {"rows": [], "message": "Таблица mastering_job_events недоступна"}
-        q = db.query(MasteringJobEvent).filter(MasteringJobEvent.status == "error")
-        if ts_from:
-            q = q.filter(MasteringJobEvent.completed_at >= ts_from)
-        if ts_to:
-            q = q.filter(MasteringJobEvent.completed_at <= ts_to + 86400)
-        recs = q.all()
-        rows = [{"job_id": r.job_id, "completed_at": r.completed_at, "style": r.style} for r in recs[:500]]
-        return {"rows": rows, "total": len(recs)}
-    if report_id == "popular_styles":
-        q = db.query(MasteringRecord.style).filter(MasteringRecord.style != None)
-        recs = q.all()
-        cnt: dict = {}
-        for r in recs:
-            s = r[0] or "standard"
-            cnt[s] = cnt.get(s, 0) + 1
-        rows = [{"style": k, "count": v} for k, v in sorted(cnt.items(), key=lambda x: -x[1])]
-        return {"rows": rows}
-    if report_id == "user_activity":
-        by_day: dict = {}
-        if DB_AVAILABLE and AiUsageLog is not None:
-            q = db.query(AiUsageLog.created_at, AiUsageLog.user_id).filter(AiUsageLog.created_at != None)
-            if ts_from:
-                q = q.filter(AiUsageLog.created_at >= ts_from)
-            if ts_to:
-                q = q.filter(AiUsageLog.created_at <= ts_to + 86400)
-            for r in q.all():
-                if ts_from and r.created_at < ts_from or ts_to and r.created_at > ts_to + 86400:
-                    continue
-                day = datetime.fromtimestamp(r.created_at).strftime("%Y-%m-%d")
-                if day not in by_day:
-                    by_day[day] = set()
-                by_day[day].add(r.user_id)
-        q = db.query(MasteringRecord.created_at, MasteringRecord.user_id).filter(MasteringRecord.created_at != None)
-        if ts_from:
-            q = q.filter(MasteringRecord.created_at >= ts_from)
-        if ts_to:
-            q = q.filter(MasteringRecord.created_at <= ts_to + 86400)
-        for r in q.all():
-            day = datetime.fromtimestamp(r.created_at).strftime("%Y-%m-%d")
-            if day not in by_day:
-                by_day[day] = set()
-            by_day[day].add(r.user_id)
-        rows = [{"date": k, "unique_users": len(v)} for k, v in sorted(by_day.items())]
-        return {"rows": rows}
-    if report_id == "export_raw":
-        return {"message": "Используйте GET /api/admin/reports/export_raw.csv?date_from=&date_to= для выгрузки CSV"}
-    return {"error": "Неизвестный отчёт"}
+# _run_report перенесён в services/reports_service.py как run_report()
+# Здесь оставляем алиас для обратной совместимости с summarize-эндпоинтом
+def _run_report(db, report_id: str, date_from=None, date_to=None) -> dict:
+    return _svc_run_report(db, report_id, date_from, date_to)
 
 
 @router.get("/reports/list")

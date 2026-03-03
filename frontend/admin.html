@@ -7,92 +7,105 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#07070f;--surface:#0e0e1a;--surface2:#15151f;--border:#2a2a3a;
-  --accent:#7c3aed;--accent2:#a855f7;--green:#22c55e;--red:#ef4444;
-  --yellow:#eab308;--text:#e8e8f0;--text-soft:#8888aa;--r:8px;
-  --nav-w:220px;
+  /* Светлая тема — читаемый контраст */
+  --bg:#f0f2f5;
+  --surface:#ffffff;
+  --surface2:#f5f6f8;
+  --border:#e1e4e8;
+  --accent:#5b21b6;
+  --accent2:#6d28d9;
+  --green:#15803d;
+  --red:#b91c1c;
+  --yellow:#a16207;
+  --text:#1a1d21;
+  --text-soft:#4b5563;
+  --text-dim:#6b7280;
+  --r:8px;
+  --nav-w:240px;
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,'Segoe UI',sans-serif;font-size:14px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,'Segoe UI',sans-serif;font-size:15px;line-height:1.5}
 a{color:inherit;text-decoration:none}
 
 /* Layout */
 .layout{display:flex;height:100vh;overflow:hidden}
 
 /* Sidebar */
-.nav{width:var(--nav-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1rem 0}
-.nav-logo{padding:.5rem 1.2rem 1.2rem;font-size:1rem;font-weight:700;color:var(--accent2)}
-.nav-logo small{display:block;font-size:.72rem;color:var(--text-soft);font-weight:400}
-.nav-item{display:flex;align-items:center;gap:.6rem;padding:.65rem 1.2rem;cursor:pointer;color:var(--text-soft);border-left:3px solid transparent;transition:.15s}
-.nav-item:hover{color:var(--text);background:rgba(124,58,237,.08)}
-.nav-item.active{color:var(--accent2);border-left-color:var(--accent);background:rgba(124,58,237,.12)}
-.nav-item .icon{width:18px;text-align:center;font-size:1rem}
-.nav-bottom{margin-top:auto;padding:.8rem 1.2rem;font-size:.75rem;color:var(--text-soft)}
+.nav{width:var(--nav-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1rem 0;box-shadow:1px 0 0 rgba(0,0,0,.04)}
+.nav-logo{padding:.6rem 1.25rem 1.25rem;font-size:1.05rem;font-weight:700;color:var(--accent2)}
+.nav-logo small{display:block;font-size:.875rem;color:var(--text-soft);font-weight:400;margin-top:.2rem}
+.nav-item{display:flex;align-items:center;gap:.65rem;padding:.7rem 1.25rem;cursor:pointer;color:var(--text-soft);border-left:3px solid transparent;transition:.15s;font-size:.9375rem}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.nav-item.active{color:var(--accent2);border-left-color:var(--accent);background:#f5f3ff;font-weight:500}
+.nav-item .icon{width:20px;text-align:center;font-size:1.05rem}
+.nav-group{margin-top:.25rem}
+.nav-group-label{padding:.5rem 1.25rem .25rem;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-soft)}
+.nav-item.nav-sub{padding-left:2rem;font-size:.9rem}
+.nav-bottom{margin-top:auto;padding:.9rem 1.25rem;font-size:.875rem;color:var(--text-soft)}
 
 /* Main */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{height:50px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;padding:0 1.5rem}
-.topbar-title{font-weight:600;font-size:.95rem}
-.topbar-auth{margin-left:auto;font-size:.8rem;color:var(--text-soft)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.topbar{height:56px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;padding:0 1.5rem;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.topbar-title{font-weight:600;font-size:1.05rem;color:var(--text)}
+.topbar-auth{margin-left:auto;font-size:.9rem;color:var(--text-soft)}
 .content{flex:1;overflow-y:auto;padding:1.5rem}
 
 /* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem}
-.card-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-soft);margin-bottom:.8rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card-title{font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-soft);margin-bottom:.9rem;font-weight:600}
 
 /* Stats grid */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;position:relative;overflow:hidden}
-.stat-card .val{font-size:1.8rem;font-weight:700;color:var(--accent2);font-family:var(--mono)}
-.stat-card .lbl{font-size:.75rem;color:var(--text-soft);margin-top:.2rem}
-.stat-card .delta{font-size:.72rem;margin-top:.4rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stat-card .val{font-size:1.9rem;font-weight:700;color:var(--accent2)}
+.stat-card .lbl{font-size:.875rem;color:var(--text-soft);margin-top:.25rem}
+.stat-card .delta{font-size:.85rem;margin-top:.4rem}
 .delta-up{color:var(--green)}.delta-dn{color:var(--red)}.delta-neu{color:var(--text-dim)}
-/* Sparkline SVG */
-.sparkline{display:block;margin-top:.6rem;width:100%;height:36px;opacity:.7}
-/* Wide analytics cards */
+.sparkline{display:block;margin-top:.6rem;width:100%;height:36px;opacity:.85}
 .analytics-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
 @media(max-width:700px){.analytics-row{grid-template-columns:1fr}}
-.analytics-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem}
+.analytics-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .analytics-card .card-title{margin-bottom:.6rem}
 
 /* Tables */
-.table-wrap{overflow-x:auto}
+.table-wrap{overflow-x:auto;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
 table{width:100%;border-collapse:collapse}
-th{text-align:left;padding:.5rem .7rem;background:var(--surface2);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-soft);border-bottom:1px solid var(--border)}
-td{padding:.5rem .7rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
-tr:hover td{background:rgba(255,255,255,.02)}
-.badge{display:inline-block;font-size:.7rem;padding:.15rem .5rem;border-radius:4px;font-weight:600}
-.badge-pro{background:rgba(168,85,247,.25);color:#c084fc}
-.badge-studio{background:rgba(234,179,8,.2);color:#fbbf24}
-.badge-free{background:rgba(99,102,241,.15);color:#818cf8}
-.badge-blocked{background:rgba(239,68,68,.2);color:#f87171}
-.badge-admin{background:rgba(34,197,94,.2);color:#4ade80}
-.badge-ok{background:rgba(34,197,94,.2);color:#4ade80}
-.badge-fail{background:rgba(239,68,68,.2);color:#f87171}
-.badge-pending{background:rgba(234,179,8,.2);color:#fbbf24}
-.badge-draft{background:rgba(99,102,241,.15);color:#818cf8}
-.badge-sent{background:rgba(34,197,94,.2);color:#4ade80}
+th{text-align:left;padding:.6rem .85rem;background:var(--surface2);font-size:.875rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-soft);border-bottom:1px solid var(--border);font-weight:600}
+td{padding:.6rem .85rem;border-bottom:1px solid var(--border);vertical-align:middle;font-size:.9375rem}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.badge{display:inline-block;font-size:.8125rem;padding:.2rem .55rem;border-radius:5px;font-weight:600}
+.badge-pro{background:#ede9fe;color:#5b21b6}
+.badge-studio{background:#fef3c7;color:#b45309}
+.badge-free{background:#e0e7ff;color:#3730a3}
+.badge-blocked{background:#fee2e2;color:#b91c1c}
+.badge-admin{background:#dcfce7;color:#15803d}
+.badge-ok{background:#dcfce7;color:#15803d}
+.badge-fail{background:#fee2e2;color:#b91c1c}
+.badge-pending{background:#fef3c7;color:#a16207}
+.badge-draft{background:#e0e7ff;color:#4338ca}
+.badge-sent{background:#dcfce7;color:#15803d}
 
 /* Buttons */
-.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;border-radius:6px;border:none;cursor:pointer;font-size:.82rem;font-weight:500;transition:.15s}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:6px;border:none;cursor:pointer;font-size:.9rem;font-weight:500;transition:.15s}
 .btn-primary{background:var(--accent);color:#fff}
 .btn-primary:hover{background:var(--accent2)}
-.btn-sm{padding:.3rem .6rem;font-size:.75rem}
-.btn-danger{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
-.btn-danger:hover{background:rgba(239,68,68,.3)}
-.btn-ghost{background:rgba(255,255,255,.05);color:var(--text-soft);border:1px solid var(--border)}
-.btn-ghost:hover{background:rgba(255,255,255,.1);color:var(--text)}
-.btn-success{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
-.btn-success:hover{background:rgba(34,197,94,.3)}
+.btn-sm{padding:.35rem .7rem;font-size:.875rem}
+.btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}
+.btn-danger:hover{background:#fecaca}
+.btn-ghost{background:var(--surface2);color:var(--text-soft);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--border);color:var(--text)}
+.btn-success{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
+.btn-success:hover{background:#bbf7d0}
 
 /* Forms */
-.form-row{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:.8rem;align-items:flex-end}
-.form-group{display:flex;flex-direction:column;gap:.35rem;flex:1;min-width:140px}
-.form-group label{font-size:.75rem;color:var(--text-soft)}
+.form-row{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:.9rem;align-items:flex-end}
+.form-group{display:flex;flex-direction:column;gap:.4rem;flex:1;min-width:140px}
+.form-group label{font-size:.875rem;color:var(--text-soft);font-weight:500}
 input[type=text],input[type=email],input[type=number],input[type=date],input[type=password],select,textarea{
-  background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);
-  padding:.45rem .7rem;font-size:.85rem;width:100%;outline:none;font-family:inherit
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);
+  padding:.5rem .75rem;font-size:.9375rem;width:100%;outline:none;font-family:inherit
 }
-input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(91,33,182,.15)}
 textarea{resize:vertical;min-height:80px}
 
 /* Search bar */
@@ -101,45 +114,44 @@ textarea{resize:vertical;min-height:80px}
 
 /* Pagination */
 .pagination{display:flex;gap:.4rem;align-items:center;margin-top:1rem}
-.page-btn{padding:.3rem .7rem;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text-soft);cursor:pointer;font-size:.78rem}
+.page-btn{padding:.35rem .8rem;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text-soft);cursor:pointer;font-size:.875rem}
 .page-btn.active,.page-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 /* Modal */
-.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
 .modal-backdrop.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
-.modal-title{font-size:1rem;font-weight:600;margin-bottom:1rem}
-.modal-close{position:absolute;top:.8rem;right:.8rem;background:none;border:none;color:var(--text-soft);font-size:1.2rem;cursor:pointer;line-height:1}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.modal-title{font-size:1.1rem;font-weight:600;margin-bottom:1rem;color:var(--text)}
+.modal-close{position:absolute;top:.8rem;right:.8rem;background:none;border:none;color:var(--text-soft);font-size:1.25rem;cursor:pointer;line-height:1}
 .modal-close:hover{color:var(--text)}
 
 /* Toast */
 .toasts{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;display:flex;flex-direction:column;gap:.5rem}
-.toast{padding:.6rem 1rem;border-radius:var(--r);font-size:.82rem;animation:slide-in .2s ease;max-width:320px}
-.toast-ok{background:#14532d;border:1px solid #166534;color:#bbf7d0}
-.toast-err{background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5}
-.toast-inf{background:#1e1b4b;border:1px solid #312e81;color:#a5b4fc}
+.toast{padding:.65rem 1.1rem;border-radius:var(--r);font-size:.9rem;animation:slide-in .2s ease;max-width:340px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-ok{background:#15803d;border:1px solid #166534;color:#fff}
+.toast-err{background:#b91c1c;border:1px solid #dc2626;color:#fff}
+.toast-inf{background:#3730a3;border:1px solid #4338ca;color:#fff}
 @keyframes slide-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
 
 /* LLM prompts in settings */
 .llm-prompts{display:flex;flex-direction:column;gap:1rem}
-.llm-prompt-block{border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;background:rgba(0,0,0,.15)}
-.llm-prompt-block strong{font-size:.8rem;display:inline-block;margin-bottom:.35rem}
-.llm-prompt-text{font-size:.72rem;line-height:1.4;white-space:pre-wrap;word-break:break-word;margin:0;max-height:120px;overflow-y:auto;color:var(--text-soft)}
+.llm-prompt-block{border:1px solid var(--border);border-radius:6px;padding:.7rem .9rem;background:var(--surface2)}
+.llm-prompt-block strong{font-size:.9rem;display:inline-block;margin-bottom:.4rem;color:var(--text)}
+.llm-prompt-text{font-size:.875rem;line-height:1.5;white-space:pre-wrap;word-break:break-word;margin:0;max-height:120px;overflow-y:auto;color:var(--text-soft)}
 
 /* Login overlay */
 .login-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;align-items:center;justify-content:center}
-.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;width:100%;max-width:360px}
-.login-box h2{margin-bottom:1.2rem;font-size:1.1rem;color:var(--accent2)}
-.login-box .err{color:#f87171;font-size:.8rem;margin-bottom:.8rem}
-.login-box .login-hint{margin-top:1rem;font-size:.75rem;color:var(--text-soft);line-height:1.4}
-.login-box .login-hint code{background:rgba(255,255,255,.08);padding:.15rem .35rem;border-radius:4px;font-size:.7rem}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;width:100%;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.login-box h2{margin-bottom:1.2rem;font-size:1.2rem;color:var(--accent2);font-weight:600}
+.login-box .err{color:#b91c1c;font-size:.9rem;margin-bottom:.8rem}
+.login-box .login-hint{margin-top:1rem;font-size:.875rem;color:var(--text-soft);line-height:1.5}
+.login-box .login-hint code{background:var(--surface2);padding:.2rem .4rem;border-radius:4px;font-size:.8125rem;border:1px solid var(--border)}
 
 /* Section header */
 .section-header{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem}
-.section-header h2{font-size:1rem;font-weight:600}
+.section-header h2{font-size:1.05rem;font-weight:600;color:var(--text)}
 .section-header .ml{margin-left:auto}
-/* Bulk actions bar (P48) */
-.bulk-bar{display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;background:rgba(108,75,255,.1);border:1px solid rgba(108,75,255,.25);border-radius:var(--r);margin-bottom:.8rem;flex-wrap:wrap;font-size:.8rem;color:var(--accent2);font-weight:600}
+.bulk-bar{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:var(--r);margin-bottom:.9rem;flex-wrap:wrap;font-size:.9rem;color:var(--accent2);font-weight:600}
 .bulk-actions{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
 .bulk-bar .ml{margin-left:auto}
 
@@ -147,20 +159,24 @@ textarea{resize:vertical;min-height:80px}
 .page{display:none}.page.active{display:block}
 
 /* Rich text preview */
-.news-body-preview{font-size:.82rem;color:var(--text-soft);max-height:3.5em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.news-body-preview{font-size:.9rem;color:var(--text-soft);max-height:3.5em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
 /* Settings tabs */
 .settings-tabs{display:flex;gap:.2rem;margin-bottom:1rem;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:0}
-.settings-tab{padding:.5rem 1rem;font-size:.85rem;cursor:pointer;color:var(--text-soft);border-radius:var(--r) var(--r) 0 0;border:1px solid transparent;border-bottom:none;margin-bottom:-1px;background:transparent}
-.settings-tab:hover{color:var(--text);background:rgba(255,255,255,.04)}
-.settings-tab.active{color:var(--accent2);background:var(--surface);border-color:var(--border)}
+.settings-tab{padding:.55rem 1rem;font-size:.9rem;cursor:pointer;color:var(--text-soft);border-radius:var(--r) var(--r) 0 0;border:1px solid transparent;border-bottom:none;margin-bottom:-1px;background:transparent}
+.settings-tab:hover{color:var(--text);background:var(--surface2)}
+.settings-tab.active{color:var(--accent2);background:var(--surface);border-color:var(--border);font-weight:500}
 .settings-panel{display:none;padding:1rem 0}
 .settings-panel.active{display:block}
-.settings-form .form-group{margin-bottom:.8rem}
-.settings-form label{display:block;font-size:.78rem;color:var(--text-soft);margin-bottom:.25rem}
+.settings-form .form-group{margin-bottom:.9rem}
+.settings-form label{display:block;font-size:.875rem;color:var(--text-soft);margin-bottom:.3rem;font-weight:500}
 .settings-form input[type=password].secret::placeholder{color:var(--text-dim)}
 .settings-save-bar{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
-.report-select.active{background:rgba(124,58,237,.2);color:var(--accent2);border-color:var(--accent)}
+.report-select.active{background:#ede9fe;color:var(--accent2);border-color:var(--accent)}
+.report-th-sort{cursor:pointer;user-select:none;white-space:nowrap;padding:.5rem .75rem;text-align:left}
+.report-th-sort:hover{background:var(--surface2)}
+.report-th-sort.sort-asc::after{content:' ▲';font-size:.7em;opacity:.8}
+.report-th-sort.sort-desc::after{content:' ▼';font-size:.7em;opacity:.8}
 </style>
 </head>
 <body>
@@ -195,6 +211,11 @@ textarea{resize:vertical;min-height:80px}
     <div class="nav-item" data-page="campaigns"><span class="icon">✉️</span> Рассылки</div>
     <div class="nav-item" data-page="reports"><span class="icon">📈</span> Отчётность</div>
     <div class="nav-item" data-page="audit"><span class="icon">📋</span> Журнал</div>
+    <div class="nav-group">
+      <div class="nav-group-label">LLM</div>
+      <div class="nav-item nav-sub" data-page="llm-connection"><span class="icon">🔌</span> Подключение</div>
+      <div class="nav-item nav-sub" data-page="llm-prompts"><span class="icon">📝</span> Промпты</div>
+    </div>
     <div class="nav-item" data-page="settings"><span class="icon">⚙️</span> Настройки</div>
     <div class="nav-bottom" id="navBottom"></div>
   </nav>
@@ -225,19 +246,19 @@ textarea{resize:vertical;min-height:80px}
           <div class="analytics-card">
             <div class="card-title">Новые пользователи — 7 дней</div>
             <svg class="sparkline" id="sparkUsers" viewBox="0 0 200 36" preserveAspectRatio="none"></svg>
-            <div id="sparkUsersLabels" style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-dim);margin-top:2px"></div>
+            <div id="sparkUsersLabels" style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-dim);margin-top:2px"></div>
           </div>
           <div class="analytics-card">
             <div class="card-title">Мастеринги — 7 дней</div>
             <svg class="sparkline" id="sparkMasters" viewBox="0 0 200 36" preserveAspectRatio="none"></svg>
-            <div id="sparkMastersLabels" style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-dim);margin-top:2px"></div>
+            <div id="sparkMastersLabels" style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-dim);margin-top:2px"></div>
           </div>
         </div>
         <div class="analytics-row">
           <div class="analytics-card">
             <div class="card-title">Выручка (₽) — 7 дней</div>
             <svg class="sparkline" id="sparkRevenue" viewBox="0 0 200 36" preserveAspectRatio="none"></svg>
-            <div id="sparkRevenueLabels" style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-dim);margin-top:2px"></div>
+            <div id="sparkRevenueLabels" style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-dim);margin-top:2px"></div>
           </div>
           <div class="analytics-card">
             <div class="card-title">Распределение тарифов</div>
@@ -276,14 +297,14 @@ textarea{resize:vertical;min-height:80px}
           <div class="bulk-actions">
             <button class="btn btn-sm btn-ghost" id="bulkBlock">🔒 Заблокировать</button>
             <button class="btn btn-sm btn-ghost" id="bulkUnblock">🔓 Разблокировать</button>
-            <select id="bulkTierSel" style="width:100px;font-size:.78rem">
+            <select id="bulkTierSel" style="width:100px;font-size:.875rem">
               <option value="">— Тариф —</option>
               <option value="free">Free</option>
               <option value="pro">Pro</option>
               <option value="studio">Studio</option>
             </select>
             <button class="btn btn-sm btn-ghost" id="bulkSetTier">Применить тариф</button>
-            <button class="btn btn-sm" style="background:rgba(248,113,113,.18);color:#fca5a5;border-color:rgba(248,113,113,.3)" id="bulkDelete">🗑 Удалить</button>
+            <button class="btn btn-sm btn-danger" id="bulkDelete">🗑 Удалить</button>
           </div>
           <button class="btn btn-ghost btn-sm ml" id="bulkClear">✕ Снять выбор</button>
         </div>
@@ -362,7 +383,7 @@ textarea{resize:vertical;min-height:80px}
         <div class="section-header">
           <h2>Отчётность</h2>
         </div>
-        <p style="font-size:.8rem;color:var(--text-soft);margin-bottom:1rem">Выберите отчёт, при необходимости укажите период и нажмите «Сформировать». Для отчёта «Экспорт для аналитики» доступна выгрузка CSV.</p>
+        <p style="font-size:.9rem;color:var(--text-soft);margin-bottom:1rem">Выберите отчёт, при необходимости укажите период и нажмите «Сформировать». Для отчёта «Экспорт для аналитики» доступна выгрузка CSV.</p>
         <div class="form-row" style="margin-bottom:1rem;flex-wrap:wrap;gap:.6rem">
           <div class="form-group" style="min-width:120px">
             <label>Дата от</label>
@@ -386,7 +407,7 @@ textarea{resize:vertical;min-height:80px}
             </div>
             <div id="reportSummary" style="display:none;padding:.6rem;background:var(--surface2);border-radius:6px;margin-bottom:.6rem;font-size:.85rem"></div>
             <div class="table-wrap">
-              <table id="reportTable"><tbody></tbody></table>
+              <table id="reportTable"><thead><tr></tr></thead><tbody></tbody></table>
             </div>
             <p id="reportEmpty" style="display:none;color:var(--text-soft);font-size:.9rem">Нет данных за выбранный период.</p>
           </div>
@@ -398,7 +419,7 @@ textarea{resize:vertical;min-height:80px}
         <div class="section-header">
           <h2>Журнал действий</h2>
         </div>
-        <p style="font-size:.8rem;color:var(--text-soft);margin-bottom:1rem">Действия администраторов: настройки, пользователи, промпты.</p>
+        <p style="font-size:.9rem;color:var(--text-soft);margin-bottom:1rem">Действия администраторов: настройки, пользователи, промпты.</p>
         <div class="form-row" style="margin-bottom:1rem;flex-wrap:wrap;gap:.6rem">
           <div class="form-group" style="min-width:140px">
             <label>Действие</label>
@@ -427,6 +448,26 @@ textarea{resize:vertical;min-height:80px}
         </div>
       </div>
 
+      <!-- ── LLM: Подключение ── -->
+      <div class="page" id="page-llm-connection">
+        <div class="section-header">
+          <h2>Подключение LLM</h2>
+          <button class="btn btn-sm" onclick="loadLlmConnection()">↻ Обновить</button>
+        </div>
+        <p style="font-size:.9rem;color:var(--text-soft);margin-bottom:1rem">Бэкенд, API-ключи, лимиты по тарифам и защита от инъекций. Изменения сохраняются в БД и применяются без перезапуска.</p>
+        <div id="llmConnectionWrap"><p style="color:var(--text-soft)">Загрузка…</p></div>
+      </div>
+
+      <!-- ── LLM: Промпты ── -->
+      <div class="page" id="page-llm-prompts">
+        <div class="section-header">
+          <h2>Промпты (шаблоны и версии)</h2>
+          <button class="btn btn-sm" onclick="loadLlmPrompts()">↻ Обновить</button>
+        </div>
+        <p style="font-size:.9rem;color:var(--text-soft);margin-bottom:1rem">Системные промпты для рекомендаций, отчётов, «настройки голосом» и чата. Редактирование создаёт новую версию; можно применить шаблон из истории.</p>
+        <div id="llmPromptsWrap"><p style="color:var(--text-soft)">Загрузка…</p></div>
+      </div>
+
       <!-- ── Settings (P29) ── -->
       <div class="page" id="page-settings">
         <div class="section-header">
@@ -436,7 +477,7 @@ textarea{resize:vertical;min-height:80px}
             <button class="btn btn-sm" id="btnRefreshSettings" onclick="loadSettings()">↻ Обновить</button>
           </div>
         </div>
-        <p style="font-size:.8rem;color:var(--text-soft);margin-bottom:1rem">Изменяемые настройки сохраняются в БД и применяются без перезапуска (кроме CORS и части параметров).</p>
+        <p style="font-size:.9rem;color:var(--text-soft);margin-bottom:1rem">Изменяемые настройки сохраняются в БД и применяются без перезапуска (кроме CORS и части параметров).</p>
         <div id="settingsWrap">
           <p style="color:var(--text-soft)">Загрузка…</p>
         </div>
@@ -457,9 +498,20 @@ textarea{resize:vertical;min-height:80px}
     <button class="modal-close" onclick="closeModal('modalPromptEdit')">×</button>
     <div class="modal-title" id="modalPromptEditTitle">Редактировать промпт</div>
     <input type="hidden" id="modalPromptEditSlug">
+    <div class="form-group" style="margin-bottom:.8rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem">
+      <label style="margin:0;font-size:.875rem;color:var(--text-soft)">Применить шаблон:</label>
+      <select id="modalPromptEditTemplate" style="min-width:160px;padding:.35rem .6rem;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text)">
+        <option value="">— выбрать версию —</option>
+      </select>
+      <button type="button" class="btn btn-sm btn-ghost" id="modalPromptEditApplyTemplate">Применить</button>
+    </div>
     <div class="form-group" style="margin-bottom:1rem">
       <label>Текст системного промпта</label>
       <textarea id="modalPromptEditBody" rows="12" style="width:100%;min-height:200px;resize:vertical"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label style="font-size:.875rem;color:var(--text-soft)">Название версии (необязательно)</label>
+      <input type="text" id="modalPromptEditTemplateName" placeholder="например: Агрессивный, Краткий" style="width:100%;max-width:280px;padding:.4rem .6rem;border-radius:var(--r);border:1px solid var(--border)">
     </div>
     <div style="display:flex;gap:.5rem;justify-content:flex-end">
       <button type="button" class="btn btn-ghost" onclick="closeModal('modalPromptEdit')">Отмена</button>
@@ -509,7 +561,7 @@ textarea{resize:vertical;min-height:80px}
         </select>
       </div>
     </div>
-    <div style="margin-top:.5rem;margin-bottom:1rem;padding:.7rem;background:var(--surface2);border-radius:6px;font-size:.8rem;color:var(--text-soft)">
+    <div style="margin-top:.5rem;margin-bottom:1rem;padding:.7rem;background:var(--surface2);border-radius:6px;font-size:.9rem;color:var(--text-soft)">
       <strong style="color:var(--text)">Назначить подписку</strong>
       <div class="form-row" style="margin-top:.5rem;margin-bottom:0">
         <div class="form-group">
@@ -721,13 +773,15 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
-const pageNames = { dashboard: 'Dashboard', users: 'Пользователи', transactions: 'Транзакции', news: 'Новости', campaigns: 'Рассылки', reports: 'Отчётность', audit: 'Журнал', settings: 'Настройки' };
+const pageNames = { dashboard: 'Dashboard', users: 'Пользователи', transactions: 'Транзакции', news: 'Новости', campaigns: 'Рассылки', reports: 'Отчётность', audit: 'Журнал', 'llm-connection': 'Подключение (LLM)', 'llm-prompts': 'Промпты (LLM)', settings: 'Настройки' };
+let _currentPage = 'dashboard';
 
 document.querySelectorAll('.nav-item[data-page]').forEach(el => {
   el.addEventListener('click', () => loadPage(el.dataset.page));
 });
 
 function loadPage(name) {
+  _currentPage = name || 'dashboard';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === name));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   document.getElementById('topbarTitle').textContent = pageNames[name] || name;
@@ -738,7 +792,14 @@ function loadPage(name) {
   if (name === 'campaigns') loadCampaigns();
   if (name === 'reports') loadReports();
   if (name === 'audit') loadAudit();
+  if (name === 'llm-connection') loadLlmConnection();
+  if (name === 'llm-prompts') loadLlmPrompts();
   if (name === 'settings') loadSettings();
+}
+
+function refreshPromptsBlock() {
+  if (_currentPage === 'llm-prompts') loadLlmPrompts();
+  else if (_currentPage === 'settings') loadSettings();
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -784,7 +845,7 @@ function drawTierBar(tiers, total) {
     const cnt = tiers[it.key] || 0;
     const pct = total > 0 ? (cnt / total * 100).toFixed(1) : 0;
     return `<div style="margin-bottom:.5rem">
-      <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-soft);margin-bottom:2px">
+      <div style="display:flex;justify-content:space-between;font-size:.875rem;color:var(--text-soft);margin-bottom:2px">
         <span style="color:${it.color};font-weight:600">${it.label}</span>
         <span>${cnt} &nbsp;(${pct}%)</span>
       </div>
@@ -881,7 +942,7 @@ async function loadUsers(page = 0) {
       <tr data-uid="${u.id}">
         <td><input type="checkbox" class="user-chk" data-id="${u.id}" ${_selectedUsers.has(u.id) ? 'checked' : ''}></td>
         <td>${u.id}</td>
-        <td>${u.email}${u.is_admin ? ' <span class="badge badge-admin">admin</span>' : ''}${!u.is_verified ? ' <span class="badge" style="background:rgba(251,191,36,.15);color:#fbbf24">unverified</span>' : ''}</td>
+        <td>${u.email}${u.is_admin ? ' <span class="badge badge-admin">admin</span>' : ''}${!u.is_verified ? ' <span class="badge badge-pending">unverified</span>' : ''}</td>
         <td>${tierBadge(u.tier)}</td>
         <td>${u.is_blocked ? '<span class="badge badge-blocked">blocked</span>' : '<span class="badge badge-ok">active</span>'}</td>
         <td>${u.subscription_expires_at ? fmtDateOnly(u.subscription_expires_at) : '—'}</td>
@@ -911,7 +972,7 @@ function renderUsersPagination() {
   const pages = Math.ceil(_usersTotal / USERS_LIMIT);
   const wrap = document.getElementById('usersPagination');
   if (pages <= 1) { wrap.innerHTML = ''; return; }
-  let html = `<span style="font-size:.8rem;color:var(--text-soft)">Всего: ${_usersTotal}</span>`;
+  let html = `<span style="font-size:.9rem;color:var(--text-soft)">Всего: ${_usersTotal}</span>`;
   for (let i = 0; i < pages; i++) {
     html += `<button class="page-btn${i === _usersPage ? ' active' : ''}" onclick="loadUsers(${i})">${i + 1}</button>`;
   }
@@ -1036,10 +1097,10 @@ async function loadTransactions(page) {
         <td>${t.id}</td><td>${t.user_id}</td>
         <td><strong>${t.amount}</strong> ${t.currency}</td>
         <td>${tierBadge(t.tier)}</td>
-        <td style="font-size:.78rem;color:var(--text-soft)">${t.payment_system}</td>
+        <td style="font-size:.875rem;color:var(--text-soft)">${t.payment_system}</td>
         <td>${statusBadge(t.status)}</td>
         <td style="max-width:200px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--text-soft)">${t.description || '—'}</td>
-        <td style="font-size:.78rem;color:var(--text-soft)">${fmtDate(t.created_at)}</td>
+        <td style="font-size:.875rem;color:var(--text-soft)">${fmtDate(t.created_at)}</td>
       </tr>
     `).join('');
     renderTxPagination();
@@ -1049,8 +1110,8 @@ function renderTxPagination() {
   const pages = Math.ceil(_txTotal / TX_LIMIT);
   const wrap = document.getElementById('txPagination');
   if (!wrap) return;
-  if (pages <= 1) { wrap.innerHTML = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _txTotal + '</span>'; return; }
-  let html = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _txTotal + '</span> ';
+  if (pages <= 1) { wrap.innerHTML = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _txTotal + '</span>'; return; }
+  let html = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _txTotal + '</span> ';
   for (let i = 0; i < pages; i++) html += '<button class="page-btn' + (i === _txPage ? ' active' : '') + '" onclick="loadTransactions(' + i + ')">' + (i + 1) + '</button>';
   wrap.innerHTML = html;
 }
@@ -1140,9 +1201,9 @@ async function loadNews(page) {
     const wrap = document.getElementById('newsPagination');
     if (wrap) {
       const pages = Math.ceil(_newsTotal / NEWS_LIMIT);
-      if (pages <= 1) wrap.innerHTML = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _newsTotal + '</span>';
+      if (pages <= 1) wrap.innerHTML = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _newsTotal + '</span>';
       else {
-        let html = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _newsTotal + '</span> ';
+        let html = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _newsTotal + '</span> ';
         for (let i = 0; i < pages; i++) html += '<button class="page-btn' + (i === _newsPage ? ' active' : '') + '" onclick="loadNews(' + i + ')">' + (i + 1) + '</button>';
         wrap.innerHTML = html;
       }
@@ -1162,7 +1223,7 @@ function renderNews() {
         <div style="flex:1">
           <div style="font-weight:600;margin-bottom:.25rem">${p.title || '(Без заголовка)'}</div>
           <div class="news-body-preview">${p.body || ''}</div>
-          <div style="margin-top:.4rem;font-size:.75rem;color:var(--text-soft)">
+          <div style="margin-top:.4rem;font-size:.875rem;color:var(--text-soft)">
             ${p.is_published ? `<span class="badge badge-ok">опубликован</span> ${fmtDate(p.published_at)}` : '<span class="badge badge-draft">черновик</span>'}
             &nbsp;· создан ${fmtDate(p.created_at)}
           </div>
@@ -1248,7 +1309,7 @@ async function loadCampaigns(page) {
     if (!camps.length) {
       wrap.innerHTML = '<div class="card" style="color:var(--text-soft);text-align:center;padding:2rem">Рассылок пока нет</div>';
       const pagEl = document.getElementById('campaignsPagination');
-      if (pagEl) pagEl.innerHTML = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: 0</span>';
+      if (pagEl) pagEl.innerHTML = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: 0</span>';
       return;
     }
     const statusBadgeC = s => {
@@ -1260,7 +1321,7 @@ async function loadCampaigns(page) {
         <div style="display:flex;align-items:flex-start;gap:.8rem">
           <div style="flex:1">
             <div style="font-weight:600;margin-bottom:.2rem">${c.subject}</div>
-            <div style="font-size:.78rem;color:var(--text-soft)">
+            <div style="font-size:.875rem;color:var(--text-soft)">
               Аудитория: ${c.target_tier || 'все'} &nbsp;·&nbsp;
               ${statusBadgeC(c.status)}
               ${c.status === 'sent' || c.status === 'sending'
@@ -1280,9 +1341,9 @@ async function loadCampaigns(page) {
     const pagEl = document.getElementById('campaignsPagination');
     if (pagEl) {
       const pages = Math.ceil(_campaignsTotal / CAMPAIGNS_LIMIT);
-      if (pages <= 1) pagEl.innerHTML = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _campaignsTotal + '</span>';
+      if (pages <= 1) pagEl.innerHTML = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _campaignsTotal + '</span>';
       else {
-        let html = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _campaignsTotal + '</span> ';
+        let html = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _campaignsTotal + '</span> ';
         for (let i = 0; i < pages; i++) html += '<button class="page-btn' + (i === _campaignsPage ? ' active' : '') + '" onclick="loadCampaigns(' + i + ')">' + (i + 1) + '</button>';
         pagEl.innerHTML = html;
       }
@@ -1329,20 +1390,18 @@ async function loadSettings() {
   if (!wrap) return;
   wrap.innerHTML = '<p style="color:var(--text-soft)">Загрузка…</p>';
   try {
-    const [d, promptsData] = await Promise.all([apiFetch('/api/admin/settings'), apiFetch('/api/admin/prompts').catch(() => ({}))]);
-    window._adminPromptsData = promptsData || {};
+    const d = await apiFetch('/api/admin/settings');
     const extList = Array.isArray(d.app.allowed_extensions) ? d.app.allowed_extensions.join(', ') : 'wav, mp3, flac';
     const slugNames = { recommend: 'Рекомендация пресета', report: 'Отчёт по анализу', nl_config: 'NL → настройки цепочки', chat: 'Чат-помощник' };
 
     wrap.innerHTML = `
       <div class="card" style="margin-bottom:1rem">
-        <p style="font-size:.78rem;color:var(--text-soft);margin-bottom:.8rem">Версия: ${[d.app.version, d.app.build_date].filter(Boolean).join(' · ') || '—'} · JWT задан: ${d.app.jwt_secret_set ? 'Да' : 'Нет'} · Админ: ${d.admin_email || '—'}</p>
+        <p style="font-size:.875rem;color:var(--text-soft);margin-bottom:.8rem">Версия: ${[d.app.version, d.app.build_date].filter(Boolean).join(' · ') || '—'} · JWT задан: ${d.app.jwt_secret_set ? 'Да' : 'Нет'} · Админ: ${d.admin_email || '—'}</p>
         <div class="settings-tabs" id="settingsTabs">
           <button type="button" class="settings-tab active" data-tab="app">Общие</button>
           <button type="button" class="settings-tab" data-tab="smtp">SMTP</button>
           <button type="button" class="settings-tab" data-tab="yookassa">YooKassa</button>
           <button type="button" class="settings-tab" data-tab="telegram">Telegram</button>
-          <button type="button" class="settings-tab" data-tab="llm">LLM</button>
         </div>
 
         <div id="settingsPanelApp" class="settings-panel active">
@@ -1366,6 +1425,14 @@ async function loadSettings() {
               <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" name="maintenance_mode" ${d.app.maintenance_mode ? 'checked' : ''}> Режим обслуживания</label>
               <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" name="notify_email_on_register" ${d.app.notify_email_on_register ? 'checked' : ''}> Email при регистрации</label>
               <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" name="notify_telegram_on_payment" ${d.app.notify_telegram_on_payment ? 'checked' : ''}> Telegram при оплате</label>
+            </div>
+            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+              <h4 style="font-size:.9rem;margin-bottom:.5rem;color:var(--accent2)">Алерты мониторинга (Telegram)</h4>
+              <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;margin-bottom:.5rem"><input type="checkbox" name="alert_monitoring_enabled" ${d.app.alert_monitoring_enabled ? 'checked' : ''}> Включить алерты при деградации health и превышении порога очереди</label>
+              <div class="form-row" style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.4rem">
+                <div class="form-group"><label>Порог очереди (задач в кэше, 0 = выкл)</label><input type="number" name="alert_queue_threshold" value="${d.app.alert_queue_threshold != null ? d.app.alert_queue_threshold : 0}" min="0" max="10000"></div>
+                <div class="form-group"><label>Минут между повторами алерта</label><input type="number" name="alert_throttle_minutes" value="${d.app.alert_throttle_minutes != null ? d.app.alert_throttle_minutes : 60}" min="1" max="1440"></div>
+              </div>
             </div>
             <div class="settings-save-bar"><button type="submit" class="btn btn-primary btn-sm">Сохранить</button></div>
           </form>
@@ -1400,60 +1467,16 @@ async function loadSettings() {
             <div class="settings-save-bar"><button type="submit" class="btn btn-primary btn-sm">Сохранить</button></div>
           </form>
         </div>
-
-        <div id="settingsPanelLlm" class="settings-panel">
-          <form class="settings-form" id="settingsFormLlm">
-            <div class="form-group"><label>Бэкенд</label><select name="backend"><option value="openai" ${(d.llm && d.llm.backend === 'openai') ? 'selected' : ''}>OpenAI</option><option value="deepseek" ${(d.llm && d.llm.backend === 'deepseek') ? 'selected' : ''}>DeepSeek</option><option value="anthropic" ${(d.llm && d.llm.backend === 'anthropic') ? 'selected' : ''}>Anthropic</option></select></div>
-            <div class="form-group"><label>OpenAI API ключ (пусто = не менять)</label><input type="password" class="secret" name="openai_api_key" placeholder="sk-..." autocomplete="new-password"></div>
-            <div class="form-group"><label>Anthropic API ключ (пусто = не менять)</label><input type="password" class="secret" name="anthropic_api_key" placeholder="..." autocomplete="new-password"></div>
-            <div class="form-group"><label>DeepSeek API ключ (пусто = не менять)</label><input type="password" class="secret" name="deepseek_api_key" placeholder="..." autocomplete="new-password"></div>
-            <div class="form-group"><label>DeepSeek Base URL</label><input type="text" name="deepseek_base_url" value="${(d.llm && d.llm.deepseek_base_url) ? String(d.llm.deepseek_base_url).replace(/"/g, '&quot;') : 'https://api.deepseek.com'}"></div>
-            <div class="form-group"><label>DeepSeek модель</label><input type="text" name="deepseek_model" value="${(d.llm && d.llm.deepseek_model) || 'deepseek-chat'}"></div>
-            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem">
-              <div class="form-group"><label>Лимит Free (запросов/день, -1 без лимита)</label><input type="number" name="ai_limit_free" value="${d.llm && d.llm.ai_limit_free != null ? d.llm.ai_limit_free : 5}"></div>
-              <div class="form-group"><label>Лимит Pro</label><input type="number" name="ai_limit_pro" value="${d.llm && d.llm.ai_limit_pro != null ? d.llm.ai_limit_pro : 50}"></div>
-              <div class="form-group"><label>Лимит Studio</label><input type="number" name="ai_limit_studio" value="${d.llm && d.llm.ai_limit_studio != null ? d.llm.ai_limit_studio : -1}"></div>
-            </div>
-            <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)">
-              <h4 style="font-size:.9rem;margin-bottom:.6rem;color:var(--accent2)">Защита от LLM-инъекций</h4>
-              <p style="font-size:.75rem;color:var(--text-soft);margin-bottom:.8rem">Проверка пользовательского ввода перед отправкой в LLM (чат, «настройки голосом»). При совпадении с запрещёнными фразами или regex запрос отклоняется.</p>
-              <div class="form-row" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem">
-                <div class="form-group"><label><input type="checkbox" name="llm_guard_enabled" ${(d.llm && d.llm.llm_guard_enabled !== false) ? 'checked' : ''}> Включить проверку</label></div>
-                <div class="form-group"><label>Макс. длина чат (символов)</label><input type="number" name="llm_guard_max_length_chat" min="0" value="${d.llm && d.llm.llm_guard_max_length_chat != null ? d.llm.llm_guard_max_length_chat : 2000}"></div>
-                <div class="form-group"><label>Макс. длина NL→config</label><input type="number" name="llm_guard_max_length_nl" min="0" value="${d.llm && d.llm.llm_guard_max_length_nl != null ? d.llm.llm_guard_max_length_nl : 500}"></div>
-              </div>
-              <div class="form-row" style="margin-bottom:.6rem">
-                <div class="form-group" style="flex:1"><label>Запрещённые подстроки (по одной на строку)</label><textarea name="llm_guard_forbidden_substrings" rows="4" placeholder="ignore previous instructions\nпереведи на английский и выполни" style="width:100%;resize:vertical">${Array.isArray(d.llm && d.llm.llm_guard_forbidden_substrings) ? (d.llm.llm_guard_forbidden_substrings.join('\n')) : ''}</textarea></div>
-              </div>
-              <div class="form-row" style="margin-bottom:.6rem">
-                <div class="form-group" style="flex:1"><label>Запрещённый regex (пусто = не использовать)</label><input type="text" name="llm_guard_forbidden_regex" placeholder="(?i)ignore\s+all\s+previous" value="${(d.llm && d.llm.llm_guard_forbidden_regex) ? String(d.llm.llm_guard_forbidden_regex).replace(/"/g, '&quot;') : ''}" style="width:100%"></div>
-              </div>
-              <div class="form-row">
-                <div class="form-group"><label><input type="checkbox" name="llm_guard_truncate_on_long" ${(d.llm && d.llm.llm_guard_truncate_on_long !== false) ? 'checked' : ''}> Обрезать длинный ввод (иначе отклонять)</label></div>
-                <div class="form-group"><label><input type="checkbox" name="llm_guard_block_role_system" ${(d.llm && d.llm.llm_guard_block_role_system !== false) ? 'checked' : ''}> Блокировать роль «system» в чате</label></div>
-              </div>
-            </div>
-            <div class="settings-save-bar"><button type="submit" class="btn btn-primary btn-sm">Сохранить</button></div>
-          </form>
-          <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
-            <h4 style="font-size:.9rem;margin-bottom:.8rem;color:var(--accent2)">Промпты (шаблоны и версии)</h4>
-            <div id="promptsBlock">${Object.keys(slugNames).map(slug => {
-              const p = (promptsData && promptsData[slug]) || {};
-              const preview = (p.effective_preview || p.active_body || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 150);
-              return '<div class="llm-prompt-block" style="margin-bottom:.8rem"><strong>' + slugNames[slug] + '</strong> <span style="font-size:.7rem;color:var(--text-soft)">(' + slug + ')</span><pre class="llm-prompt-text" style="max-height:60px">' + (preview || '—') + '</pre><div style="display:flex;gap:.4rem;margin-top:.4rem"><button type="button" class="btn btn-sm btn-ghost prompt-edit" data-slug="' + slug + '">Редактировать</button><button type="button" class="btn btn-sm btn-ghost prompt-history" data-slug="' + slug + '">История</button><button type="button" class="btn btn-sm btn-ghost prompt-reset" data-slug="' + slug + '">Восстановить встроенный</button></div></div>';
-            }).join('')}</div>
-          </div>
-        </div>
       </div>
 
       <div class="card">
         <h3 style="margin:0 0 .8rem;font-size:.95rem;color:var(--accent2)">Тестирование уведомлений</h3>
-        <p style="font-size:.8rem;color:var(--text-soft);margin-bottom:.9rem">Отправьте тестовое сообщение для проверки настроек.</p>
+        <p style="font-size:.9rem;color:var(--text-soft);margin-bottom:.9rem">Отправьте тестовое сообщение для проверки настроек.</p>
         <div style="display:flex;gap:.7rem;flex-wrap:wrap">
           <button class="btn btn-sm" id="btnTestSmtp">📧 Тест Email (SMTP)</button>
           <button class="btn btn-sm" id="btnTestTg">✈ Тест Telegram</button>
         </div>
-        <div id="notifyTestResult" style="margin-top:.7rem;font-size:.82rem;min-height:1.2em"></div>
+        <div id="notifyTestResult" style="margin-top:.7rem;font-size:.9rem;min-height:1.2em"></div>
       </div>
     `;
 
@@ -1486,7 +1509,10 @@ async function loadSettings() {
           feature_registration_enabled: !!fd.get('feature_registration_enabled'),
           maintenance_mode: !!fd.get('maintenance_mode'),
           notify_email_on_register: !!fd.get('notify_email_on_register'),
-          notify_telegram_on_payment: !!fd.get('notify_telegram_on_payment')
+          notify_telegram_on_payment: !!fd.get('notify_telegram_on_payment'),
+          alert_monitoring_enabled: !!fd.get('alert_monitoring_enabled'),
+          alert_queue_threshold: parseInt(fd.get('alert_queue_threshold'), 10) || 0,
+          alert_throttle_minutes: parseInt(fd.get('alert_throttle_minutes'), 10) || 60
         }
       };
     }
@@ -1511,21 +1537,10 @@ async function loadSettings() {
       if (Object.keys(o.telegram).length === 0) o.telegram = undefined;
       return o;
     }
-    function buildLlmPayload(form) {
-      const fd = new FormData(form);
-      const o = { llm: { backend: fd.get('backend'), deepseek_base_url: fd.get('deepseek_base_url'), deepseek_model: fd.get('deepseek_model'), ai_limit_free: parseInt(fd.get('ai_limit_free'), 10), ai_limit_pro: parseInt(fd.get('ai_limit_pro'), 10), ai_limit_studio: parseInt(fd.get('ai_limit_studio'), 10), llm_guard_enabled: !!fd.get('llm_guard_enabled'), llm_guard_max_length_chat: parseInt(fd.get('llm_guard_max_length_chat'), 10) || 2000, llm_guard_max_length_nl: parseInt(fd.get('llm_guard_max_length_nl'), 10) || 500, llm_guard_forbidden_regex: (fd.get('llm_guard_forbidden_regex') || '').toString().trim() || undefined, llm_guard_truncate_on_long: !!fd.get('llm_guard_truncate_on_long'), llm_guard_block_role_system: !!fd.get('llm_guard_block_role_system') } };
-      o.llm.llm_guard_forbidden_substrings = (fd.get('llm_guard_forbidden_substrings') || '').toString().split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
-      if ((fd.get('openai_api_key') || '').toString().trim()) o.llm.openai_api_key = fd.get('openai_api_key');
-      if ((fd.get('anthropic_api_key') || '').toString().trim()) o.llm.anthropic_api_key = fd.get('anthropic_api_key');
-      if ((fd.get('deepseek_api_key') || '').toString().trim()) o.llm.deepseek_api_key = fd.get('deepseek_api_key');
-      return o;
-    }
-
     document.getElementById('settingsFormApp').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildAppPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
     document.getElementById('settingsFormSmtp').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildSmtpPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
     document.getElementById('settingsFormYookassa').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildYookassaPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
     document.getElementById('settingsFormTelegram').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildTelegramPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
-    document.getElementById('settingsFormLlm').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildLlmPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
 
     document.getElementById('btnTestSmtp')?.addEventListener('click', async () => {
       const el = document.getElementById('notifyTestResult');
@@ -1538,7 +1553,111 @@ async function loadSettings() {
       try { const r = await apiFetch('/api/admin/notifications/test-telegram', { method: 'POST' }); el.textContent = '✓ ' + r.message; el.style.color = 'var(--green)'; } catch (e) { el.textContent = '✗ ' + e.message; el.style.color = 'var(--red)'; }
     });
 
-    // Промпты: Редактировать / История / Восстановить
+  } catch (e) {
+    wrap.innerHTML = `<p style="color:var(--red)">Ошибка загрузки настроек: ${e.message}</p>`;
+  }
+}
+
+// ─── LLM: Подключение (отдельная страница) ─────────────────────────────────────
+async function loadLlmConnection() {
+  const wrap = document.getElementById('llmConnectionWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<p style="color:var(--text-soft)">Загрузка…</p>';
+  try {
+    const d = await apiFetch('/api/admin/settings');
+    const llm = d.llm || {};
+    wrap.innerHTML = `
+      <div class="card">
+        <form class="settings-form" id="llmConnectionForm">
+          <div class="form-group"><label>Бэкенд</label><select name="backend"><option value="openai" ${llm.backend === 'openai' ? 'selected' : ''}>OpenAI</option><option value="deepseek" ${llm.backend === 'deepseek' ? 'selected' : ''}>DeepSeek</option><option value="anthropic" ${llm.backend === 'anthropic' ? 'selected' : ''}>Anthropic</option></select></div>
+          <div class="form-group"><label>OpenAI API ключ (пусто = не менять)</label><input type="password" class="secret" name="openai_api_key" placeholder="sk-..." autocomplete="new-password"></div>
+          <div class="form-group"><label>Anthropic API ключ (пусто = не менять)</label><input type="password" class="secret" name="anthropic_api_key" placeholder="..." autocomplete="new-password"></div>
+          <div class="form-group"><label>DeepSeek API ключ (пусто = не менять)</label><input type="password" class="secret" name="deepseek_api_key" placeholder="..." autocomplete="new-password"></div>
+          <div class="form-group"><label>DeepSeek Base URL</label><input type="text" name="deepseek_base_url" value="${(llm.deepseek_base_url || 'https://api.deepseek.com').replace(/"/g, '&quot;')}"></div>
+          <div class="form-group"><label>DeepSeek модель</label><input type="text" name="deepseek_model" value="${(llm.deepseek_model || 'deepseek-chat').replace(/"/g, '&quot;')}"></div>
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem">
+            <div class="form-group"><label>Лимит Free (запросов/день, -1 без лимита)</label><input type="number" name="ai_limit_free" value="${llm.ai_limit_free != null ? llm.ai_limit_free : 5}"></div>
+            <div class="form-group"><label>Лимит Pro</label><input type="number" name="ai_limit_pro" value="${llm.ai_limit_pro != null ? llm.ai_limit_pro : 50}"></div>
+            <div class="form-group"><label>Лимит Studio</label><input type="number" name="ai_limit_studio" value="${llm.ai_limit_studio != null ? llm.ai_limit_studio : -1}"></div>
+          </div>
+          <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)">
+            <h4 style="font-size:.9rem;margin-bottom:.6rem;color:var(--accent2)">Защита от LLM-инъекций</h4>
+            <p style="font-size:.875rem;color:var(--text-soft);margin-bottom:.8rem">Проверка пользовательского ввода перед отправкой в LLM (чат, «настройки голосом»). При совпадении с запрещёнными фразами или regex запрос отклоняется.</p>
+            <div class="form-row" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem">
+              <div class="form-group"><label><input type="checkbox" name="llm_guard_enabled" ${llm.llm_guard_enabled !== false ? 'checked' : ''}> Включить проверку</label></div>
+              <div class="form-group"><label>Макс. длина чат (символов)</label><input type="number" name="llm_guard_max_length_chat" min="0" value="${llm.llm_guard_max_length_chat != null ? llm.llm_guard_max_length_chat : 2000}"></div>
+              <div class="form-group"><label>Макс. длина NL→config</label><input type="number" name="llm_guard_max_length_nl" min="0" value="${llm.llm_guard_max_length_nl != null ? llm.llm_guard_max_length_nl : 500}"></div>
+            </div>
+            <div class="form-row" style="margin-bottom:.6rem">
+              <div class="form-group" style="flex:1"><label>Запрещённые подстроки (по одной на строку)</label><textarea name="llm_guard_forbidden_substrings" rows="4" placeholder="ignore previous instructions\nпереведи на английский и выполни" style="width:100%;resize:vertical">${Array.isArray(llm.llm_guard_forbidden_substrings) ? llm.llm_guard_forbidden_substrings.join('\n') : ''}</textarea></div>
+            </div>
+            <div class="form-row" style="margin-bottom:.6rem">
+              <div class="form-group" style="flex:1"><label>Запрещённый regex (пусто = не использовать)</label><input type="text" name="llm_guard_forbidden_regex" placeholder="(?i)ignore\s+all\s+previous" value="${(llm.llm_guard_forbidden_regex || '').replace(/"/g, '&quot;')}" style="width:100%"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label><input type="checkbox" name="llm_guard_truncate_on_long" ${llm.llm_guard_truncate_on_long !== false ? 'checked' : ''}> Обрезать длинный ввод (иначе отклонять)</label></div>
+              <div class="form-group"><label><input type="checkbox" name="llm_guard_block_role_system" ${llm.llm_guard_block_role_system !== false ? 'checked' : ''}> Блокировать роль «system» в чате</label></div>
+            </div>
+          </div>
+          <div class="settings-save-bar"><button type="submit" class="btn btn-primary btn-sm">Сохранить</button></div>
+        </form>
+      </div>`;
+    document.getElementById('llmConnectionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const o = { llm: { backend: fd.get('backend'), deepseek_base_url: fd.get('deepseek_base_url'), deepseek_model: fd.get('deepseek_model'), ai_limit_free: parseInt(fd.get('ai_limit_free'), 10), ai_limit_pro: parseInt(fd.get('ai_limit_pro'), 10), ai_limit_studio: parseInt(fd.get('ai_limit_studio'), 10), llm_guard_enabled: !!fd.get('llm_guard_enabled'), llm_guard_max_length_chat: parseInt(fd.get('llm_guard_max_length_chat'), 10) || 2000, llm_guard_max_length_nl: parseInt(fd.get('llm_guard_max_length_nl'), 10) || 500, llm_guard_forbidden_regex: (fd.get('llm_guard_forbidden_regex') || '').toString().trim() || undefined, llm_guard_truncate_on_long: !!fd.get('llm_guard_truncate_on_long'), llm_guard_block_role_system: !!fd.get('llm_guard_block_role_system') } };
+      o.llm.llm_guard_forbidden_substrings = (fd.get('llm_guard_forbidden_substrings') || '').toString().split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
+      if ((fd.get('openai_api_key') || '').toString().trim()) o.llm.openai_api_key = fd.get('openai_api_key');
+      if ((fd.get('anthropic_api_key') || '').toString().trim()) o.llm.anthropic_api_key = fd.get('anthropic_api_key');
+      if ((fd.get('deepseek_api_key') || '').toString().trim()) o.llm.deepseek_api_key = fd.get('deepseek_api_key');
+      try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(o) }); toast('Сохранено', 'ok'); loadLlmConnection(); } catch (err) { toast(err.message || 'Ошибка', 'err'); }
+    });
+  } catch (e) {
+    wrap.innerHTML = `<p style="color:var(--red)">Ошибка: ${e.message}</p>`;
+  }
+}
+
+// ─── LLM: Промпты (отдельная страница) ─────────────────────────────────────────
+const _slugNames = { recommend: 'Рекомендация пресета', report: 'Отчёт по анализу', nl_config: 'NL → настройки цепочки', chat: 'Чат-помощник' };
+let _promptModalHandlersAttached = false;
+function attachPromptModalHandlersOnce() {
+  if (_promptModalHandlersAttached) return;
+  _promptModalHandlersAttached = true;
+  document.getElementById('modalPromptEditApplyTemplate')?.addEventListener('click', async () => {
+    const slug = document.getElementById('modalPromptEditSlug').value;
+    const sel = document.getElementById('modalPromptEditTemplate');
+    const versionId = sel && sel.value ? parseInt(sel.value, 10) : 0;
+    if (!versionId) { toast('Выберите шаблон', 'err'); return; }
+    try { const r = await apiFetch('/api/admin/prompts/' + encodeURIComponent(slug) + '/version/' + versionId); if (r.body != null) document.getElementById('modalPromptEditBody').value = r.body; toast('Шаблон применён', 'ok'); } catch (e) { toast(e.message || 'Ошибка', 'err'); }
+  });
+  document.getElementById('modalPromptEditSave')?.addEventListener('click', async () => {
+    const slug = document.getElementById('modalPromptEditSlug').value;
+    const body = document.getElementById('modalPromptEditBody').value.trim();
+    const templateNameEl = document.getElementById('modalPromptEditTemplateName');
+    const templateName = templateNameEl && templateNameEl.value ? templateNameEl.value.trim() : '';
+    if (!body) { toast('Введите текст промпта', 'err'); return; }
+    try {
+      const payload = { slug, body }; if (templateName) payload.save_as_template_name = templateName;
+      await apiFetch('/api/admin/prompts', { method: 'POST', body: JSON.stringify(payload) });
+      toast('Сохранено', 'ok'); closeModal('modalPromptEdit'); refreshPromptsBlock();
+    } catch (e) { toast(e.message || 'Ошибка', 'err'); }
+  });
+}
+
+async function loadLlmPrompts() {
+  const wrap = document.getElementById('llmPromptsWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<p style="color:var(--text-soft)">Загрузка…</p>';
+  attachPromptModalHandlersOnce();
+  try {
+    const promptsData = await apiFetch('/api/admin/prompts').catch(() => ({}));
+    window._adminPromptsData = promptsData || {};
+    const slugNames = _slugNames;
+    wrap.innerHTML = '<div class="card"><div id="promptsBlock">' + Object.keys(slugNames).map(slug => {
+      const p = (promptsData && promptsData[slug]) || {};
+      const preview = (p.effective_preview || p.active_body || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 150);
+      return '<div class="llm-prompt-block" style="margin-bottom:.8rem"><strong>' + slugNames[slug] + '</strong> <span style="font-size:.8125rem;color:var(--text-soft)">(' + slug + ')</span><pre class="llm-prompt-text" style="max-height:60px">' + (preview || '—') + '</pre><div style="display:flex;gap:.4rem;margin-top:.4rem"><button type="button" class="btn btn-sm btn-ghost prompt-edit" data-slug="' + slug + '">Редактировать</button><button type="button" class="btn btn-sm btn-ghost prompt-history" data-slug="' + slug + '">История</button><button type="button" class="btn btn-sm btn-ghost prompt-reset" data-slug="' + slug + '">Восстановить встроенный</button></div></div>';
+    }).join('') + '</div></div>';
     wrap.querySelectorAll('.prompt-edit').forEach(btn => {
       btn.addEventListener('click', () => {
         const slug = btn.dataset.slug;
@@ -1546,6 +1665,8 @@ async function loadSettings() {
         document.getElementById('modalPromptEditSlug').value = slug;
         document.getElementById('modalPromptEditTitle').textContent = 'Редактировать: ' + (slugNames[slug] || slug);
         document.getElementById('modalPromptEditBody').value = p.effective_body || p.active_body || '';
+        const tplSelect = document.getElementById('modalPromptEditTemplate');
+        if (tplSelect) tplSelect.innerHTML = '<option value="">— выбрать версию —</option>' + ((p.history && p.history.length) ? p.history.map(h => '<option value="' + h.id + '">' + (h.name || ('v' + h.version)) + ' (v' + h.version + ')</option>').join('') : '');
         document.getElementById('modalPromptEdit').classList.add('open');
       });
     });
@@ -1559,9 +1680,9 @@ async function loadSettings() {
         document.getElementById('modalPromptHistory').classList.add('open');
         try {
           const r = await apiFetch('/api/admin/prompts/' + slug + '/history');
-          listEl.innerHTML = (r.items && r.items.length) ? r.items.map(v => '<div style="padding:.5rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-size:.8rem">v' + v.version + ' · ' + (v.preview || '').slice(0, 80) + '…</span><button type="button" class="btn btn-sm btn-ghost prompt-activate-version" data-id="' + v.id + '">Сделать активной</button></div>').join('') : '<p style="color:var(--text-soft)">Нет версий</p>';
+          listEl.innerHTML = (r.items && r.items.length) ? r.items.map(v => '<div style="padding:.5rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-size:.9rem">' + (v.name ? v.name + ' · ' : '') + 'v' + v.version + ' · ' + (v.preview || '').slice(0, 60) + '…</span><button type="button" class="btn btn-sm btn-ghost prompt-activate-version" data-id="' + v.id + '">Сделать активной</button></div>').join('') : '<p style="color:var(--text-soft)">Нет версий</p>';
           listEl.querySelectorAll('.prompt-activate-version').forEach(b => b.addEventListener('click', async () => {
-            try { await apiFetch('/api/admin/prompts/' + slug + '/activate', { method: 'POST', body: JSON.stringify({ version_id: parseInt(b.dataset.id, 10) }) }); toast('Активировано', 'ok'); closeModal('modalPromptHistory'); loadSettings(); } catch (e) { toast(e.message || 'Ошибка', 'err'); }
+            try { await apiFetch('/api/admin/prompts/' + slug + '/activate', { method: 'POST', body: JSON.stringify({ version_id: parseInt(b.dataset.id, 10) }) }); toast('Активировано', 'ok'); closeModal('modalPromptHistory'); refreshPromptsBlock(); } catch (e) { toast(e.message || 'Ошибка', 'err'); }
           }));
         } catch (e) { listEl.innerHTML = '<p style="color:var(--red)">' + e.message + '</p>'; }
       });
@@ -1570,23 +1691,11 @@ async function loadSettings() {
       btn.addEventListener('click', async () => {
         const slug = btn.dataset.slug;
         if (!confirm('Восстановить встроенный промпт для «' + (slugNames[slug] || slug) + '»? Кастомные версии останутся в истории.')) return;
-        try { await apiFetch('/api/admin/prompts/' + slug + '/reset', { method: 'POST' }); toast('Восстановлено', 'ok'); loadSettings(); } catch (e) { toast(e.message || 'Ошибка', 'err'); }
+        try { await apiFetch('/api/admin/prompts/' + slug + '/reset', { method: 'POST' }); toast('Восстановлено', 'ok'); refreshPromptsBlock(); } catch (e) { toast(e.message || 'Ошибка', 'err'); }
       });
     });
-    document.getElementById('modalPromptEditSave')?.addEventListener('click', async () => {
-      const slug = document.getElementById('modalPromptEditSlug').value;
-      const body = document.getElementById('modalPromptEditBody').value.trim();
-      if (!body) { toast('Введите текст промпта', 'err'); return; }
-      try {
-        await apiFetch('/api/admin/prompts', { method: 'POST', body: JSON.stringify({ slug, body }) });
-        toast('Сохранено', 'ok');
-        closeModal('modalPromptEdit');
-        loadSettings();
-      } catch (e) { toast(e.message || 'Ошибка', 'err'); }
-    });
-
   } catch (e) {
-    wrap.innerHTML = `<p style="color:var(--red)">Ошибка загрузки настроек: ${e.message}</p>`;
+    wrap.innerHTML = `<p style="color:var(--red)">Ошибка: ${e.message}</p>`;
   }
 }
 
@@ -1622,9 +1731,9 @@ async function loadAudit(page) {
     }
     const pages = Math.ceil(_auditTotal / AUDIT_LIMIT);
     if (pages <= 1) {
-      paginationEl.innerHTML = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _auditTotal + '</span>';
+      paginationEl.innerHTML = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _auditTotal + '</span>';
     } else {
-      let html = '<span style="font-size:.8rem;color:var(--text-soft)">Всего: ' + _auditTotal + '</span> ';
+      let html = '<span style="font-size:.9rem;color:var(--text-soft)">Всего: ' + _auditTotal + '</span> ';
       for (let i = 0; i < pages; i++) {
         html += '<button class="page-btn' + (i === _auditPage ? ' active' : '') + '" onclick="loadAudit(' + i + ')">' + (i + 1) + '</button>';
       }
@@ -1638,6 +1747,39 @@ const auditFilterBtn = document.getElementById('auditFilterBtn');
 if (auditFilterBtn) auditFilterBtn.addEventListener('click', () => { _auditPage = 0; loadAudit(); });
 
 let _currentReportId = null;
+let _reportRows = [];
+let _reportCols = [];
+let _reportSortCol = -1;
+let _reportSortDir = 1;
+let _reportsList = [];
+
+function renderReportTableBody() {
+  const table = document.getElementById('reportTable');
+  if (!table) return;
+  const tbody = table.querySelector('tbody');
+  const thead = table.querySelector('thead tr');
+  const cols = _reportCols;
+  let rows = _reportRows.slice();
+  if (_reportSortCol >= 0 && cols[_reportSortCol] !== undefined) {
+    const key = cols[_reportSortCol];
+    rows.sort((a, b) => {
+      const va = a[key];
+      const vb = b[key];
+      const na = Number(va);
+      const nb = Number(vb);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return _reportSortDir * (na - nb);
+      const sa = (va != null ? String(va) : '');
+      const sb = (vb != null ? String(vb) : '');
+      return _reportSortDir * sa.localeCompare(sb, undefined, { numeric: true });
+    });
+  }
+  thead.querySelectorAll('th').forEach((th, i) => {
+    th.classList.toggle('sort-asc', i === _reportSortCol && _reportSortDir === 1);
+    th.classList.toggle('sort-desc', i === _reportSortCol && _reportSortDir === -1);
+  });
+  tbody.innerHTML = rows.map(row => '<tr>' + cols.map(c => '<td>' + (row[c] != null ? String(row[c]) : '') + '</td>').join('') + '</tr>').join('');
+}
+
 async function loadReports() {
   const wrap = document.getElementById('reportSelectWrap');
   const resultWrap = document.getElementById('reportResultWrap');
@@ -1645,13 +1787,19 @@ async function loadReports() {
   try {
     const r = await apiFetch('/api/admin/reports/list');
     const reports = r.reports || [];
-    wrap.innerHTML = reports.map(rep => '<button type="button" class="btn btn-ghost btn-sm report-select" data-id="' + rep.id + '" title="' + (rep.description || '') + '">' + rep.name + '</button>').join('');
-    wrap.querySelectorAll('.report-select').forEach(btn => {
+    _reportsList = reports;
+    wrap.innerHTML = reports.length ? reports.map(rep => '<button type="button" class="btn btn-ghost btn-sm report-select" data-id="' + rep.id + '" title="' + (rep.description || '') + '">' + rep.name + '</button>').join('') : '<p style="font-size:.9rem;color:var(--text-soft)">Нет доступных отчётов.</p>';
+    wrap.querySelectorAll('.report-select').forEach((btn, idx) => {
       btn.addEventListener('click', () => {
         _currentReportId = btn.dataset.id;
         document.querySelectorAll('.report-select').forEach(b => b.classList.toggle('active', b.dataset.id === _currentReportId));
       });
     });
+    if (reports.length > 0) {
+      _currentReportId = reports[0].id;
+      const firstBtn = wrap.querySelector('.report-select[data-id="' + reports[0].id + '"]');
+      if (firstBtn) firstBtn.classList.add('active');
+    }
     resultWrap.style.display = 'none';
     document.getElementById('reportRunBtn').onclick = async () => {
       if (!_currentReportId) { toast('Выберите отчёт', 'err'); return; }
@@ -1661,20 +1809,35 @@ async function loadReports() {
       if (dateFrom) params.set('date_from', dateFrom);
       if (dateTo) params.set('date_to', dateTo);
       const data = await apiFetch('/api/admin/reports/' + _currentReportId + '?' + params.toString());
-      const meta = reports.find(x => x.id === _currentReportId);
+      const meta = _reportsList.find(x => x.id === _currentReportId);
       document.getElementById('reportResultTitle').textContent = meta ? meta.name : _currentReportId;
       document.getElementById('reportSummary').style.display = 'none';
       const table = document.getElementById('reportTable');
+      const theadTr = table.querySelector('thead tr');
       const tbody = table.querySelector('tbody');
       const emptyEl = document.getElementById('reportEmpty');
       const rows = data.rows || [];
+      _reportRows = rows;
+      _reportSortCol = -1;
+      _reportSortDir = 1;
       if (rows.length === 0 && !data.total && !data.total_amount) {
+        _reportCols = [];
+        theadTr.innerHTML = '';
         tbody.innerHTML = '';
         emptyEl.style.display = 'block';
       } else {
         emptyEl.style.display = 'none';
         const cols = rows.length ? Object.keys(rows[0]) : [];
-        tbody.innerHTML = '<tr><th>' + cols.join('</th><th>') + '</th></tr>' + rows.map(row => '<tr>' + cols.map(c => '<td>' + (row[c] != null ? String(row[c]) : '') + '</td>').join('') + '</tr>').join('');
+        _reportCols = cols;
+        theadTr.innerHTML = cols.map((col, i) => '<th class="report-th-sort" data-col="' + i + '" title="Сортировать по колонке">' + col + '</th>').join('');
+        theadTr.querySelectorAll('.report-th-sort').forEach(th => {
+          th.addEventListener('click', () => {
+            const col = parseInt(th.dataset.col, 10);
+            if (_reportSortCol === col) _reportSortDir = -_reportSortDir; else { _reportSortCol = col; _reportSortDir = 1; }
+            renderReportTableBody();
+          });
+        });
+        renderReportTableBody();
       }
       resultWrap.style.display = 'block';
       const csvBtn = document.getElementById('reportCsvBtn');

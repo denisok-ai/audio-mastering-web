@@ -10,7 +10,7 @@
     "id": "podcast",
     "name": "Подкаст (−16 LUFS)",
     "target_lufs": -16,
-    "style": "standard",
+    "style": "podcast",
     "chain_config": null
   },
   {
@@ -18,6 +18,27 @@
     "name": "Клуб (−9 LUFS)",
     "target_lufs": -9,
     "style": "edm",
+    "chain_config": null
+  },
+  {
+    "id": "rock",
+    "name": "Rock (−12 LUFS)",
+    "target_lufs": -12,
+    "style": "standard",
+    "chain_config": null
+  },
+  {
+    "id": "jazz",
+    "name": "Jazz (−18 LUFS)",
+    "target_lufs": -18,
+    "style": "classical",
+    "chain_config": null
+  },
+  {
+    "id": "cinematic",
+    "name": "Cinematic (−24 LUFS)",
+    "target_lufs": -24,
+    "style": "standard",
     "chain_config": null
   }
 ]

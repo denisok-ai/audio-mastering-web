@@ -3,15 +3,16 @@
 Run:
     cd backend && python3 -m pytest tests/ -v
 """
+import sys
+import os
 import pytest
 from httpx import AsyncClient, ASGITransport
 
-# Reset rate limits before each test to avoid interference
-import sys
-import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.main import app, _rate_limits, _check_audio_magic_bytes
+from app.main import app
+from app.deps import _rate_limits
+from app.helpers import check_audio_magic_bytes as _check_audio_magic_bytes
 
 
 @pytest.fixture(autouse=True)
@@ -133,6 +134,19 @@ async def test_api_presets_community():
 
 
 @pytest.mark.anyio
+async def test_api_extensions():
+    """Минимальный API расширений: статус загрузки дополнительных пресетов."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.get("/api/extensions")
+    assert r.status_code == 200
+    data = r.json()
+    assert "community_presets_extra_configured" in data
+    assert "community_presets_extra_loaded" in data
+    assert isinstance(data["community_presets_extra_configured"], bool)
+    assert isinstance(data["community_presets_extra_loaded"], bool)
+
+
+@pytest.mark.anyio
 async def test_api_styles():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         r = await ac.get("/api/styles")
@@ -225,7 +239,7 @@ async def test_api_v2_master_creates_job(minimal_wav_bytes):
 @pytest.mark.anyio
 async def test_api_v2_master_rate_limit(minimal_wav_bytes):
     """После 3 запросов с одного IP — должен вернуть 429."""
-    from app.main import _FREE_DAILY_LIMIT
+    from app.deps import _FREE_DAILY_LIMIT
     import datetime
 
     # Заполняем лимит напрямую (имитируем 3 успешных мастеринга)
@@ -241,6 +255,33 @@ async def test_api_v2_master_rate_limit(minimal_wav_bytes):
     assert r.status_code == 429
     detail = r.json().get("detail", "")
     assert "лимит" in detail.lower() or "limit" in detail.lower() or "429" in str(r.status_code)
+
+
+@pytest.mark.anyio
+async def test_api_v2_master_accepts_bitrate(minimal_wav_bytes):
+    """POST /api/v2/master принимает параметр bitrate (для MP3/OPUS); при WAV битрейт игнорируется."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.post(
+            "/api/v2/master",
+            files={"file": ("test.wav", minimal_wav_bytes, "audio/wav")},
+            data={"style": "standard", "out_format": "wav", "bitrate": "320"},
+        )
+    assert r.status_code == 200
+    data = r.json()
+    assert "job_id" in data
+    assert data["status"] == "running"
+
+
+@pytest.mark.anyio
+async def test_api_v2_batch_requires_files():
+    """POST /api/v2/batch без файлов или с пустым списком — 422 (валидация) или 400/503 (бизнес-логика)."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # Без поля files — FastAPI вернёт 422
+        r = await ac.post(
+            "/api/v2/batch",
+            data={"style": "standard", "out_format": "wav"},
+        )
+    assert r.status_code in (400, 422, 503)
 
 
 @pytest.mark.anyio

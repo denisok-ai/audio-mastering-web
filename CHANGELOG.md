@@ -48,6 +48,70 @@ Format: `[Phase] Brief description — files changed`.
 - **frontend/index.html**: атрибуты `data-i18n` проставлены на соответствующие элементы; при переключении RU/EN обновляется весь интерфейс.
 - **frontend/app.js**: текст кнопки мастеринга («Запустить мастеринг», «Обработка…») выставляется через `__t('app.master')` и `__t('app.processing')` с учётом текущей локали.
 
+### Очередь 3.4 — Расширение пресетов сообщества (2026-03)
+
+- **backend/app/presets_community.json**: добавлены пресеты Rock (−12 LUFS, standard), Jazz (−18 LUFS, classical), Cinematic (−24 LUFS, standard); для пресета «Подкаст» указан стиль `podcast`.
+- **backend/app/PRESETS_COMMUNITY_README.md**: описание формата полей (id, name, target_lufs, style, chain_config), список допустимых `style`, инструкция по добавлению пресетов.
+
+### Очередь 3.3 — Доп. алерты мониторинга (2026-03)
+
+- **backend/app/config.py**: добавлены `alert_monitoring_enabled`, `alert_queue_threshold`, `alert_throttle_minutes` (MAGIC_MASTER_ALERT_*).
+- **backend/app/notifier.py**: функции `notify_alert_health_degraded(reason, details)` и `notify_alert_queue_threshold(jobs_total, jobs_running)` с троттлингом (не чаще раза в N минут). Настройки читаются из settings_store (админка) с fallback на config.
+- **backend/app/main.py**: при ответе `/api/health` при статусе degraded вызывается `notify_alert_health_degraded`; при ответе `/api/metrics` при превышении порога очереди — `notify_alert_queue_threshold`. Уведомления уходят в Telegram (те же токен/chat_id, что и для прочих алертов).
+- **backend/app/settings_store.py**, **admin.py**: ключи алертов добавлены в хранилище и в API настроек (GET/PATCH). В админке в разделе «Настройки» → «Общие» добавлен блок «Алерты мониторинга» (чекбокс включения, порог очереди, интервал повтора).
+
+### Очередь 1.2–1.3 — ROADMAP и синхронизация документации (2026-03)
+
+- **Очередь 1.2:** В ROADMAP.md пункт «ITU/E-weighted опции в API» уже отмечен выполненным `[x]`; в плане доработок задача 1.2 отмечена как выполненная.
+- **Очередь 1.3:** Обновлены даты в PROGRESS.md и ROADMAP.md (2026-03); в PROGRESS уточнён блок «Осталось задач к разработке» (состояние очередей 1–4). doc/ФУНКЦИИ_И_УРОВНИ.md и doc/PLAN_DORABOTKI.md приведены в соответствие (ссылки и даты).
+
+### Очередь 2.3 — Отдельный пункт «LLM» в сайдбаре (2026-03)
+
+- **frontend/admin.html**: в сайдбар добавлена группа «LLM» с подпунктами «Подключение» и «Промпты». Страница «Подключение (LLM)» — форма бэкенда, API-ключей, лимитов и защиты от инъекций; страница «Промпты (LLM)» — список промптов с редактированием, историей и восстановлением. Вкладка «LLM» удалена из «Настройки»; в Настройках остались только Общие, SMTP, YooKassa, Telegram. Обработчики модалок промптов вызывают `refreshPromptsBlock()` для обновления текущей страницы (LLM Промпты или Настройки).
+
+### Очередь 4.3 — Плагины/расширения (2026-03)
+
+- **backend/app/config.py**: добавлена настройка `community_presets_extra` (MAGIC_MASTER_COMMUNITY_PRESETS_EXTRA) — путь к дополнительному JSON-файлу или каталогу с пресетами сообщества.
+- **backend/app/routers/misc.py**: загрузка пресетов расширена: после `presets_community.json` подгружаются пресеты из extra (файл или все .json в каталоге), дубликаты по `id` отбрасываются. Добавлен GET /api/extensions — минимальный API статуса расширений (community_presets_extra_configured, community_presets_extra_loaded).
+- **doc/PLUGINS_EXTENSIONS.md**: описание архитектуры расширений (пресеты сообщества, задел под будущие процессоры).
+- **backend/app/PRESETS_COMMUNITY_README.md**: упоминание переменной COMMUNITY_PRESETS_EXTRA и ссылка на doc/PLUGINS_EXTENSIONS.md.
+- **backend/tests/test_api.py**: тест test_api_extensions для GET /api/extensions.
+
+### Очередь 4.2 — Отчёт «Рекомендации по промптам» (2026-03)
+
+- **backend/app/services/reports_service.py**: добавлен отчёт `prompt_recommendations` в REPORTS_META. Реализация: по каждому типу промпта (recommend, report, nl_config, chat) выводится число использований из `ai_usage_log` за период и превью активного текста промпта из БД. Кнопка «Резюме LLM» в админке формирует краткие рекомендации по данным отчёта.
+
+### Очередь 4.1 — Именованные шаблоны промптов (2026-03)
+
+- **backend/app/admin.py**: в ответах GET /api/admin/prompts и GET /api/admin/prompts/{slug}/history в каждую версию добавлено поле `name` (имя шаблона или «v{version}»). Добавлен GET /api/admin/prompts/{slug}/version/{version_id} — возвращает { id, version, name, body } для кнопки «Применить шаблон».
+- **frontend/admin.html**: в модальном окне редактирования промпта добавлены блок «Применить шаблон» (выпадающий список версий + кнопка «Применить»), загрузка тела выбранной версии через новый API, и необязательное поле «Название версии» при сохранении (передаётся как save_as_template_name).
+
+### Очередь 3.5 — Улучшение тестов (2026-03)
+
+- **backend/tests/test_api.py**: тест `test_api_v2_master_accepts_bitrate` — POST /api/v2/master с параметром bitrate (при out_format=wav битрейт игнорируется); тест `test_api_v2_batch_requires_files` — POST /api/v2/batch без файлов возвращает 400/422/503.
+- **backend/tests/test_pipeline.py**: тесты `test_export_audio_mp3_with_bitrate` и `test_export_audio_opus_with_bitrate` — проверка экспорта MP3 (128/192/320) и OPUS (128/192) с параметром bitrate (пропуск при отсутствии ffmpeg).
+
+### Очередь 3.2 — Доп. битрейты MP3/OPUS (2026-03)
+
+- **backend/app/pipeline.py**: в `export_audio()` добавлен параметр `bitrate` (опционально); для MP3 используются 128/192/256/320 kbps, для OPUS — 128/192 kbps (по умолчанию 320 и 192).
+- **backend/app/routers/mastering.py**: в формах v2/master, v2/batch и v2/reference-match добавлен параметр `bitrate`; добавлена `_normalize_bitrate()` для проверки допустимых значений; битрейт передаётся в `export_audio`.
+- **frontend/index.html**: блок «Битрейт (kbps)» с выпадающим списком (id="outBitrateWrap", "outBitrate"), отображается при выборе MP3 или OPUS.
+- **frontend/app.js**: при смене формата обновляются опции битрейта (MP3: 128/192/256/320, OPUS: 128/192); при отправке форм мастеринга, batch и reference-match в запрос добавляется `bitrate`.
+
+### Очередь 3.1 — Расширение i18n (2026-03)
+
+- **frontend/locales/ru.json**, **en.json**: ключи для эталона (ref_track, ref_not_selected, ref_intensity), экспорта (export_section, export_dither, export_auto_blank), форматов (format_wav, format_mp3, format_flac, format_opus, format_aac), блока «Доп. обработка» (pro_preset, pro_strength, pro_threshold, pro_attack, pro_sustain, pro_mix, denoiser_custom/light/medium/aggressive).
+- **frontend/index.html**: атрибуты data-i18n на подписи эталона, экспорта, форматов и опций дизеринга/обрезки, пресета деноайзера и подписей слайдеров (Пресет, Сила, Порог, Атака, Сустейн, Mix).
+- **frontend/app.js**: плейсхолдер «не выбран» для эталона выставляется через __t('app.ref_not_selected'); при смене языка applyI18n не перезаписывает имя файла эталона (window.__refFile).
+
+### Очередь 2 — Админка: отчётность (2026-03)
+
+- **frontend/admin.html**: На странице «Отчётность» добавлена сортировка по колонкам таблицы (клик по заголовку — сортировка по колонке, повторный клик переключает направление; числовые и строковые значения). При загрузке списка отчётов автоматически выбирается первый отчёт (класс `active`), при отсутствии отчётов выводится подсказка «Нет доступных отчётов». Стили для `.report-th-sort` (курсор, hover, индикаторы ▲/▼).
+
+### Единый план доработок
+
+- **doc/PLAN_DORABOTKI.md**: единый план доработок в четыре очереди — 1) закрепление рефакторинга и деплоя в git, синхронизация ROADMAP; 2) админка (сортировка по колонкам в отчётности, подсветка выбранного отчёта, опционально пункт LLM в сайдбаре); 3) бэклог продукта (i18n, доп. битрейты, алерты, пресеты, тесты); 4) опции (шаблоны промптов, отчёт по промптам, плагины). PROGRESS.md, ROADMAP.md, ФУНКЦИИ_И_УРОВНИ.md, AUDIT_ADMIN_REDESIGN.md увязаны со ссылками на этот план; в ROADMAP отмечено выполнение ITU/E-weighted dither.
+
 ### Точечные доработки (аудит и валидация)
 
 - **backend/app/admin.py**: валидация PATCH настроек через Pydantic `Field` — `max_upload_mb` (1–500), `default_target_lufs` (−60…−1), `jobs_done_ttl_seconds` (0–30 дней), `global_rate_limit` (1–10000), `ai_limit_*`, `llm_guard_max_length_*`, SMTP `port` (1–65535). Согласованность с ограничениями на фронте.

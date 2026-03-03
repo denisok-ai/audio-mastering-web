@@ -11,7 +11,8 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from httpx import AsyncClient, ASGITransport
-from app.main import app, _rate_limits
+from app.main import app
+from app.deps import _rate_limits
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────

@@ -55,6 +55,10 @@ _SETTING_TYPES: dict[str, str] = {
     "llm_guard_forbidden_regex": "str",
     "llm_guard_truncate_on_long": "bool",
     "llm_guard_block_role_system": "bool",
+    # Алерты мониторинга (очередь 3.3)
+    "alert_monitoring_enabled": "bool",
+    "alert_queue_threshold": "int",
+    "alert_throttle_minutes": "int",
 }
 
 

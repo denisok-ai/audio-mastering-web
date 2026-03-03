@@ -11,6 +11,9 @@ dist/
 build/
 .eggs/
 
+# Database (local, do not commit)
+backend/magic_master.db
+
 # Temp / mastering output
 /tmp/
 *.tmp

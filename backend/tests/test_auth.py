@@ -10,7 +10,9 @@ from httpx import AsyncClient, ASGITransport
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.main import app, _rate_limits, _auth_attempts, _reset_tokens
+from app.main import app
+from app.deps import _rate_limits, _auth_attempts
+from app.routers.auth import _reset_tokens
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ async def test_login_unknown_email():
 @pytest.mark.anyio
 async def test_auth_rate_limit_login():
     """После 10 попыток входа с одного IP — 429."""
-    from app.main import _AUTH_LIMIT_PER_MINUTE
+    from app.deps import _AUTH_LIMIT_PER_MINUTE
     import time
     # Заполняем счётчик (имитируем max попыток)
     _auth_attempts["testclient"] = {"count": _AUTH_LIMIT_PER_MINUTE, "window_start": time.time()}
@@ -102,7 +104,7 @@ async def test_auth_rate_limit_login():
 @pytest.mark.anyio
 async def test_auth_rate_limit_register():
     """После 10 попыток регистрации с одного IP — 429."""
-    from app.main import _AUTH_LIMIT_PER_MINUTE
+    from app.deps import _AUTH_LIMIT_PER_MINUTE
     import time
     _auth_attempts["testclient"] = {"count": _AUTH_LIMIT_PER_MINUTE, "window_start": time.time()}
     async with _make_client() as ac:
@@ -113,7 +115,7 @@ async def test_auth_rate_limit_register():
 @pytest.mark.anyio
 async def test_auth_rate_limit_resets_after_minute():
     """После истечения окна (>60с) лимит сбрасывается."""
-    from app.main import _AUTH_LIMIT_PER_MINUTE
+    from app.deps import _AUTH_LIMIT_PER_MINUTE
     import time
     # Окно давно истекло
     _auth_attempts["testclient"] = {"count": _AUTH_LIMIT_PER_MINUTE, "window_start": time.time() - 120}
@@ -257,7 +259,7 @@ async def test_forgot_password_creates_token():
 @pytest.mark.anyio
 async def test_forgot_password_rate_limit():
     """Rate limit применяется и к forgot-password."""
-    from app.main import _AUTH_LIMIT_PER_MINUTE
+    from app.deps import _AUTH_LIMIT_PER_MINUTE
     import time
     _auth_attempts["testclient"] = {"count": _AUTH_LIMIT_PER_MINUTE, "window_start": time.time()}
     async with _make_client() as ac:

@@ -106,3 +106,31 @@ sudo systemctl start magic-master
    Актуальные IP уточняйте в документации YooKassa или у поддержки.
 
 Подробнее: [.env.example](../.env.example), [DEPLOY.md](../DEPLOY.md).
+
+---
+
+## 6. Контейнер убит по OOM (Exit 137, OOMKilled)
+
+**Симптомы:** контейнер в состоянии `Exited (137)`; в `docker inspect` видно `"OOMKilled": true`; в логах ядра (`dmesg | tail`) — `Out of memory: Killed process ... (python)`.
+
+**Причина:** процесс мастеринга (Python + numpy/аудио) потребляет много RAM; на сервере с малым объёмом памяти (например 2 GB) при одновременной работе бота или других контейнеров ядро убивает процесс по нехватке памяти.
+
+**Что сделать:**
+
+1. **Добавить swap** (на хосте), чтобы снизить вероятность OOM:
+   ```bash
+   sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+   ```
+
+2. **Ограничить память контейнера и включить перезапуск** — при превышении лимита контейнер перезапустится, а не убьёт всю систему:
+   ```bash
+   docker run -d --name magic-master -p 8000:8000 \
+     --memory=1g --restart=unless-stopped \
+     -e MAGIC_MASTER_HOST=0.0.0.0 \
+     -v /root/audio-mastering-web/PROGRESS.md:/app/PROGRESS.md:ro \
+     magic-master:latest python run_production.py
+   ```
+   На сервере с 2 GB RAM разумно дать контейнеру 1g; второй контейнер (бот и т.п.) тогда тоже лучше ограничить.
+
+3. **Увеличить RAM сервера** или перенести один из контейнеров на другой хост.

@@ -57,6 +57,8 @@ const meterCorrelation = document.getElementById('meterCorrelation');
 const lufsTimelineWrap   = document.getElementById('lufsTimelineWrap');
 const lufsTimelineCanvas = document.getElementById('lufsTimelineCanvas');
 const outFormat   = document.getElementById('outFormat');
+const outBitrate  = document.getElementById('outBitrate');
+const outBitrateWrap = document.getElementById('outBitrateWrap');
 const styleGrid     = document.getElementById('styleGrid');
 const targetLufsInput= document.getElementById('targetLufsInput');
 const abWrap        = document.getElementById('abWrap');
@@ -1837,6 +1839,7 @@ btnMaster.addEventListener('click', async()=>{
   const autoBlankSecEl = document.getElementById('autoBlankSec');
   if (ditherTypeEl) form.append('dither_type', ditherTypeEl.value);
   if (autoBlankSecEl) form.append('auto_blank_sec', autoBlankSecEl.value);
+  if ((outFormat.value === 'mp3' || outFormat.value === 'opus') && outBitrate && outBitrate.value) form.append('bitrate', outBitrate.value);
   if (chainModulesConfig?.modules?.length) {
     const modules = chainModulesConfig.modules.map(m => { const { label, ...rest } = m; return rest; });
     form.append('config', JSON.stringify({ modules }));
@@ -1917,6 +1920,7 @@ btnMaster.addEventListener('click', async()=>{
         const refStrVal = refStrEl ? (parseFloat(refStrEl.value) / 100).toFixed(2) : '0.80';
         refForm.append('strength', refStrVal);
         refForm.append('out_format', outFormat.value);
+        if ((outFormat.value === 'mp3' || outFormat.value === 'opus') && outBitrate && outBitrate.value) refForm.append('bitrate', outBitrate.value);
         const refRes = await fetch(API + '/api/v2/reference-match', {
           method: 'POST', body: refForm, headers: authHeaders()
         });
@@ -2043,6 +2047,7 @@ if (btnAutoMaster) {
       const form = new FormData();
       form.append('file', currentFile);
       form.append('out_format', outFormat.value);
+      if ((outFormat.value === 'mp3' || outFormat.value === 'opus') && outBitrate && outBitrate.value) form.append('bitrate', outBitrate.value);
       const r = await fetch(API + '/api/v2/master/auto', { method: 'POST', body: form, headers: authHeaders() });
       const data = await safeResponseJson(r);
       if (!r.ok) throw new Error(data.detail || r.statusText);
@@ -2275,6 +2280,20 @@ function applyTierUI() {
 })();
 
 /* Обработчик смены формата — блокировать MP3/FLAC для Free (не для Pro / debug) */
+function updateBitrateSelect() {
+  if (!outBitrateWrap || !outBitrate) return;
+  const fmt = outFormat && outFormat.value ? outFormat.value.toLowerCase() : '';
+  if (fmt === 'mp3') {
+    outBitrateWrap.style.display = '';
+    outBitrate.innerHTML = '<option value="128">128</option><option value="192">192</option><option value="256">256</option><option value="320" selected>320</option>';
+  } else if (fmt === 'opus') {
+    outBitrateWrap.style.display = '';
+    outBitrate.innerHTML = '<option value="128">128</option><option value="192" selected>192</option>';
+  } else {
+    outBitrateWrap.style.display = 'none';
+  }
+}
+
 outFormat.addEventListener('change', function() {
   const opt = outFormat.options[outFormat.selectedIndex];
   const isPro = _debugMode || isLoggedIn() || _tierInfo.tier === 'pro' || _tierInfo.tier === 'studio';
@@ -2286,7 +2305,9 @@ outFormat.addEventListener('change', function() {
     );
     outFormat.value = 'wav';
   }
+  updateBitrateSelect();
 });
+if (outFormat) updateBitrateSelect();
 
 /* ═══════ Upgrade Modal ═══════ */
 function showUpgradeModal(icon, title, desc) {
@@ -2384,6 +2405,7 @@ function refreshTierAfterMaster() {
     files.forEach(function(f) { form.append('files', f); });
     form.append('style', selectedStyle || 'standard');
     form.append('out_format', outFormat.value);
+    if ((outFormat.value === 'mp3' || outFormat.value === 'opus') && outBitrate && outBitrate.value) form.append('bitrate', outBitrate.value);
     form.append('target_lufs', targetLufsInput.value);
     if (chainModulesConfig && chainModulesConfig.modules) {
       form.append('config', JSON.stringify({ modules: chainModulesConfig.modules }));
@@ -2485,6 +2507,7 @@ let refFile = null;
   refInput.addEventListener('change', () => {
     if (refInput.files && refInput.files[0]) {
       refFile = refInput.files[0];
+      window.__refFile = refFile;
       refFileName.textContent = refFile.name;
       if (btnRefClear) btnRefClear.style.display = 'inline';
       if (refStrWrap) refStrWrap.style.display = 'flex';
@@ -2492,8 +2515,9 @@ let refFile = null;
   });
   if (btnRefClear) btnRefClear.addEventListener('click', () => {
     refFile = null;
+    window.__refFile = null;
     refInput.value = '';
-    refFileName.textContent = 'не выбран';
+    refFileName.textContent = (typeof window.__t === 'function' ? window.__t('app.ref_not_selected') : 'не выбран');
     btnRefClear.style.display = 'none';
     if (refStrWrap) refStrWrap.style.display = 'none';
   });
@@ -2891,6 +2915,7 @@ loadTierLimits();
   }
   function applyI18n() {
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      if (el.id === 'refFileName' && window.__refFile) return;
       var key = el.getAttribute('data-i18n');
       if (key && window.__t(key) !== key) el.textContent = window.__t(key);
     });

@@ -1,0 +1,233 @@
+# @file routers/misc.py
+# @description Вспомогательные эндпоинты: новости, debug-mode, лимиты, пресеты, стили, прогресс, measure.
+# @created 2026-03-01
+
+import json
+import shutil
+from pathlib import Path
+from typing import Optional
+
+import numpy as np
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.responses import Response
+
+from ..config import settings
+from ..database import DB_AVAILABLE, get_news_posts
+from ..deps import check_rate_limit, get_current_user_optional
+from ..helpers import allowed_file, check_audio_magic_bytes, json_safe_float
+from ..pipeline import PRESET_LUFS, STYLE_CONFIGS, load_audio_from_bytes, measure_lufs
+from .. import settings_store
+
+router = APIRouter()
+
+# Корень проекта: routers/misc.py → routers → app → backend → project root
+_PROGRESS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "PROGRESS.md"
+
+
+@router.get("/api/news")
+def api_news_public(limit: int = 5):
+    """Последние опубликованные новости для лендинга (без авторизации)."""
+    if not DB_AVAILABLE:
+        return {"posts": []}
+    from ..database import SessionLocal as _SL
+    if _SL is None:
+        return {"posts": []}
+    db = _SL()
+    try:
+        posts = get_news_posts(db, published_only=True, limit=max(1, min(limit, 20)))
+        return {
+            "posts": [
+                {
+                    "id": p.id,
+                    "title": p.title,
+                    "body": p.body,
+                    "published_at": p.published_at,
+                }
+                for p in posts
+            ]
+        }
+    finally:
+        db.close()
+
+
+@router.get("/api/debug-mode")
+def api_debug_mode():
+    """Режим отладки: при MAGIC_MASTER_DEBUG=1 возвращает {"debug": true}."""
+    return {"debug": getattr(settings, "debug_mode", False)}
+
+
+@router.get("/api/limits")
+async def api_limits(
+    request: Request,
+    user: Optional[dict] = Depends(get_current_user_optional),
+):
+    """Текущий тариф и лимиты мастеринга."""
+    if user:
+        tier = (user.get("tier") or "pro").lower()
+        return {
+            "tier": tier,
+            "used": 0,
+            "limit": -1,
+            "remaining": -1,
+            "reset_at": None,
+            "email": user.get("email"),
+            "priority_queue": tier in ("pro", "studio"),
+        }
+    if getattr(settings, "debug_mode", False):
+        return {
+            "tier": "pro",
+            "used": 0,
+            "limit": -1,
+            "remaining": -1,
+            "reset_at": None,
+            "debug": True,
+            "priority_queue": True,
+        }
+    from ..helpers import get_client_ip
+    ip = get_client_ip(request)
+    info = check_rate_limit(ip)
+    return {
+        "tier": "free",
+        "used": info["used"],
+        "limit": info["limit"],
+        "remaining": info["remaining"],
+        "reset_at": info["reset_at"],
+        "priority_queue": False,
+    }
+
+
+@router.get("/api/progress", response_class=Response)
+def api_progress():
+    """Содержимое PROGRESS.md (статус плана разработки)."""
+    if not _PROGRESS_PATH.is_file():
+        return Response(
+            content="# Статус плана\n\nФайл PROGRESS.md отсутствует на сервере.\n",
+            media_type="text/markdown; charset=utf-8",
+        )
+    return Response(
+        content=_PROGRESS_PATH.read_text(encoding="utf-8"),
+        media_type="text/markdown; charset=utf-8",
+    )
+
+
+@router.get("/api/presets")
+def get_presets():
+    """Список пресетов целевой громкости (LUFS)."""
+    return {"presets": PRESET_LUFS}
+
+
+def _load_community_presets() -> list:
+    """Загружает пресеты сообщества: app/presets_community.json + опционально extra (файл или каталог)."""
+    base = Path(__file__).resolve().parent.parent
+    main_path = base / "presets_community.json"
+    out: list = []
+    seen_ids: set = set()
+
+    def _append_valid(items: list) -> None:
+        nonlocal out, seen_ids
+        if not isinstance(items, list):
+            return
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            pid = item.get("id")
+            if not pid or pid in seen_ids:
+                continue
+            if "name" in item and "target_lufs" in item:
+                seen_ids.add(pid)
+                out.append(item)
+
+    if main_path.is_file():
+        try:
+            data = json.loads(main_path.read_text(encoding="utf-8"))
+            _append_valid(data if isinstance(data, list) else [])
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    extra = getattr(settings, "community_presets_extra", None) or ""
+    if extra:
+        extra_path = Path(extra)
+        if not extra_path.is_absolute():
+            extra_path = base / extra
+        if extra_path.is_file() and extra_path.suffix.lower() == ".json":
+            try:
+                data = json.loads(extra_path.read_text(encoding="utf-8"))
+                _append_valid(data if isinstance(data, list) else [])
+            except (json.JSONDecodeError, OSError):
+                pass
+        elif extra_path.is_dir():
+            for p in sorted(extra_path.glob("*.json")):
+                try:
+                    data = json.loads(p.read_text(encoding="utf-8"))
+                    _append_valid(data if isinstance(data, list) else [])
+                except (json.JSONDecodeError, OSError):
+                    pass
+
+    return out
+
+
+@router.get("/api/presets/community")
+def get_presets_community():
+    """Пресеты сообщества (P64). Поддержка расширений: MAGIC_MASTER_COMMUNITY_PRESETS_EXTRA."""
+    return {"presets": _load_community_presets()}
+
+
+@router.get("/api/extensions")
+def get_extensions_status():
+    """Минимальный API расширений: статус загрузки дополнительных пресетов и т.п."""
+    extra = getattr(settings, "community_presets_extra", None) or ""
+    base = Path(__file__).resolve().parent.parent
+    extra_path = Path(extra) if extra else None
+    if extra_path and not extra_path.is_absolute():
+        extra_path = base / extra
+    extra_loaded = bool(
+        extra_path
+        and extra_path.exists()
+        and (extra_path.is_file() and extra_path.suffix.lower() == ".json" or extra_path.is_dir())
+    )
+    return {
+        "community_presets_extra_configured": bool(extra),
+        "community_presets_extra_loaded": extra_loaded,
+    }
+
+
+@router.get("/api/styles")
+def get_styles():
+    """Список жанровых пресетов с параметрами."""
+    return {"styles": {k: {"lufs": v["lufs"]} for k, v in STYLE_CONFIGS.items()}}
+
+
+@router.post("/api/measure")
+async def api_measure(file: UploadFile = File(...)):
+    """Загрузить файл и вернуть текущую громкость в LUFS. Форматы: WAV, MP3, FLAC."""
+    if not allowed_file(file.filename or ""):
+        raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
+    fname = file.filename or ""
+    if fname.lower().endswith(".mp3") and not shutil.which("ffmpeg"):
+        raise HTTPException(
+            400,
+            "Чтение MP3 требует ffmpeg, который не найден на сервере. "
+            "Установите: sudo apt-get install -y ffmpeg",
+        )
+    data = await file.read()
+    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+    if len(data) > max_mb * 1024 * 1024:
+        raise HTTPException(400, f"Файл больше {max_mb} МБ.")
+    if not check_audio_magic_bytes(data, fname):
+        raise HTTPException(400, "Содержимое файла не соответствует формату. Ожидается WAV, MP3 или FLAC.")
+    try:
+        audio, sr = load_audio_from_bytes(data, fname or "wav")
+    except Exception as e:
+        raise HTTPException(400, f"Не удалось прочитать аудио: {e}")
+    lufs = measure_lufs(audio, sr)
+    peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+    peak_dbfs = float(20 * np.log10(max(peak, 1e-12)))
+    duration = float(len(audio) / sr)
+    channels = 1 if audio.ndim == 1 else int(audio.shape[1])
+    return {
+        "lufs": json_safe_float(lufs),
+        "sample_rate": sr,
+        "peak_dbfs": round(peak_dbfs, 2),
+        "duration": round(duration, 3),
+        "channels": channels,
+    }

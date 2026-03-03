@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     default_target_lufs: float = -14.0
     jobs_max_entries: int = 100
     jobs_done_ttl_seconds: int = 3600
+    # Семафоры одновременных задач мастеринга: Pro/Studio и Free (на мощном сервере увеличьте)
+    semaphore_priority: int = 2   # MAGIC_MASTER_SEMAPHORE_PRIORITY
+    semaphore_normal: int = 1     # MAGIC_MASTER_SEMAPHORE_NORMAL
     # Режим отладки: все функции без авторизации (MAGIC_MASTER_DEBUG=1)
     debug_mode: bool = Field(False, validation_alias="DEBUG")
 
@@ -84,6 +87,16 @@ class Settings(BaseSettings):
     # Создайте бота через @BotFather, узнайте chat_id через @userinfobot
     telegram_bot_token: str = ""
     telegram_admin_chat_id: str = ""
+
+    # Расширения: дополнительный путь к пресетам сообщества (файл .json или каталог с .json)
+    # MAGIC_MASTER_COMMUNITY_PRESETS_EXTRA — подгружаются после presets_community.json
+    community_presets_extra: str = ""
+
+    # Алерты мониторинга (3.3): уведомления в Telegram при деградации health или превышении порога очереди
+    # MAGIC_MASTER_ALERT_MONITORING_ENABLED=1, MAGIC_MASTER_ALERT_QUEUE_THRESHOLD=20 (0 = выкл)
+    alert_monitoring_enabled: bool = False
+    alert_queue_threshold: int = 0
+    alert_throttle_minutes: int = 60
 
     @field_validator("debug_mode", "require_email_verify", mode="before")
     @classmethod

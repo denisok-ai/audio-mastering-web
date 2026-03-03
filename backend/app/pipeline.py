@@ -4,7 +4,7 @@
 # @created 2026-02-26
 
 import io
-from typing import NoReturn, Tuple
+from typing import NoReturn, Optional, Tuple
 
 import numpy as np
 import pyloudnorm as pyln
@@ -12,6 +12,21 @@ import soundfile as sf
 from pydub import AudioSegment
 
 from .config import settings
+
+# numba JIT: ускоряет per-sample Python-циклы (comb/allpass reverb, envelope follower)
+# до 50–100× на крупных буферах. При отсутствии numba падаем на чистый Python.
+try:
+    import numba as _numba
+
+    def _njit(fn):
+        return _numba.njit(cache=True, fastmath=True)(fn)
+
+    _NUMBA_AVAILABLE = True
+except ImportError:  # noqa: BLE001
+    def _njit(fn):  # type: ignore[misc]
+        return fn
+
+    _NUMBA_AVAILABLE = False
 
 
 def _safe_filtfilt(b, a, x, signal_module=None):
@@ -434,13 +449,10 @@ def apply_maximizer(audio: np.ndarray) -> np.ndarray:
     return (sign * out_abs).astype(np.float32)
 
 
-def _envelope_follower(x: np.ndarray, sr: float, attack_sec: float, release_sec: float) -> np.ndarray:
-    """Однополюсный envelope follower: attack_sec и release_sec в секундах."""
+@_njit
+def _envelope_follower_core(x: np.ndarray, attack_coef: float, release_coef: float) -> np.ndarray:
+    """Ядро envelope follower — JIT-компилируется numba если доступна."""
     n = len(x)
-    if n == 0:
-        return x
-    attack_coef = np.exp(-1.0 / max(1e-6, sr * attack_sec))
-    release_coef = np.exp(-1.0 / max(1e-6, sr * release_sec))
     env = np.empty(n, dtype=np.float32)
     env[0] = abs(x[0])
     for i in range(1, n):
@@ -450,6 +462,17 @@ def _envelope_follower(x: np.ndarray, sr: float, attack_sec: float, release_sec:
         else:
             env[i] = release_coef * env[i - 1] + (1.0 - release_coef) * val
     return env
+
+
+def _envelope_follower(x: np.ndarray, sr: float, attack_sec: float, release_sec: float) -> np.ndarray:
+    """Однополюсный envelope follower: attack_sec и release_sec в секундах."""
+    n = len(x)
+    if n == 0:
+        return x
+    attack_coef = float(np.exp(-1.0 / max(1e-6, sr * attack_sec)))
+    release_coef = float(np.exp(-1.0 / max(1e-6, sr * release_sec)))
+    x_f32 = x.astype(np.float32) if x.dtype != np.float32 else x
+    return _envelope_follower_core(x_f32, attack_coef, release_coef)
 
 
 def apply_maximizer_transient_aware(
@@ -849,11 +872,12 @@ def export_audio(
     out_format: str = "wav",
     dither_type: str = "tpdf",
     auto_blank_sec: float = 0.0,
+    bitrate: Optional[int] = None,
 ) -> bytes:
     """Экспорт в wav/mp3/flac/opus/aac.
 
     WAV: 16-bit с дизерингом (dither_type: tpdf или ns_e). FLAC: 24-bit.
-    MP3: 320 kbps (ffmpeg). OPUS: 192 kbps libopus через ogg-контейнер (ffmpeg).
+    MP3: bitrate kbps (128/192/256/320), по умолчанию 320. OPUS: bitrate (128/192), по умолчанию 192.
     AAC: 192 kbps в контейнере M4A (ffmpeg). auto_blank_sec > 0: обрезка тишины в конце перед экспортом.
     """
     samples = np.asarray(samples, dtype=np.float32)
@@ -876,27 +900,28 @@ def export_audio(
         return buf.getvalue()
 
     if out_format == "mp3":
+        br = bitrate if bitrate in (128, 192, 256, 320) else 320
         try:
             wav_buf = io.BytesIO()
             _write_wav_16bit_dithered(wav_buf, samples, sr, dither_type=dither_type)
             wav_buf.seek(0)
             seg = AudioSegment.from_wav(wav_buf)
             out_buf = io.BytesIO()
-            seg.export(out_buf, format="mp3", bitrate="320k")
+            seg.export(out_buf, format="mp3", bitrate=f"{br}k")
             out_buf.seek(0)
             return out_buf.getvalue()
         except FileNotFoundError as exc:
             _raise_ffmpeg_error("mp3", exc)
 
     if out_format == "opus":
+        br = bitrate if bitrate in (128, 192) else 192
         try:
             wav_buf = io.BytesIO()
             _write_wav_16bit_dithered(wav_buf, samples, sr, dither_type=dither_type)
             wav_buf.seek(0)
             seg = AudioSegment.from_wav(wav_buf)
             out_buf = io.BytesIO()
-            # pydub/ffmpeg: opus через ogg-контейнер, кодек libopus
-            seg.export(out_buf, format="opus", codec="libopus", parameters=["-b:a", "192k"])
+            seg.export(out_buf, format="opus", codec="libopus", parameters=["-b:a", f"{br}k"])
             out_buf.seek(0)
             return out_buf.getvalue()
         except FileNotFoundError as exc:
@@ -940,15 +965,28 @@ _REVERB_PRESETS = {
 }
 
 
+@_njit
+def _comb_filter_core(x: np.ndarray, out: np.ndarray, delay_samples: int, gain: float) -> None:
+    """Ядро comb-фильтра — JIT-компилируется numba если доступна."""
+    for i in range(delay_samples, len(x)):
+        out[i] = x[i] + gain * out[i - delay_samples]
+
+
 def _comb_filter(x: np.ndarray, delay_samples: int, gain: float) -> np.ndarray:
     """Один comb-фильтр: y[n] = x[n] + gain * y[n - delay]."""
     out = np.zeros_like(x)
     if delay_samples <= 0 or delay_samples >= len(x):
         return x
     out[:delay_samples] = x[:delay_samples]
-    for i in range(delay_samples, len(x)):
-        out[i] = x[i] + gain * out[i - delay_samples]
+    _comb_filter_core(x, out, delay_samples, float(gain))
     return out
+
+
+@_njit
+def _allpass_filter_core(x: np.ndarray, out: np.ndarray, delay_samples: int, gain: float) -> None:
+    """Ядро allpass-фильтра — JIT-компилируется numba если доступна."""
+    for i in range(delay_samples, len(x)):
+        out[i] = -gain * x[i] + x[i - delay_samples] + gain * out[i - delay_samples]
 
 
 def _allpass_filter(x: np.ndarray, delay_samples: int, gain: float) -> np.ndarray:
@@ -957,8 +995,7 @@ def _allpass_filter(x: np.ndarray, delay_samples: int, gain: float) -> np.ndarra
     if delay_samples <= 0 or delay_samples >= len(x):
         return x
     out[:delay_samples] = -gain * x[:delay_samples]
-    for i in range(delay_samples, len(x)):
-        out[i] = -gain * x[i] + x[i - delay_samples] + gain * out[i - delay_samples]
+    _allpass_filter_core(x, out, delay_samples, float(gain))
     return out
 
 

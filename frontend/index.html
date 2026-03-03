@@ -2039,28 +2039,37 @@
           <input type="number" id="targetLufsInput" value="-14" min="-60" max="-1" step="0.5"
                  title="Задаётся автоматически по стилю. Можно изменить вручную.">
           <select id="outFormat">
-            <option value="wav">WAV — без потерь</option>
-            <option value="mp3" data-tier="pro">MP3 — 320 kbps 🔒</option>
-            <option value="flac" data-tier="pro">FLAC — без потерь 🔒</option>
-            <option value="opus" data-tier="pro">OPUS — 192 kbps 🔒</option>
-            <option value="aac" data-tier="pro">AAC — 192 kbps (M4A) 🔒</option>
+            <option value="wav" data-i18n="app.format_wav">WAV — без потерь</option>
+            <option value="mp3" data-tier="pro" data-i18n="app.format_mp3">MP3 — 320 kbps 🔒</option>
+            <option value="flac" data-tier="pro" data-i18n="app.format_flac">FLAC — без потерь 🔒</option>
+            <option value="opus" data-tier="pro" data-i18n="app.format_opus">OPUS — 192 kbps 🔒</option>
+            <option value="aac" data-tier="pro" data-i18n="app.format_aac">AAC — 192 kbps (M4A) 🔒</option>
           </select>
+          <div class="field out-bitrate-wrap" id="outBitrateWrap" style="display:none;margin-top:.5rem">
+            <span class="f-lbl" style="font-size:.75rem;opacity:.9">Битрейт (kbps)</span>
+            <select id="outBitrate" title="Выбор битрейта для MP3 или OPUS">
+              <option value="128">128</option>
+              <option value="192">192</option>
+              <option value="256">256</option>
+              <option value="320">320</option>
+            </select>
+          </div>
         </div>
       </div>
       <!-- Reference Track Mastering -->
       <div class="field">
-        <span class="f-lbl">Reference Track <span class="badge-new">NEW</span></span>
+        <span class="f-lbl"><span data-i18n="app.ref_track">Эталонный трек</span> <span class="badge-new">NEW</span></span>
         <div class="reference-track-wrap">
           <label class="btn btn-sm btn-reference" id="btnRefLabel" title="Загрузите эталонный трек для подгонки спектрального баланса">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Загрузить эталон
             <input type="file" id="refFileInput" accept=".wav,.mp3,.flac" style="display:none;">
           </label>
-          <span class="ref-file-name" id="refFileName">не выбран</span>
+          <span class="ref-file-name" id="refFileName" data-i18n="app.ref_not_selected">не выбран</span>
           <button type="button" class="btn-ref-clear" id="btnRefClear" style="display:none;" title="Убрать эталон" aria-label="Убрать эталонный трек">✕</button>
         </div>
         <div class="ref-strength-wrap" id="refStrengthWrap" style="display:none;">
-          <label class="f-lbl-sm">Интенсивность</label>
+          <label class="f-lbl-sm" data-i18n="app.ref_intensity">Интенсивность</label>
           <input type="range" id="refStrength" min="0" max="100" value="80" step="5">
           <span id="refStrengthVal">80%</span>
         </div>
@@ -2098,16 +2107,16 @@
               </div>
               <div class="pro-module-body" id="denoiserBody">
                 <div class="pro-select-row">
-                  <span class="pro-slider-label">Пресет</span>
+                  <span class="pro-slider-label" data-i18n="app.pro_preset">Пресет</span>
                   <select id="denoiserPreset" class="pro-select" title="Лёгкий / Средний / Агрессивный или свой уровень">
-                    <option value="">Свой</option>
-                    <option value="light">Лёгкий</option>
-                    <option value="medium" selected>Средний</option>
-                    <option value="aggressive">Агрессивный</option>
+                    <option value="" data-i18n="app.denoiser_custom">Свой</option>
+                    <option value="light" data-i18n="app.denoiser_light">Лёгкий</option>
+                    <option value="medium" selected data-i18n="app.denoiser_medium">Средний</option>
+                    <option value="aggressive" data-i18n="app.denoiser_aggressive">Агрессивный</option>
                   </select>
                 </div>
                 <div class="pro-slider-row">
-                  <span class="pro-slider-label">Сила</span>
+                  <span class="pro-slider-label" data-i18n="app.pro_strength">Сила</span>
                   <input type="range" id="denoiserStrength" min="0" max="100" value="40" step="5">
                   <span class="pro-slider-val" id="denoiserStrVal">40%</span>
                 </div>
@@ -2131,7 +2140,7 @@
               </div>
               <div class="pro-module-body" id="deesserBody">
                 <div class="pro-slider-row">
-                  <span class="pro-slider-label">Порог</span>
+                  <span class="pro-slider-label" data-i18n="app.pro_threshold">Порог</span>
                   <input type="range" id="deesserThreshold" min="-30" max="-5" value="-10" step="1">
                   <span class="pro-slider-val" id="deesserThrVal">−10 dB</span>
                 </div>
@@ -2155,12 +2164,12 @@
               </div>
               <div class="pro-module-body" id="transientBody">
                 <div class="pro-slider-row">
-                  <span class="pro-slider-label">Атака</span>
+                  <span class="pro-slider-label" data-i18n="app.pro_attack">Атака</span>
                   <input type="range" id="transientAttack" min="50" max="200" value="100" step="5">
                   <span class="pro-slider-val" id="transientAttackVal">1.0×</span>
                 </div>
                 <div class="pro-slider-row">
-                  <span class="pro-slider-label">Сустейн</span>
+                  <span class="pro-slider-label" data-i18n="app.pro_sustain">Сустейн</span>
                   <input type="range" id="transientSustain" min="50" max="200" value="100" step="5">
                   <span class="pro-slider-val" id="transientSustainVal">1.0×</span>
                 </div>
@@ -2184,7 +2193,7 @@
               </div>
               <div class="pro-module-body" id="parallelBody">
                 <div class="pro-slider-row">
-                  <span class="pro-slider-label">Mix</span>
+                  <span class="pro-slider-label" data-i18n="app.pro_mix">Mix</span>
                   <input type="range" id="parallelMix" min="0" max="100" value="30" step="5">
                   <span class="pro-slider-val" id="parallelMixVal">30%</span>
                 </div>
@@ -2220,10 +2229,10 @@
 
       <!-- Export: dither (WAV/16-bit), auto-blank -->
       <div class="field export-opts">
-        <span class="f-lbl">Экспорт (WAV/16-bit)</span>
+        <span class="f-lbl" data-i18n="app.export_section">Экспорт (WAV/16-bit)</span>
         <div class="two-col">
           <label class="export-opt">
-            <span class="export-opt-lbl">Дизеринг</span>
+            <span class="export-opt-lbl" data-i18n="app.export_dither">Дизеринг</span>
             <select id="ditherType" title="TPDF — стандарт, Noise-shaped / ITU — шейпинг шума">
               <option value="tpdf">TPDF</option>
               <option value="ns_e">Noise-shaped (E)</option>
@@ -2231,7 +2240,7 @@
             </select>
           </label>
           <label class="export-opt">
-            <span class="export-opt-lbl">Обрезка тишины (сек)</span>
+            <span class="export-opt-lbl" data-i18n="app.export_auto_blank">Обрезка тишины (сек)</span>
             <select id="autoBlankSec" title="Обрезать тишину в конце файла">
               <option value="0">0</option>
               <option value="0.5">0.5</option>

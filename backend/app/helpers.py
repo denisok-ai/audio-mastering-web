@@ -1,6 +1,8 @@
 # @file helpers.py
-# @description Общие хелперы для main: IP, валидация файлов, magic bytes. P62.
+# @description Общие хелперы для main: IP, валидация файлов, magic bytes, JSON-safe float. P62.
 # @dependencies app.config, app.settings_store
+
+import math
 
 from fastapi import Request
 
@@ -42,3 +44,24 @@ def check_audio_magic_bytes(data: bytes, filename: str) -> bool:
             return True
         return len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0
     return True
+
+
+def json_safe_float(v) -> float | None:
+    """Для ответа JSON: inf/-inf/nan заменяем на None."""
+    if v is None:
+        return None
+    try:
+        f = float(v)
+        if math.isnan(f) or math.isinf(f):
+            return None
+        return f
+    except (TypeError, ValueError):
+        return None
+
+
+def safe_content_disposition_filename(filename: str, default: str = "mastered.wav") -> str:
+    """Имя файла только ASCII (latin-1), чтобы заголовок Content-Disposition не падал с UnicodeEncodeError."""
+    if not filename or not str(filename).strip():
+        return default
+    s = "".join(c if ord(c) < 128 else "_" for c in str(filename)).strip()
+    return s or default

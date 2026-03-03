@@ -170,6 +170,37 @@ def test_export_audio_aac_returns_bytes(stereo_2sec_44k):
     assert b"ftyp" in out[:20]
 
 
+def test_export_audio_mp3_with_bitrate(stereo_2sec_44k):
+    """Экспорт MP3 с параметром bitrate (128/192/256/320 kbps)."""
+    import shutil
+    import pytest
+    if not shutil.which("ffmpeg"):
+        pytest.skip("ffmpeg required for MP3 export")
+    from app.pipeline import export_audio
+    audio, sr = stereo_2sec_44k
+    for br in (128, 192, 320):
+        out = export_audio(audio, sr, channels=2, out_format="mp3", bitrate=br)
+        assert isinstance(out, bytes)
+        assert len(out) > 100
+        assert out[:3] == b"ID3" or b"\xff\xfb" in out[:4]  # ID3 header or MPEG frame
+
+
+def test_export_audio_opus_with_bitrate(stereo_2sec_44k):
+    """Экспорт OPUS с параметром bitrate (128/192 kbps)."""
+    import shutil
+    import pytest
+    if not shutil.which("ffmpeg"):
+        pytest.skip("ffmpeg required for OPUS export")
+    from app.pipeline import export_audio
+    audio, sr = stereo_2sec_44k
+    for br in (128, 192):
+        out = export_audio(audio, sr, channels=2, out_format="opus", bitrate=br)
+        assert isinstance(out, bytes)
+        assert len(out) > 100
+        # Ogg container
+        assert out[:4] == b"OggS"
+
+
 def test_run_mastering_pipeline_returns_same_shape(stereo_2sec_44k):
     from app.pipeline import run_mastering_pipeline
     audio, sr = stereo_2sec_44k

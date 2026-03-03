@@ -1,6 +1,6 @@
 # Magic Master — Дорожная карта разработки
 
-> Документ сохранён: 2026-02-27  
+> Документ сохранён: 2026-03  
 > Статус проекта: **активная разработка**  
 > План переработан с учётом полного аудита и приоритетов (см. [AUDIT.md](AUDIT.md)).
 
@@ -259,7 +259,7 @@ M/S контроль: `ms_center_dry` + `ms_side_wet`
 
 **Задачи фазы 3:**
 - [x] Reverb: алгоритмический (Schroeder comb+allpass), 5 типов (plate, room, hall, theater, cathedral), ReverbModule в цепочке (enabled: false по умолчанию). [x] M/S mix (mix_mid, mix_side в apply_reverb и UI в цепочке).
-- [x] Dithering: TPDF + noise-shaped (ns_e) в export_audio, auto_blank_sec (обрезка тишины в конце). POST /api/v2/master принимает dither_type и auto_blank_sec; UI — выбор в карточке «Параметры». [ ] ITU/E-weighted опции в API
+- [x] Dithering: TPDF + noise-shaped (ns_e) в export_audio, auto_blank_sec (обрезка тишины в конце). POST /api/v2/master принимает dither_type и auto_blank_sec; UI — выбор в карточке «Параметры». [x] ITU/E-weighted опции в API (ns_itu в export_audio и UI).
 - [x] Расширение `/api/v2/analyze`: FFT (spectrum_bars), LUFS timeline (lufs_timeline, timeline_step_sec), vectorscope_points для стерео.
 
 ---
@@ -312,6 +312,6 @@ bash start.sh
 
 ### Следующий шаг разработки
 
-**Приоритет P2 выполнен (модульный бэкенд v2).** Дальше: **P3** — расширение процессоров (Фаза 2: EQ linear phase, variable crossovers, exciter/imager режимы) или **P4** — Frontend v2 (вынос CSS/JS, спектроанализатор, векторскоп).
+**Приоритет P2 выполнен (модульный бэкенд v2).** Фазы P0–P64 закрыты. Дальнейшие задачи собраны в **едином плане доработок:** [doc/PLAN_DORABOTKI.md](doc/PLAN_DORABOTKI.md) (очереди 1–4: закрепление кода, админка, бэклог продукта, опции).
 
 **Прогресс выполнения плана:** см. [PROGRESS.md](PROGRESS.md).

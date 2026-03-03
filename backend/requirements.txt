@@ -16,6 +16,9 @@ numpy>=1.24.0
 scipy>=1.11.0
 soundfile>=0.12.1
 pyloudnorm>=0.2.0
+# JIT-компиляция per-sample DSP-циклов (comb/allpass/envelope): ускорение 50–100×
+# При отсутствии — автоматический fallback на чистый Python
+numba>=0.59.0
 # Профессиональный JUCE-based компрессор/эффекты (Spotify Pedalboard).
 # При наличии автоматически заменяет scipy-компрессор в multiband dynamics.
 # Установка: pip install pedalboard
