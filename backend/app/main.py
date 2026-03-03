@@ -8,7 +8,9 @@ import datetime
 import json
 import logging
 import os
+import struct
 import time
+import zlib
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,27 @@ logger = logging.getLogger(__name__)
 _PNG_1X1 = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 )
+
+
+def _make_png_placeholder(size: int, r: int = 0x6c, g: int = 0x4b, b: int = 0xff) -> bytes:
+    """Генерирует PNG размером size×size (однотонный) для PWA — без зависимости от Pillow."""
+    def png_chunk(chunk_type: bytes, data: bytes) -> bytes:
+        chunk = chunk_type + data
+        crc = zlib.crc32(chunk) & 0xFFFFFFFF
+        return struct.pack(">I", len(data)) + chunk + struct.pack(">I", crc)
+    signature = b"\x89PNG\r\n\x1a\n"
+    ihdr = struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)  # 8bit RGBA
+    raw = b""
+    for _ in range(size):
+        raw += b"\x00"  # filter
+        raw += (struct.pack(">BBBB", r, g, b, 255) * size)
+    idat_data = zlib.compress(raw, 9)
+    return signature + png_chunk(b"IHDR", ihdr) + png_chunk(b"IDAT", idat_data) + png_chunk(b"IEND", b"")
+
+
+# PWA-иконки правильного размера (manifest требует 192x192 и 512x512)
+_PNG_192 = _make_png_placeholder(192)
+_PNG_512 = _make_png_placeholder(512)
 
 from pathlib import Path
 from typing import Optional
@@ -555,13 +578,13 @@ if _frontend.is_dir():
         )
         return HTMLResponse(content=html)
 
-    # PWA: иконки из manifest (если frontend/icons/ отсутствуют — отдаём минимальный PNG, чтобы не было 404)
+    # PWA: иконки правильного размера (manifest требует 192x192 и 512x512 — иначе предупреждение)
     @app.get("/icons/icon-192.png", response_class=Response)
     def _icon_192():
-        return Response(content=_PNG_1X1, media_type="image/png")
+        return Response(content=_PNG_192, media_type="image/png")
 
     @app.get("/icons/icon-512.png", response_class=Response)
     def _icon_512():
-        return Response(content=_PNG_1X1, media_type="image/png")
+        return Response(content=_PNG_512, media_type="image/png")
 
     app.mount("/", StaticFiles(directory=str(_frontend), html=True), name="frontend")

@@ -173,9 +173,15 @@
       box-shadow: 0 6px 20px rgba(91,33,182,0.4);
     }
     html.theme-light .ab-player-wrap {
-      background: linear-gradient(135deg, rgba(91,33,182,0.06) 0%, rgba(124,58,237,0.04) 100%);
-      border: 1px solid rgba(91,33,182,0.2);
-      box-shadow: 0 2px 12px rgba(91,33,182,0.06);
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border-color: rgba(91,33,182,0.15);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(91,33,182,0.04);
+    }
+    html.theme-light .ab-progress-wrap { background: rgba(91,33,182,0.12); }
+    html.theme-light .ab-player-wrap:first-of-type {
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border-color: rgba(91,33,182,0.15);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(91,33,182,0.04);
     }
     html.theme-light .ab-player-title { color: var(--text-soft); font-weight: 600; }
     html.theme-light .ab-play-btn {
@@ -183,7 +189,6 @@
       box-shadow: 0 3px 12px rgba(91,33,182,0.35);
     }
     html.theme-light .ab-play-btn:hover { opacity: 1; box-shadow: 0 4px 16px rgba(91,33,182,0.45); }
-    html.theme-light .ab-progress-wrap { background: rgba(91,33,182,0.12); }
     html.theme-light .ab-progress-fill { background: linear-gradient(90deg, #5b21b6, #7c3aed); }
     html.theme-light .ab-switch-btn {
       background: var(--surface);
@@ -215,6 +220,7 @@
     html.theme-light .chain-modules-card,
     html.theme-light .result-panel,
     html.theme-light .ab-player-wrap,
+    html.theme-light .daw-card,
     html.theme-light .prog-wrap,
     html.theme-light .ai-helpers-section,
     html.theme-light .spectrum-card,
@@ -286,6 +292,15 @@
       background: var(--surface);
       border-color: var(--border);
     }
+    html.theme-light .batch-section {
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border-color: rgba(91,33,182,0.15);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(91,33,182,0.04);
+    }
+    html.theme-light .batch-panel {
+      background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+      border-color: var(--border);
+    }
     html.theme-light .spectrum-head,
     html.theme-light .vectorscope-head {
       background: var(--surface-2);
@@ -297,6 +312,33 @@
     html.theme-light .vectorscope-hint { color: var(--text-dim); }
     html.theme-light .spectrum-canvas {
       background: #e2e6eb;
+    }
+    html.theme-light .daw-head {
+      background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+      border-color: var(--border);
+    }
+    html.theme-light .daw-ruler-wrap {
+      background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+    }
+    html.theme-light .daw-track {
+      background: linear-gradient(180deg, rgba(91,33,182,0.06) 0%, rgba(91,33,182,0.02) 100%);
+    }
+    html.theme-light .daw-stats-row {
+      background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+      border-color: var(--border);
+    }
+    html.theme-light .wave-wrap {
+      background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+      border-color: var(--border);
+    }
+    html.theme-light .transport {
+      background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+      border-color: var(--border);
+    }
+    html.theme-light .t-scrub { background: rgba(91,33,182,0.12); }
+    html.theme-light .audio-meta {
+      background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+      border-color: var(--border);
     }
     html.theme-light .vectorscope-canvas {
       background: #e2e6eb;
@@ -419,9 +461,9 @@
       100% { transform:scaleY(1);   opacity:1   }
     }
 
-    /* ═══════════════════════ CARD (оформление как у Цепочки модулей) ═══════════════════════ */
+    /* ═══════════════════════ CARD (градиент как у Спектр) ═══════════════════════ */
     .card {
-      background: var(--surface);
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
       border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 1.65rem;
@@ -507,9 +549,12 @@
     .btn-reset:hover { color:var(--red) }
     .btn-reset svg { width:13px;height:13px }
 
-    /* ═══════════════════════ BATCH ═══════════════════════ */
+    /* ═══════════════════════ BATCH (градиент как у Спектр) ═══════════════════════ */
     .batch-section {
-      margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);
+      margin-top: 1rem; padding: 1.1rem 1rem 1rem;
+      border: 1px solid var(--border); border-radius: var(--r);
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.25);
     }
     .batch-hd { display: flex; align-items: baseline; gap: .5rem; margin-bottom: .5rem; flex-wrap: wrap; }
     .batch-ttl { font-size: .875rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); }
@@ -523,13 +568,20 @@
     .btn-batch:hover { background: rgba(108,75,255,.18); border-color: rgba(108,75,255,.4); }
     .batch-file-list {
       font-size: .875rem; color: var(--text-soft); margin-top: .5rem;
-      max-height: 80px; overflow-y: auto;
+      max-height: 140px; overflow-y: auto;
     }
     .batch-file-list span { display: block; padding: .15rem 0; }
+    .batch-file-row { display: flex; align-items: center; gap: .4rem; padding: .2rem 0; }
+    .batch-file-row .batch-file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .batch-file-remove { flex-shrink: 0; width: 1.2rem; height: 1.2rem; padding: 0; border: none; border-radius: 4px; background: rgba(239,68,68,0.2); color: var(--red, #ef4444); cursor: pointer; font-size: .9rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    .batch-file-remove:hover { background: rgba(239,68,68,0.35); }
+    .batch-clear-list { font-size: .8rem; color: var(--text-dim); cursor: pointer; margin-top: .35rem; text-decoration: underline; }
+    .batch-clear-list:hover { color: var(--accent); }
     .btn-batch-run { margin-top: .5rem; }
     .batch-panel {
       margin-top: 1rem; padding: 1rem;
-      background: rgba(0,0,0,.2); border: 1px solid var(--border); border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);
+      border: 1px solid var(--border); border-radius: var(--r);
     }
     .batch-panel-title { font-size: .875rem; font-weight: 700; letter-spacing: .06em; color: var(--text-dim); margin-bottom: .6rem; }
     .batch-job-row {
@@ -658,8 +710,8 @@
     .result-panel.visible { display:block }
     @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
-    /* ═══════════ A/B AUDIO PLAYER (P45) ═══════════ */
-    .ab-player-wrap{display:none;margin-top:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.15rem;box-shadow: 0 2px 16px rgba(0,0,0,0.25);animation:fadeIn .4s ease}
+    /* ═══════════ A/B AUDIO PLAYER (P45) — градиент как Спектр ═══════════ */
+    .ab-player-wrap{display:none;margin-top:1rem;background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.15rem;box-shadow: 0 2px 16px rgba(0,0,0,0.25);animation:fadeIn .4s ease}
     .ab-player-wrap.visible{display:block}
     .ab-player-title{font-size:.875rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-soft);margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
     .ab-player-title svg{opacity:.6}
@@ -667,7 +719,7 @@
     .ab-play-btn{width:2.2rem;height:2.2rem;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#6c4bff,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;transition:opacity .15s, box-shadow .2s, transform .15s;flex-shrink:0}
     .ab-play-btn:hover{opacity:1;box-shadow:0 4px 16px rgba(108,75,255,0.45)}
     .ab-play-btn svg{width:14px;height:14px}
-    .ab-progress-wrap{flex:1;min-width:100px;position:relative;height:6px;background:rgba(255,255,255,.1);border-radius:3px;cursor:pointer}
+    .ab-progress-wrap{flex:1;min-width:100px;position:relative;height:6px;background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);border-radius:3px;cursor:pointer}
     .ab-progress-fill{position:absolute;top:0;left:0;height:100%;border-radius:3px;background:linear-gradient(90deg,#6c4bff,#a855f7);width:0;pointer-events:none;transition:width .1s linear}
     .ab-time{font-size:.875rem;color:var(--text-soft);font-family:var(--mono);white-space:nowrap}
     .ab-switch{display:flex;gap:.35rem;margin-left:auto}
@@ -757,18 +809,21 @@
     .ai-actions-wrap .ai-actions { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap }
     .ai-actions-wrap .btn-ai { display:inline-flex; align-items:center; gap:.35rem; background:rgba(124,58,237,0.2); border:1px solid rgba(124,58,237,0.5); color:var(--accent-2); font-size:.9rem }
     .ai-actions-wrap .btn-ai:hover { background:rgba(124,58,237,0.3); color:#fff; box-shadow: 0 4px 14px rgba(124,58,237,0.35); }
-    .ai-actions-wrap .btn-ai-icon { font-size:.9em }
+    .ai-actions-wrap .btn-ai-icon-svg { width:14px; height:14px; vertical-align:middle }
+    .ai-helpers-icon-svg, .btn-ai-icon-svg, .icon-ai-inline { display:inline-block; vertical-align:middle; color:var(--accent); flex-shrink:0 }
+    .icon-ai { display:inline-block; vertical-align:middle; margin-right:.25rem; color:inherit }
+    .chat-panel-hd .icon-ai-inline { margin-right:.35rem }
     .ai-actions-wrap .ai-limits { font-size:.875rem; color:var(--text-dim); margin-left:.5rem }
 
     /* AI помощники — секция в первой карточке */
     .ai-helpers-section { margin-top:1.2rem; padding:1rem 1rem 1rem; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow: 0 2px 16px rgba(0,0,0,0.25); }
     .ai-helpers-title { display:flex; align-items:center; gap:.5rem; font-size:1rem; font-weight:600; color:var(--accent-2); margin-bottom:.35rem }
-    .ai-helpers-icon { font-size:1.2em }
+    .ai-helpers-title .ai-helpers-icon-svg { margin-right:.35rem }
     .ai-helpers-desc { font-size:.9rem; color:var(--text-soft); margin:0 0 .75rem; line-height:1.4 }
     .ai-helpers-btns { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem }
     .btn-ai-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.5rem .9rem; font-size:.85rem; font-weight:500; background:var(--accent); color:#fff; border:none; border-radius:8px; cursor:pointer; transition:background .15s, transform .1s }
     .btn-ai-primary:hover { background:var(--accent-2); transform:translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
-    .btn-ai-primary .btn-ai-icon { font-size:1em }
+    .btn-ai-primary .btn-ai-icon-svg { margin-right:.4rem }
     .ai-helpers-more { font-size:.875rem; color:var(--text-dim); line-height:1.4 }
     .ai-helpers-more strong { color:var(--text-soft) }
     .ai-helpers-voice-wrap { margin-top:1rem; padding-top:.85rem; border-top:1px solid rgba(124,58,237,0.2); }
@@ -786,6 +841,7 @@
 
     /* P25: NL→настройки */
     .nl-config-wrap { margin-top:.8rem; padding:.7rem .9rem; background:rgba(124,58,237,.07); border:1px solid rgba(124,58,237,.25); border-radius:var(--r) }
+    .nl-config-note .nl-config-note-txt { margin:0; font-size:.8125rem; color:var(--text-dim); line-height:1.4 }
     .nl-config-label { font-size:.875rem; color:var(--accent-2); margin-bottom:.4rem; font-weight:600 }
     .nl-config-inline .nl-inline-desc { font-size:.875rem; color:var(--text-soft); margin:0 0 .5rem; line-height:1.35 }
     .nl-config-inline .nl-config-row { display:flex; gap:.5rem; align-items:center }
@@ -850,13 +906,21 @@
     /* ═══════════════════════ WAVEFORM PLAYER ═══════════════════════ */
     .player { display:none; margin-top:1rem; animation:fadeIn .3s ease; }
     .player.visible { display:block }
+    .player.no-file .wave-wrap { opacity:0.6; pointer-events:none; }
+    .player.no-file .transport { opacity:0.7; pointer-events:none; }
+    .player.no-file .btn-pp { cursor:not-allowed; opacity:0.7; }
+    .ai-helpers-section.no-file .btn-ai-primary { cursor:not-allowed; opacity:0.75; }
+    .ai-helpers-section.no-file .btn-ai-outline { cursor:not-allowed; opacity:0.75; }
+    .chat-fab.no-file { opacity:0.6; cursor:not-allowed; }
 
+    /* Стиль как у блока Спектр: градиентный фон, бирюзовая шкала */
     .wave-wrap {
       position:relative; border-radius:var(--r-sm); overflow:hidden;
-      background:rgba(0,0,0,0.35); border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.14) 100%);
+      border:1px solid var(--border);
       cursor:crosshair; user-select:none;
     }
-    .wave-wrap:hover { border-color:rgba(108,75,255,0.3) }
+    .wave-wrap:hover { border-color:rgba(6,182,212,0.35) }
     .wave-canvas { display:block; width:100%; height:58px }
 
     /* playhead overlay */
@@ -864,11 +928,15 @@
       content:attr(data-time);
       position:absolute; top:4px; right:6px;
       font-family:'JetBrains Mono',monospace; font-size:.8125rem; font-weight:600;
-      color:rgba(255,255,255,0.45); pointer-events:none;
+      color:var(--text-dim); pointer-events:none;
     }
 
     .transport {
-      display:flex; align-items:center; gap:.55rem; margin-top:.55rem;
+      display:flex; align-items:center; gap:.55rem; margin-top:.5rem;
+      padding:.5rem .75rem; border-radius:var(--r-sm);
+      background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);
+      border:1px solid var(--border);
+      font-family:'JetBrains Mono',monospace;
     }
     .btn-pp {
       width:30px; height:30px; border-radius:50%; flex-shrink:0; border:none; cursor:pointer;
@@ -882,14 +950,15 @@
     .btn-pp svg { width:11px;height:11px }
 
     .t-elapsed, .t-total {
-      font-family:'JetBrains Mono',monospace; font-size:.8125rem; white-space:nowrap;
+      font-size:.8125rem; white-space:nowrap;
+      color:var(--text-dim);
     }
-    .t-elapsed { color:var(--text-soft); min-width:2.5rem; text-align:right }
-    .t-total   { color:var(--text-dim);  min-width:2.5rem }
+    .t-elapsed { min-width:2.5rem; text-align:right }
+    .t-total   { min-width:2.5rem }
 
     .t-scrub {
-      flex:1; height:4px; background:rgba(255,255,255,0.07);
-      border-radius:2px; position:relative; cursor:pointer; overflow:hidden;
+      flex:1; height:6px; background:linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 100%);
+      border-radius:3px; position:relative; cursor:pointer; overflow:hidden;
     }
     .t-scrub-fill {
       height:100%; width:0%; border-radius:2px;
@@ -897,17 +966,18 @@
       transition:none; pointer-events:none;
     }
 
-    /* peak/duration info row */
+    /* peak/duration info row — градиент как у Спектр */
     .audio-meta {
       display:none; align-items:center; justify-content:space-between;
-      margin-top:.55rem; padding:.4rem .55rem;
-      background:rgba(255,255,255,0.03); border:1px solid var(--border);
+      margin-top:.5rem; padding:.5rem .75rem;
+      background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);
+      border:1px solid var(--border);
       border-radius:var(--r-sm);
     }
     .audio-meta.visible { display:flex }
     .am-item { display:flex; flex-direction:column; align-items:center; gap:1px }
-    .am-val { font-family:'JetBrains Mono',monospace; font-size:.875rem; font-weight:600; color:var(--text-soft) }
-    .am-key { font-size:.75rem; color:var(--text-dim); letter-spacing:.07em; text-transform:uppercase }
+    .am-val { font-family:'JetBrains Mono',monospace; font-size:.875rem; font-weight:600; color:var(--text-dim) }
+    .am-key { font-size:.7rem; color:var(--text-dim); letter-spacing:.08em; text-transform:uppercase }
 
     /* ═══════════════════════ DIVIDER ═══════════════════════ */
     .div {
@@ -1096,10 +1166,11 @@
     }
     .hist-clear:hover { color:var(--red) }
 
-    /* ═══════════════════════ DAW COMPARISON CARD ═══════════════════════ */
+    /* ═══════════════════════ DAW COMPARISON CARD — градиент как Спектр ═══════════════════════ */
     .daw-card {
       display:none; width:100%; margin-top:1.1rem;
-      background:var(--surface); border:1px solid var(--border);
+      background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border:1px solid var(--border);
       border-radius:var(--r-lg); overflow:hidden;
       box-shadow:var(--shadow); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
     }
@@ -1107,7 +1178,7 @@
     .daw-head {
       display:flex; align-items:center; justify-content:space-between;
       padding:.7rem 1rem; border-bottom:1px solid var(--border);
-      background:rgba(0,0,0,0.25);
+      background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);
     }
     .daw-ttl {
       font-size:.7rem; font-weight:700; letter-spacing:.09em;
@@ -1116,7 +1187,8 @@
     }
     .daw-ttl svg { width:14px;height:14px;color:var(--accent) }
     .daw-ruler-wrap {
-      position:relative; height:20px; background:rgba(0,0,0,0.4);
+      position:relative; height:20px;
+      background:linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.18) 100%);
       border-bottom:1px solid var(--border);
       overflow:hidden;
     }
@@ -1129,7 +1201,8 @@
       display:flex; flex-direction:column; gap:0;
     }
     .daw-track {
-      position:relative; height:52px; background:rgba(0,0,0,0.35);
+      position:relative; height:52px;
+      background:linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.14) 100%);
       border-bottom:1px solid var(--border); overflow:hidden;
     }
     .daw-track:last-of-type { border-bottom:none }
@@ -1148,7 +1221,7 @@
     .daw-stats-row {
       display:grid; grid-template-columns:1fr 1fr;
       gap:0; border-top:1px solid var(--border);
-      background:rgba(0,0,0,0.2);
+      background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);
     }
     .daw-stat {
       padding:.5rem .75rem; border-right:1px solid var(--border);
@@ -1169,7 +1242,8 @@
     /* ═══════════════════════ SPECTRUM CARD ═══════════════════════ */
     .spectrum-card {
       display:none; width:100%; margin-top:1.1rem;
-      background:var(--surface); border:1px solid var(--border);
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border:1px solid var(--border);
       border-radius:var(--r); overflow:hidden;
       box-shadow: 0 2px 16px rgba(0,0,0,0.25);
     }
@@ -1835,6 +1909,7 @@
       <input type="file" id="batchFileInput" accept=".wav,.mp3,.flac,audio/*" multiple style="display:none">
       <button type="button" class="btn btn-batch" id="btnSelectBatch" data-i18n="app.batch_select">Выбрать файлы</button>
       <div class="batch-file-list" id="batchFileList"></div>
+      <button type="button" class="batch-clear-list" id="batchClearList" style="display:none" data-i18n="app.batch_clear">Очистить список</button>
       <button type="button" class="btn btn-primary btn-batch-run" id="btnBatchMaster" style="display:none" disabled><span data-i18n="app.batch_run">Запустить мастеринг</span> (<span id="batchCount">0</span> <span data-i18n="app.files">файлов</span>)</button>
       <div class="batch-panel" id="batchPanel" style="display:none">
         <div class="batch-panel-title">Обработка</div>
@@ -1916,7 +1991,7 @@
       </button>
       <button type="button" class="btn-report-json" id="btnDownloadReportJson" title="Скачать отчёт в формате JSON">JSON</button>
       <button type="button" class="btn-report-json" id="btnDownloadReportPdf" title="Экспортировать отчёт в PDF">PDF</button>
-      <button type="button" class="btn btn-sm btn-ai-report" id="btnAiReport" title="AI: краткое описание и рекомендации по треку">✨ AI отчёт</button>
+      <button type="button" class="btn btn-sm btn-ai-report" id="btnAiReport" title="AI: краткое описание и рекомендации по треку"><svg class="icon-ai" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z"/></svg> AI отчёт</button>
     </span>
     <div class="ai-report-result" id="aiReportResult" style="display:none">
       <div class="ai-report-summary" id="aiReportSummary"></div>
@@ -1927,16 +2002,18 @@
     <!-- AI помощники: видимая секция при загруженном файле -->
     <div class="ai-helpers-section" id="aiHelpersSection" style="display:none">
       <div class="ai-helpers-title">
-        <span class="ai-helpers-icon">✨</span>
+        <svg class="ai-helpers-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z"/></svg>
         <span>AI помощники</span>
       </div>
       <p class="ai-helpers-desc">Подбор стиля и громкости по треку, авто-мастеринг в один клик, отчёт и чат.</p>
       <div class="ai-helpers-btns">
         <button type="button" class="btn btn-ai-primary" id="btnAiRecommend" title="Подобрать стиль и LUFS по анализу">
-          <span class="btn-ai-icon">✨</span> Рекомендовать пресет
+          <svg class="btn-ai-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z"/></svg>
+          <span>Рекомендовать пресет</span>
         </button>
         <button type="button" class="btn btn-ai-primary" id="btnAutoMaster" title="Анализ → настройки → мастеринг автоматически">
-          <span class="btn-ai-icon">⚡</span> Авто-мастеринг
+          <svg class="btn-ai-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>Авто-мастеринг</span>
         </button>
       </div>
       <div class="ai-helpers-more">
@@ -1944,13 +2021,14 @@
       </div>
       <div class="ai-helpers-chat-row">
         <button type="button" class="btn btn-ai-outline" id="btnChatHelper" title="Открыть чат с AI-помощником по мастерингу">
-          <span class="btn-ai-icon">💬</span> Чат-помощник
+          <svg class="btn-ai-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Чат-помощник</span>
         </button>
         <span class="ai-fab-hint">или кнопка в правом нижнем углу</span>
       </div>
       <!-- Настройки голосом — внутри блока AI помощники -->
       <div class="ai-helpers-voice-wrap nl-config-inline" id="nlConfigInline">
-        <span class="ai-helpers-voice-title">✨ Настройки голосом</span>
+        <span class="ai-helpers-voice-title"><svg class="icon-ai-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z"/></svg> Настройки голосом</span>
         <p class="nl-inline-desc">Опишите желаемые изменения — AI подстроит параметры цепочки.</p>
         <div class="nl-config-row">
           <input type="text" id="nlConfigInputInline" placeholder="Например: сделай потише, больше воздуха, меньше сибилянтов" maxlength="300">
@@ -2261,13 +2339,9 @@
       </div>
       <div class="chain-modules-body" id="chainModulesBody">
         <div class="chain-modules-list" id="chainModulesList"></div>
-        <!-- P25: NL→настройки (только при загруженном файле, pro/debug) -->
-        <div class="nl-config-wrap" id="nlConfigWrap" style="display:none">
-          <div class="nl-config-label">✨ AI: описать изменения</div>
-          <div class="nl-config-row">
-            <input type="text" id="nlConfigInput" placeholder="Например: сделай потише, больше воздуха" maxlength="300">
-            <button type="button" class="btn-nl" id="btnNlConfig">Применить</button>
-          </div>
+        <!-- P25: настройки голосом — единое место в блоке «AI помощники» (здесь только подсказка) -->
+        <div class="nl-config-wrap nl-config-note" id="nlConfigWrap" style="display:none">
+          <p class="nl-config-note-txt">Настройки голосом (описать изменения) — в блоке <strong>«AI помощники»</strong> выше.</p>
         </div>
         <!-- P10: сохранённые пресеты (только для залогиненных) -->
         <div class="chain-presets-wrap" id="chainPresetsWrap" style="display:none;">
@@ -2514,7 +2588,7 @@
 </button>
 <div class="chat-panel" id="chatPanel">
   <div class="chat-panel-hd">
-    <span>✨ AI-помощник</span>
+    <span><svg class="icon-ai-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z"/></svg> AI-помощник</span>
     <button id="chatClose" aria-label="Закрыть чат">×</button>
   </div>
   <div class="chat-pro-notice" id="chatProNotice" style="display:none">
@@ -2533,7 +2607,7 @@
 <div class="upgrade-overlay" id="upgradeOverlay" role="dialog" aria-modal="true" aria-labelledby="upgradeTitle">
   <div class="upgrade-box">
     <button class="upgrade-close" id="upgradeClose" aria-label="Закрыть">✕</button>
-    <div class="upgrade-icon" id="upgradeModalIcon">⚡</div>
+    <div class="upgrade-icon" id="upgradeModalIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
     <h3 class="upgrade-title" id="upgradeTitle">Это функция Pro</h3>
     <p class="upgrade-desc" id="upgradeDesc">Жанровые пресеты EDM, Hip-Hop, Classical, Podcast, Lo-fi, House и экспорт MP3/FLAC доступны в тарифах Pro и Studio.</p>
     <div class="upgrade-features">

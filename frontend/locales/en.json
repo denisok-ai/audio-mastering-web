@@ -27,6 +27,7 @@
   "app.batch_hint": "up to 10 files, same settings",
   "app.batch_select": "Select files",
   "app.batch_run": "Run mastering",
+  "app.batch_clear": "Clear list",
   "app.files": "files",
   "app.theme": "Theme",
   "app.theme_dark": "Dark",

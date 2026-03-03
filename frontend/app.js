@@ -435,17 +435,7 @@ async function loadAudio(file) {
       vectorscopeCard.classList.add('visible');
       requestAnimationFrame(() => drawVectorscope());
     }
-    if (_features.ai_enabled) {
-      const aiHelpersSection = document.getElementById('aiHelpersSection');
-      if (aiHelpersSection) { aiHelpersSection.style.display = 'block'; loadAiLimits(); }
-      if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
-      if (nlConfigWrap) nlConfigWrap.style.display = 'block';
-    } else {
-      const aiHelpersSection = document.getElementById('aiHelpersSection');
-      if (aiHelpersSection) aiHelpersSection.style.display = 'none';
-      if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
-      if (nlConfigWrap) nlConfigWrap.style.display = 'none';
-    }
+    if (_features.ai_enabled && typeof loadAiLimits === 'function') loadAiLimits();
   } catch(e) {
     console.warn('Audio decode failed:', e);
   }
@@ -485,9 +475,10 @@ function drawWaveform(playPosFrac) {
     }
     const h = Math.max(1, maxAmp * mid * 0.93);
     const played = x < playedX;
+    // Бирюзовый цвет шкалы (как в блоке Спектр)
     ctx.fillStyle = played
-      ? `rgba(108,75,255,${0.55 + maxAmp * 0.45})`
-      : `rgba(108,75,255,${0.18 + maxAmp * 0.22})`;
+      ? `rgba(6,182,212,${0.55 + maxAmp * 0.45})`
+      : `rgba(6,182,212,${0.18 + maxAmp * 0.22})`;
     ctx.fillRect(x, mid - h, 1, h * 2);
   }
 
@@ -496,8 +487,8 @@ function drawWaveform(playPosFrac) {
     const px = Math.floor(playPosFrac * W);
     ctx.fillStyle = 'rgba(255,255,255,0.75)';
     ctx.fillRect(px, 0, Math.max(1, dpr), H);
-    // glow
-    ctx.fillStyle = 'rgba(108,75,255,0.35)';
+    // glow — бирюзовый
+    ctx.fillStyle = 'rgba(6,182,212,0.35)';
     ctx.fillRect(Math.max(0, px - 2 * dpr), 0, 4 * dpr, H);
   }
 }
@@ -995,6 +986,31 @@ function fmtSize(bytes){
   return (bytes/1024/1024).toFixed(1)+' MB';
 }
 
+/** Обновляет активность элементов при наличии/отсутствии файла: все блоки видны, без файла — неактивны */
+function updateNoFileState() {
+  const hasFile = !!currentFile;
+  if (playerEl) {
+    playerEl.classList.add('visible');
+    if (hasFile) playerEl.classList.remove('no-file'); else playerEl.classList.add('no-file');
+  }
+  if (btnMeasure) btnMeasure.disabled = !hasFile;
+  if (btnMaster) btnMaster.disabled = !hasFile;
+  if (btnPP) btnPP.disabled = !hasFile;
+  const btnAiRecommend = document.getElementById('btnAiRecommend');
+  const btnAutoMaster = document.getElementById('btnAutoMaster');
+  const btnChatHelper = document.getElementById('btnChatHelper');
+  const btnNlConfigInline = document.getElementById('btnNlConfigInline');
+  const nlConfigInputInline = document.getElementById('nlConfigInputInline');
+  const aiHelpersSection = document.getElementById('aiHelpersSection');
+  if (btnAiRecommend) btnAiRecommend.disabled = !hasFile;
+  if (btnAutoMaster) btnAutoMaster.disabled = !hasFile;
+  if (btnChatHelper) btnChatHelper.disabled = !hasFile;
+  if (btnNlConfigInline) btnNlConfigInline.disabled = !hasFile;
+  if (nlConfigInputInline) nlConfigInputInline.disabled = !hasFile;
+  if (chatFab) { if (hasFile) chatFab.classList.remove('no-file'); else chatFab.classList.add('no-file'); }
+  if (aiHelpersSection) { if (hasFile) aiHelpersSection.classList.remove('no-file'); else aiHelpersSection.classList.add('no-file'); }
+}
+
 function setFile(f){
   currentFile=f;
   fileName.textContent=f.name;
@@ -1003,6 +1019,7 @@ function setFile(f){
   drop.classList.add('has-file');
   btnMeasure.disabled=false;
   btnMaster.disabled=false;
+  if (btnPP) btnPP.disabled=false;
   setMeter(null);
   setStatus(stMeasure,'');
   setStatus(stMaster,'');
@@ -1022,24 +1039,14 @@ function setFile(f){
   dawCard.classList.remove('visible');
   if (spectrumCard) spectrumCard.classList.remove('visible');
   if (vectorscopeCard) vectorscopeCard.classList.remove('visible');
-  // AI-блок, секция «AI помощники», чат и NL — показываем при выборе файла, если AI включён в настройках
-  const aiHelpersSection = document.getElementById('aiHelpersSection');
-  if (_features.ai_enabled) {
-    if (aiHelpersSection) { aiHelpersSection.style.display = 'block'; if (typeof loadAiLimits === 'function') loadAiLimits(); }
-    if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
-    if (nlConfigWrap) nlConfigWrap.style.display = 'block';
-  } else {
-    if (aiHelpersSection) aiHelpersSection.style.display = 'none';
-    if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
-    if (nlConfigWrap) nlConfigWrap.style.display = 'none';
-  }
   lastDawState = null;
-  // P45: сброс A/B плеера
   document.dispatchEvent(new Event('masteringReset'));
   btnABa.classList.add('active'); btnABb.classList.remove('active');
   audioMeta.classList.remove('visible');
   tTotal.textContent='0:00';
   playerEl.classList.add('visible');
+  playerEl.classList.remove('no-file');
+  if (chatFab) chatFab.classList.remove('no-file');
   // decode async
   loadAudio(f);
 }
@@ -1051,13 +1058,7 @@ function resetAll(){
   fileMeta.textContent='';
   fileInfo.classList.remove('visible');
   drop.classList.remove('has-file');
-  btnMeasure.disabled=true;
-  btnMaster.disabled=true;
-  const aiHelpersSection = document.getElementById('aiHelpersSection');
-  if (aiHelpersSection) aiHelpersSection.style.display = 'none';
-  if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
   if (chatPanel) chatPanel.classList.remove('open');
-  if (nlConfigWrap) nlConfigWrap.style.display = 'none';
   setMeter(null);
   setStatus(stMeasure,'');
   setStatus(stMaster,'');
@@ -1068,7 +1069,6 @@ function resetAll(){
   if (abLufsB) abLufsB.textContent = '—';
   resetPipelineSteps();
   updateOzoneSteps(selectedStyle);
-  // reset player
   stopAll();
   audioBuffer=null;
   masteredBuffer=null;
@@ -1079,9 +1079,10 @@ function resetAll(){
   if (vectorscopeCard) vectorscopeCard.classList.remove('visible');
   lastDawState = null;
   btnABa.classList.add('active'); btnABb.classList.remove('active');
-  playerEl.classList.remove('visible');
   audioMeta.classList.remove('visible');
-  // clear canvas
+  if (playerEl) { playerEl.classList.add('visible'); playerEl.classList.add('no-file'); }
+  if (chatFab) chatFab.classList.add('no-file');
+  updateNoFileState();
   const ctx2=waveCanvas.getContext('2d');
   ctx2.clearRect(0,0,waveCanvas.width,waveCanvas.height);
 }
@@ -1667,57 +1668,38 @@ if (btnAiReport) {
   });
 }
 
-/* ═══════ P25: NL→настройки ═══════ */
-if (btnNlConfig && nlConfigInput) {
-  btnNlConfig.addEventListener('click', async () => {
-    const text = nlConfigInput.value.trim();
-    if (!text) return;
-    btnNlConfig.disabled = true;
-    btnNlConfig.textContent = '…';
-    try {
-      const currentConfig = typeof chainModulesConfig !== 'undefined' ? chainModulesConfig : null;
-      const r = await fetch(API + '/api/ai/nl-config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ text, current_config: currentConfig }),
-      });
-      const res = await safeResponseJson(r);
-      if (!r.ok) throw new Error(res.detail || r.statusText);
-
-      // Применяем target_lufs если вернулся
-      if (res.target_lufs != null && !isNaN(res.target_lufs)) {
-        targetLufsInput.value = res.target_lufs;
-      }
-      // Применяем chain_config если вернулся
-      if (res.chain_config && res.chain_config.modules && typeof renderChainModules === 'function') {
-        chainModulesConfig = res.chain_config;
-        renderChainModules(chainModulesConfig.modules);
-      }
-      toast('AI настройки применены', 'ok', 2500);
-      nlConfigInput.value = '';
-      const inpInline = document.getElementById('nlConfigInputInline');
-      if (inpInline) inpInline.value = '';
-      if (typeof loadAiLimits === 'function') loadAiLimits();
-    } catch (e) {
-      toast(friendlyError(e.message || 'Ошибка AI'), 'err', 4000);
+/* ═══════ P25: NL→настройки (единое место: блок «AI помощники» → Настройки голосом) ═══════ */
+async function applyNlConfig(text) {
+  if (!text || !text.trim()) return;
+  const btn = document.getElementById('btnNlConfigInline');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const currentConfig = typeof chainModulesConfig !== 'undefined' ? chainModulesConfig : null;
+    const r = await fetch(API + '/api/ai/nl-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ text: text.trim(), current_config: currentConfig }),
+    });
+    const res = await safeResponseJson(r);
+    if (!r.ok) throw new Error(res.detail || r.statusText);
+    if (res.target_lufs != null && !isNaN(res.target_lufs) && targetLufsInput) targetLufsInput.value = res.target_lufs;
+    if (res.chain_config && res.chain_config.modules && typeof renderChainModules === 'function') {
+      chainModulesConfig = res.chain_config;
+      renderChainModules(chainModulesConfig.modules);
     }
-    btnNlConfig.disabled = false;
-    btnNlConfig.textContent = 'Применить';
-  });
-  nlConfigInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') btnNlConfig.click();
-  });
+    toast('AI настройки применены', 'ok', 2500);
+    const inpInline = document.getElementById('nlConfigInputInline');
+    if (inpInline) inpInline.value = '';
+    if (typeof loadAiLimits === 'function') loadAiLimits();
+  } catch (e) {
+    toast(friendlyError(e.message || 'Ошибка AI'), 'err', 4000);
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Применить'; }
 }
-// «Настройки голосом» в блоке AI помощники — применяет текст к основному NL-config (цепочка)
 const nlConfigInputInline = document.getElementById('nlConfigInputInline');
 const btnNlConfigInline = document.getElementById('btnNlConfigInline');
-if (btnNlConfigInline && nlConfigInputInline && nlConfigInput && btnNlConfig) {
-  btnNlConfigInline.addEventListener('click', () => {
-    const t = nlConfigInputInline.value.trim();
-    if (!t) return;
-    nlConfigInput.value = t;
-    btnNlConfig.click();
-  });
+if (btnNlConfigInline && nlConfigInputInline) {
+  btnNlConfigInline.addEventListener('click', () => applyNlConfig(nlConfigInputInline.value));
   nlConfigInputInline.addEventListener('keydown', e => { if (e.key === 'Enter') btnNlConfigInline.click(); });
 }
 
@@ -1726,6 +1708,10 @@ if (btnNlConfigInline && nlConfigInputInline && nlConfigInput && btnNlConfig) {
   if (!chatFab || !chatPanel) return;
 
   chatFab.addEventListener('click', () => {
+    if (!currentFile && chatFab.classList.contains('no-file')) {
+      if (typeof toast === 'function') toast('Загрузите файл, чтобы использовать чат с контекстом анализа', 'inf', 3000);
+      return;
+    }
     chatPanel.classList.toggle('open');
     const notice = document.getElementById('chatProNotice');
     if (notice) {
@@ -2263,14 +2249,15 @@ function applyTierUI() {
   const batchSection = document.getElementById('batchSection');
   if (batchSection) batchSection.style.display = (isPro && _features.batch_enabled) ? 'block' : 'none';
 
-  // P24/P25: Chat FAB и NL-config — при наличии файла и если AI включён
-  if (_features.ai_enabled && currentFile) {
-    if (chatFab) { chatFab.style.display = 'flex'; chatFab.classList.add('visible'); }
-    if (nlConfigWrap) nlConfigWrap.style.display = 'block';
-  } else {
-    if (chatFab) { chatFab.style.display = 'none'; chatFab.classList.remove('visible'); }
-    if (nlConfigWrap) nlConfigWrap.style.display = 'none';
+  // AI-блоки всегда видны при включённом AI; без файла — неактивны (updateNoFileState)
+  const aiHelpersSection = document.getElementById('aiHelpersSection');
+  if (aiHelpersSection) aiHelpersSection.style.display = _features.ai_enabled ? 'block' : 'none';
+  if (chatFab) {
+    chatFab.style.display = _features.ai_enabled ? 'flex' : 'none';
+    if (_features.ai_enabled) chatFab.classList.add('visible'); else chatFab.classList.remove('visible');
   }
+  if (nlConfigWrap) nlConfigWrap.style.display = (isPro && _features.ai_enabled) ? 'block' : 'none';
+  updateNoFileState();
 }
 
 // Logout button
@@ -2310,13 +2297,14 @@ outFormat.addEventListener('change', function() {
 if (outFormat) updateBitrateSelect();
 
 /* ═══════ Upgrade Modal ═══════ */
+var _upgradeModalIconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
 function showUpgradeModal(icon, title, desc) {
   const overlay = document.getElementById('upgradeOverlay');
   if (!overlay) return;
   const iconEl = document.getElementById('upgradeModalIcon');
   const titleEl= document.getElementById('upgradeTitle');
   const descEl = document.getElementById('upgradeDesc');
-  if (iconEl)  iconEl.textContent  = icon;
+  if (iconEl)  iconEl.innerHTML = (icon === '⚡' || icon === 'bolt') ? _upgradeModalIconSvg : (icon || '');
   if (titleEl) titleEl.textContent = title;
   if (descEl)  descEl.textContent  = desc;
   overlay.classList.add('open');
@@ -2368,41 +2356,93 @@ function refreshTierAfterMaster() {
   }
 }
 
-/* ═══════ Пакетная обработка (Batch) ═══════ */
+/* ═══════ Пакетная обработка (Batch), до 10 файлов ═══════ */
 (function() {
+  const BATCH_MAX = 10;
   const batchSection = document.getElementById('batchSection');
   const batchFileInput = document.getElementById('batchFileInput');
   const batchFileList = document.getElementById('batchFileList');
   const batchCountEl = document.getElementById('batchCount');
   const btnSelectBatch = document.getElementById('btnSelectBatch');
   const btnBatchMaster = document.getElementById('btnBatchMaster');
+  const batchClearListEl = document.getElementById('batchClearList');
   const batchPanel = document.getElementById('batchPanel');
   const batchJobsEl = document.getElementById('batchJobs');
   if (!batchSection || !batchFileInput || !btnBatchMaster) return;
 
+  /** Накопленный список файлов (до 10). Каждый выбор добавляется к списку. */
+  let batchFiles = [];
+
+  function allowedExt(f) {
+    return /\.(wav|mp3|flac)$/i.test(f.name);
+  }
+
+  function renderBatchList() {
+    if (batchFileList) {
+      batchFileList.innerHTML = batchFiles.map(function(f, i) {
+        return '<div class="batch-file-row" data-index="' + i + '">' +
+          '<span class="batch-file-name" title="' + (f.name || '').replace(/"/g, '&quot;') + '">' + (f.name || '—') + '</span>' +
+          '<button type="button" class="batch-file-remove" title="Удалить" aria-label="Удалить">×</button></div>';
+      }).join('');
+      batchFileList.querySelectorAll('.batch-file-remove').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = btn.closest('.batch-file-row');
+          if (!row) return;
+          var idx = parseInt(row.getAttribute('data-index'), 10);
+          if (!isNaN(idx) && idx >= 0 && idx < batchFiles.length) {
+            batchFiles.splice(idx, 1);
+            renderBatchList();
+            updateBatchState();
+          }
+        });
+      });
+    }
+    if (batchCountEl) batchCountEl.textContent = batchFiles.length;
+    if (batchClearListEl) batchClearListEl.style.display = batchFiles.length ? 'inline-block' : 'none';
+    updateBatchState();
+  }
+
+  function updateBatchState() {
+    if (btnBatchMaster) {
+      btnBatchMaster.style.display = batchFiles.length ? 'inline-flex' : 'none';
+      btnBatchMaster.disabled = batchFiles.length === 0;
+    }
+  }
+
   btnSelectBatch.addEventListener('click', function() { batchFileInput.click(); });
 
   batchFileInput.addEventListener('change', function() {
-    const files = Array.from(batchFileInput.files || []).filter(function(f) {
-      return /\.(wav|mp3|flac)$/i.test(f.name);
+    var newFiles = Array.from(batchFileInput.files || []).filter(allowedExt);
+    var names = batchFiles.map(function(f) { return f.name; });
+    var added = 0;
+    newFiles.forEach(function(f) {
+      if (batchFiles.length >= BATCH_MAX) return;
+      if (names.indexOf(f.name) === -1) {
+        batchFiles.push(f);
+        names.push(f.name);
+        added++;
+      }
     });
-    if (batchFileList) {
-      batchFileList.innerHTML = files.length ? files.map(function(f) { return '<span>' + f.name + '</span>'; }).join('') : '';
-    }
-    if (batchCountEl) batchCountEl.textContent = files.length;
-    if (btnBatchMaster) {
-      btnBatchMaster.style.display = files.length ? 'inline-flex' : 'none';
-      btnBatchMaster.disabled = files.length === 0;
+    batchFileInput.value = '';
+    renderBatchList();
+    if (newFiles.length > 0 && added < newFiles.length && batchFiles.length >= BATCH_MAX && typeof toast === 'function') {
+      toast('Достигнут лимит: макс. ' + BATCH_MAX + ' файлов. Часть файлов не добавлена.', 'inf', 3500);
     }
   });
 
+  if (batchClearListEl) {
+    batchClearListEl.addEventListener('click', function() {
+      batchFiles = [];
+      renderBatchList();
+    });
+  }
+
   btnBatchMaster.addEventListener('click', async function() {
-    const files = Array.from(batchFileInput.files || []).filter(function(f) { return /\.(wav|mp3|flac)$/i.test(f.name); });
-    if (files.length === 0) return;
+    if (batchFiles.length === 0) return;
     btnBatchMaster.disabled = true;
 
     const form = new FormData();
-    files.forEach(function(f) { form.append('files', f); });
+    batchFiles.forEach(function(f) { form.append('files', f); });
     form.append('style', selectedStyle || 'standard');
     form.append('out_format', outFormat.value);
     if ((outFormat.value === 'mp3' || outFormat.value === 'opus') && outBitrate && outBitrate.value) form.append('bitrate', outBitrate.value);
@@ -2460,9 +2500,8 @@ function refreshTierAfterMaster() {
       });
 
       toast('Пакет запущен: ' + data.jobs.length + ' файлов', 'ok', 3000);
-      batchFileInput.value = '';
-      batchFileList.innerHTML = '';
-      batchCountEl.textContent = '0';
+      batchFiles = [];
+      renderBatchList();
       btnBatchMaster.style.display = 'none';
     } catch (e) {
       toast(e.message || 'Ошибка пакетной обработки', 'err', 4000);
@@ -2670,7 +2709,8 @@ document.addEventListener('analyzeComplete', (e) => {
   if (e.detail) updateSpectrumTabs(e.detail);
 });
 
-/* Запускаем при загрузке: в режиме отладки сразу разблокируем Pro-карточки */
+/* Запускаем при загрузке: показываем все блоки, без файла — неактивны */
+if (typeof updateNoFileState === 'function') updateNoFileState();
 if (_debugMode) {
   if (typeof applyTierUI === 'function') applyTierUI();
 }

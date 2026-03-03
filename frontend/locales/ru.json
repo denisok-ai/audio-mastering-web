@@ -27,6 +27,7 @@
   "app.batch_hint": "до 10 файлов, одни параметры",
   "app.batch_select": "Выбрать файлы",
   "app.batch_run": "Запустить мастеринг",
+  "app.batch_clear": "Очистить список",
   "app.files": "файлов",
   "app.theme": "Тема",
   "app.theme_dark": "Тёмная",

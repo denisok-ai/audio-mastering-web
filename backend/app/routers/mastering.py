@@ -90,6 +90,19 @@ def _prune():
     _jobs_store.prune_jobs()
 
 
+def _user_id_from_user(user: Optional[dict]) -> Optional[int]:
+    """Безопасно извлекает user_id (int) из payload пользователя. JWT sub может быть строкой-числом или UUID."""
+    if not user:
+        return None
+    sub = user.get("sub")
+    if sub is None:
+        return None
+    try:
+        return int(sub)
+    except (TypeError, ValueError):
+        return None
+
+
 # ─── Вспомогательные функции rate-limit ───────────────────────────────────────
 
 def _check_mastering_rate_limit(user, request: Request) -> None:
@@ -379,7 +392,7 @@ async def api_master(
     style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
     _new_job(job_id, target_lufs, style_key, data, file.filename or "audio.wav", out_format)
     try:
-        log_mastering_job_start(job_id, int(user["sub"]) if user and user.get("sub") else None, style_key)
+        log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
     except Exception:  # noqa: BLE001
         pass
 
@@ -426,75 +439,81 @@ async def api_master_v2(
     dither_type (tpdf | ns_e | ns_itu), auto_blank_sec (сек), bitrate (для MP3: 128/192/256/320, для OPUS: 128/192).
     Ответ: job_id; статус и результат — те же GET /api/master/status/{job_id}, GET /api/master/result/{job_id}.
     """
-    _validate_format(file.filename or "", out_format)
     try:
-        bitrate_val = _normalize_bitrate(out_format, int(bitrate) if bitrate and bitrate.strip() else None)
-    except (ValueError, TypeError):
-        bitrate_val = None
-    _check_mastering_rate_limit(user, request)
-
-    if target_lufs is None:
-        target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
-    data = await file.read()
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
-    _validate_upload(data, file.filename or "", max_mb)
-    try:
-        load_audio_from_bytes(data, file.filename or "wav")
-    except Exception as e:
-        logger.error("v2/master: load_audio failed filename=%s error=%s", file.filename, str(e)[:200])
-        raise HTTPException(400, f"Не удалось прочитать аудио: {e}")
-
-    chain_config: Optional[dict[str, Any]] = None
-    if config and config.strip():
+        _validate_format(file.filename or "", out_format)
         try:
-            chain_config = json.loads(config)
-        except json.JSONDecodeError as e:
-            raise HTTPException(400, f"Неверный JSON в config: {e}")
+            bitrate_val = _normalize_bitrate(out_format, int(bitrate) if bitrate and str(bitrate).strip() else None)
+        except (ValueError, TypeError):
+            bitrate_val = None
+        _check_mastering_rate_limit(user, request)
 
-    if not user and not getattr(settings, "debug_mode", False):
-        _record_usage(_get_client_ip(request))
+        if target_lufs is None:
+            target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
+        data = await file.read()
+        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        _validate_upload(data, file.filename or "", max_mb)
+        try:
+            load_audio_from_bytes(data, file.filename or "wav")
+        except Exception as e:
+            logger.error("v2/master: load_audio failed filename=%s error=%s", file.filename, str(e)[:200])
+            raise HTTPException(400, f"Не удалось прочитать аудио: {e}") from e
 
-    _prune()
-    job_id = str(uuid.uuid4())
-    style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
-    _new_job(job_id, target_lufs, style_key, data, file.filename or "audio.wav", out_format)
-    try:
-        log_mastering_job_start(job_id, int(user["sub"]) if user and user.get("sub") else None, style_key)
-    except Exception:  # noqa: BLE001
-        pass
+        chain_config: Optional[dict[str, Any]] = None
+        if config and config.strip():
+            try:
+                chain_config = json.loads(config)
+            except json.JSONDecodeError as e:
+                raise HTTPException(400, f"Неверный JSON в config: {e}") from e
 
-    pro_params: dict = {}
-    if denoise_preset and denoise_preset.strip().lower() in ("light", "medium", "aggressive"):
-        pro_params["denoise_preset"] = denoise_preset.strip().lower()
-    elif denoise_strength is not None and denoise_strength > 0:
-        pro_params["denoise_strength"] = float(denoise_strength)
-    if denoise_noise_percentile is not None and 5 <= denoise_noise_percentile <= 40:
-        pro_params["denoise_noise_percentile"] = float(denoise_noise_percentile)
-    if deesser_enabled and deesser_enabled.lower() in ("true", "1", "yes"):
-        pro_params["deesser_enabled"] = True
-        pro_params["deesser_threshold"] = float(deesser_threshold) if deesser_threshold is not None else -10.0
-    if transient_attack is not None and transient_sustain is not None:
-        pro_params["transient_attack"] = float(transient_attack)
-        pro_params["transient_sustain"] = float(transient_sustain)
-    if parallel_mix is not None and parallel_mix > 0:
-        pro_params["parallel_mix"] = float(parallel_mix)
-    if dynamic_eq_enabled and dynamic_eq_enabled.lower() in ("true", "1", "yes"):
-        pro_params["dynamic_eq_enabled"] = True
+        if not user and not getattr(settings, "debug_mode", False):
+            _record_usage(_get_client_ip(request))
 
-    sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
+        _prune()
+        job_id = str(uuid.uuid4())
+        style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
+        _new_job(job_id, target_lufs, style_key, data, file.filename or "audio.wav", out_format)
+        try:
+            log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
+        except Exception:  # noqa: BLE001
+            pass
 
-    async def run_job_v2() -> None:
-        async with sem:
-            await asyncio.to_thread(
-                _run_mastering_job_v2,
-                job_id, data, file.filename or "audio.wav",
-                target_lufs, out_format.lower(), style_key,
-                chain_config, dither_type=dither_type, auto_blank_sec=auto_blank_sec,
-                bitrate=bitrate_val, pro_params=pro_params,
-            )
+        pro_params: dict = {}
+        if denoise_preset and denoise_preset.strip().lower() in ("light", "medium", "aggressive"):
+            pro_params["denoise_preset"] = denoise_preset.strip().lower()
+        elif denoise_strength is not None and denoise_strength > 0:
+            pro_params["denoise_strength"] = float(denoise_strength)
+        if denoise_noise_percentile is not None and 5 <= denoise_noise_percentile <= 40:
+            pro_params["denoise_noise_percentile"] = float(denoise_noise_percentile)
+        if deesser_enabled and deesser_enabled.lower() in ("true", "1", "yes"):
+            pro_params["deesser_enabled"] = True
+            pro_params["deesser_threshold"] = float(deesser_threshold) if deesser_threshold is not None else -10.0
+        if transient_attack is not None and transient_sustain is not None:
+            pro_params["transient_attack"] = float(transient_attack)
+            pro_params["transient_sustain"] = float(transient_sustain)
+        if parallel_mix is not None and parallel_mix > 0:
+            pro_params["parallel_mix"] = float(parallel_mix)
+        if dynamic_eq_enabled and dynamic_eq_enabled.lower() in ("true", "1", "yes"):
+            pro_params["dynamic_eq_enabled"] = True
 
-    background_tasks.add_task(run_job_v2)
-    return {"job_id": job_id, "status": "running", "version": "v2"}
+        sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
+
+        async def run_job_v2() -> None:
+            async with sem:
+                await asyncio.to_thread(
+                    _run_mastering_job_v2,
+                    job_id, data, file.filename or "audio.wav",
+                    target_lufs, out_format.lower(), style_key,
+                    chain_config, dither_type=dither_type, auto_blank_sec=auto_blank_sec,
+                    bitrate=bitrate_val, pro_params=pro_params,
+                )
+
+        background_tasks.add_task(run_job_v2)
+        return {"job_id": job_id, "status": "running", "version": "v2"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_master_v2: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при запуске мастеринга: {e!s}") from e
 
 
 @router.post("/api/v2/batch")
@@ -516,104 +535,110 @@ async def api_v2_batch(
     Возвращает список { job_id, filename }. Статус и результат — как у одиночного.
     Максимум файлов: 10. Для Free каждый файл считается за 1 использование в дневном лимите.
     """
-    _require_feature_batch()
-    if not files:
-        raise HTTPException(400, "Отправьте хотя бы один файл.")
-    if len(files) > _BATCH_MAX_FILES:
-        raise HTTPException(400, f"Максимум {_BATCH_MAX_FILES} файлов за один запрос.")
-
-    for f in files:
-        if not _allowed_file(f.filename or ""):
-            raise HTTPException(400, f"Формат не поддерживается: {f.filename}. Разрешены: WAV, MP3, FLAC.")
-    if out_format.lower() not in ("wav", "mp3", "flac", "opus", "aac"):
-        raise HTTPException(400, "Формат экспорта: wav, mp3, flac, opus или aac.")
-    if out_format.lower() in ("mp3", "opus", "aac") and not shutil.which("ffmpeg"):
-        raise HTTPException(400, "Экспорт в MP3/OPUS/AAC требует ffmpeg.")
-
     try:
-        bitrate_val = _normalize_bitrate(out_format, int(bitrate) if bitrate and str(bitrate).strip() else None)
-    except (ValueError, TypeError):
-        bitrate_val = None
+        _require_feature_batch()
+        if not files:
+            raise HTTPException(400, "Отправьте хотя бы один файл.")
+        if len(files) > _BATCH_MAX_FILES:
+            raise HTTPException(400, f"Максимум {_BATCH_MAX_FILES} файлов за один запрос.")
 
-    is_pro = user or getattr(settings, "debug_mode", False)
-    if not is_pro:
-        ip = _get_client_ip(request)
-        limit_info = _check_rate_limit(ip)
-        if limit_info["remaining"] < len(files):
-            raise HTTPException(
-                429,
-                f"Недостаточно лимита. Осталось {limit_info['remaining']} мастерингов, файлов — {len(files)}. "
-                f"Сброс: {limit_info['reset_at']}.",
-            )
+        for f in files:
+            if not _allowed_file(f.filename or ""):
+                raise HTTPException(400, f"Формат не поддерживается: {f.filename}. Разрешены: WAV, MP3, FLAC.")
+        if out_format.lower() not in ("wav", "mp3", "flac", "opus", "aac"):
+            raise HTTPException(400, "Формат экспорта: wav, mp3, flac, opus или aac.")
+        if out_format.lower() in ("mp3", "opus", "aac") and not shutil.which("ffmpeg"):
+            raise HTTPException(400, "Экспорт в MP3/OPUS/AAC требует ffmpeg.")
 
-    if target_lufs is None:
-        target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
-    style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
-    chain_config: Optional[dict[str, Any]] = None
-    if config and config.strip():
         try:
-            chain_config = json.loads(config)
-        except json.JSONDecodeError as e:
-            raise HTTPException(400, f"Неверный JSON в config: {e}")
+            bitrate_val = _normalize_bitrate(out_format, int(bitrate) if bitrate and str(bitrate).strip() else None)
+        except (ValueError, TypeError):
+            bitrate_val = None
 
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
-    payloads: List[Tuple[bytes, str]] = []
-    for f in files:
-        data = await f.read()
-        if len(data) > max_mb * 1024 * 1024:
-            raise HTTPException(400, f"Файл {f.filename} больше {max_mb} МБ.")
-        if not _check_audio_magic_bytes(data, f.filename or ""):
-            raise HTTPException(400, f"Содержимое файла {f.filename} не соответствует формату. Ожидается WAV, MP3 или FLAC.")
-        try:
-            load_audio_from_bytes(data, f.filename or "wav")
-        except Exception as e:
-            raise HTTPException(400, f"Не удалось прочитать аудио {f.filename}: {e}")
-        payloads.append((data, f.filename or "audio.wav"))
-
-    if not is_pro:
-        for _ in range(len(payloads)):
-            _record_usage(_get_client_ip(request))
-
-    _prune()
-    dt = dither_type or "tpdf"
-    ab = float(auto_blank_sec or 0)
-    jobs_created: List[dict] = []
-    batch_sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
-
-    for data, filename in payloads:
-        job_id = str(uuid.uuid4())
-        _jobs_store.all_jobs()[job_id] = {
-            "status": "running",
-            "progress": 0,
-            "message": "Ожидание…",
-            "created_at": time.time(),
-            "result_bytes": None,
-            "filename": None,
-            "error": None,
-            "before_lufs": None,
-            "after_lufs": None,
-            "target_lufs": target_lufs,
-            "style": style_key,
-        }
-        try:
-            log_mastering_job_start(job_id, int(user["sub"]) if user and user.get("sub") else None, style_key)
-        except Exception:  # noqa: BLE001
-            pass
-        jobs_created.append({"job_id": job_id, "filename": filename})
-
-        async def run_one(jid: str = job_id, d: bytes = data, fname: str = filename) -> None:
-            async with batch_sem:
-                await asyncio.to_thread(
-                    _run_mastering_job_v2,
-                    jid, d, fname,
-                    target_lufs, out_format.lower(), style_key,
-                    chain_config, dither_type=dt, auto_blank_sec=ab,
-                    bitrate=bitrate_val,
+        is_pro = user or getattr(settings, "debug_mode", False)
+        if not is_pro:
+            ip = _get_client_ip(request)
+            limit_info = _check_rate_limit(ip)
+            if limit_info["remaining"] < len(files):
+                raise HTTPException(
+                    429,
+                    f"Недостаточно лимита. Осталось {limit_info['remaining']} мастерингов, файлов — {len(files)}. "
+                    f"Сброс: {limit_info['reset_at']}.",
                 )
 
-        background_tasks.add_task(run_one)
+        if target_lufs is None:
+            target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
+        style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
+        chain_config: Optional[dict[str, Any]] = None
+        if config and config.strip():
+            try:
+                chain_config = json.loads(config)
+            except json.JSONDecodeError as e:
+                raise HTTPException(400, f"Неверный JSON в config: {e}") from e
 
-    return {"version": "v2", "batch": True, "jobs": jobs_created}
+        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        payloads: List[Tuple[bytes, str]] = []
+        for f in files:
+            data = await f.read()
+            if len(data) > max_mb * 1024 * 1024:
+                raise HTTPException(400, f"Файл {f.filename} больше {max_mb} МБ.")
+            if not _check_audio_magic_bytes(data, f.filename or ""):
+                raise HTTPException(400, f"Содержимое файла {f.filename} не соответствует формату. Ожидается WAV, MP3 или FLAC.")
+            try:
+                load_audio_from_bytes(data, f.filename or "wav")
+            except Exception as e:
+                raise HTTPException(400, f"Не удалось прочитать аудио {f.filename}: {e}") from e
+            payloads.append((data, f.filename or "audio.wav"))
+
+        if not is_pro:
+            for _ in range(len(payloads)):
+                _record_usage(_get_client_ip(request))
+
+        _prune()
+        dt = dither_type or "tpdf"
+        ab = float(auto_blank_sec or 0)
+        jobs_created: List[dict] = []
+        batch_sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
+
+        for data, filename in payloads:
+            job_id = str(uuid.uuid4())
+            _jobs_store.all_jobs()[job_id] = {
+                "status": "running",
+                "progress": 0,
+                "message": "Ожидание…",
+                "created_at": time.time(),
+                "result_bytes": None,
+                "filename": None,
+                "error": None,
+                "before_lufs": None,
+                "after_lufs": None,
+                "target_lufs": target_lufs,
+                "style": style_key,
+            }
+            try:
+                log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
+            except Exception:  # noqa: BLE001
+                pass
+            jobs_created.append({"job_id": job_id, "filename": filename})
+
+            async def run_one(jid: str = job_id, d: bytes = data, fname: str = filename) -> None:
+                async with batch_sem:
+                    await asyncio.to_thread(
+                        _run_mastering_job_v2,
+                        jid, d, fname,
+                        target_lufs, out_format.lower(), style_key,
+                        chain_config, dither_type=dt, auto_blank_sec=ab,
+                        bitrate=bitrate_val,
+                    )
+
+            background_tasks.add_task(run_one)
+
+        return {"version": "v2", "batch": True, "jobs": jobs_created}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("api_v2_batch: unhandled error")
+        raise HTTPException(500, detail=f"Ошибка сервера при пакетном мастеринге: {e!s}") from e
 
 
 @router.post("/api/v2/master/auto")
@@ -708,7 +733,7 @@ async def api_v2_master_auto(
         "style": style_key,
     }
     try:
-        log_mastering_job_start(job_id, int(user["sub"]) if user and user.get("sub") else None, style_key)
+        log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
     except Exception:  # noqa: BLE001
         pass
 
