@@ -783,7 +783,8 @@ def _dither_noise_tpdf(shape: tuple) -> np.ndarray:
 
 
 def _dither_noise_ns_e(shape: tuple) -> np.ndarray:
-    """Упрощённый noise-shaped dither (E-weighted style): high-pass фильтр сдвигает шум вверх по частоте."""
+    """Упрощённый noise-shaped dither (E-weighted style): high-pass фильтр сдвигает шум вверх по частоте.
+    Масштаб 0.9 снижает слышимый шипящий шум на верхних частотах/вокале (задача 1.6)."""
     n = shape[0] if shape else 0
     ch = shape[1] if len(shape) > 1 else 1
     if n < 4:
@@ -800,11 +801,12 @@ def _dither_noise_ns_e(shape: tuple) -> np.ndarray:
         out[0, :] = white[0, :]
         for i in range(1, n):
             out[i, :] = white[i, :] - white[i - 1, :] + 0.99 * out[i - 1, :]
-    return out.astype(np.float32)
+    return (out * 0.9).astype(np.float32)
 
 
 def _dither_noise_ns_itu(shape: tuple) -> np.ndarray:
-    """Noise-shaped dither (ITU-style): двухполюсный HP, сдвиг шума в высокие частоты (broadcast/ITU)."""
+    """Noise-shaped dither (ITU-style): двухполюсный HP, сдвиг шума в высокие частоты (broadcast/ITU).
+    Масштаб 0.9 снижает слышимый шипящий шум на верхних частотах/вокале (задача 1.6)."""
     n = shape[0] if shape else 0
     ch = shape[1] if len(shape) > 1 else 1
     if n < 8:
@@ -822,7 +824,7 @@ def _dither_noise_ns_itu(shape: tuple) -> np.ndarray:
         from scipy import signal as _sg
         for c in range(white.shape[1]):
             out[:, c] = _sg.lfilter(b, a, white[:, c])
-    return out.astype(np.float32)
+    return (out * 0.9).astype(np.float32)
 
 
 def _write_wav_16bit_dithered(
@@ -882,6 +884,15 @@ def resample_audio(audio: np.ndarray, sr: int, target_sr: int) -> np.ndarray:
     for c in range(audio.shape[1]):
         out[:, c] = sg.resample(audio[:, c], n_out).astype(np.float32)
     return out
+
+
+def validate_mastered_not_silent(mastered: np.ndarray) -> None:
+    """Проверка, что результат мастеринга не пустой и не тишина (защита от пустого файла при доп. обработке, задача 1.5)."""
+    if mastered.size == 0 or float(np.max(np.abs(mastered))) < 1e-7:
+        raise ValueError(
+            "Обработка дала тишину. Отключите часть доп. настроек (Spectral Denoiser, De-esser, "
+            "Transient Designer, Parallel Compression, Dynamic EQ) и попробуйте снова."
+        )
 
 
 def export_audio(
@@ -1219,11 +1230,13 @@ def apply_harmonic_exciter(
     valid_modes = ("warm", "tape", "tube", "transistor", "digital")
     sat_mode = mode if mode in valid_modes else "warm"
     k = 2.5 if sat_mode == "warm" else 2.0
+    # Коэффициент 0.25 вместо 0.35: более мягкое добавление гармоник, меньше шума/артефактов на вокале и верхних частотах (задача 1.6)
+    exciter_mix = 0.25
     out_work = work.copy()
     for ch in range(work.shape[1]):
         hf = _safe_filtfilt(b_hp, a_hp, work[:, ch], sg)
         saturated = _exciter_saturate(hf, sat_mode, k)
-        excitation = (saturated - hf) * gain * 0.35
+        excitation = (saturated - hf) * gain * exciter_mix
         out_work[:, ch] = work[:, ch] + excitation
 
     if os > 1:

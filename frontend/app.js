@@ -777,6 +777,79 @@ function showDawComparison(origBuf, masteredBuf, lufsA, lufsB) {
   dawCard.classList.add('visible');
 }
 
+/* Upscale: увеличенный просмотр карточки «Сравнение до/после» по клику */
+const dawUpscaleOverlay = document.getElementById('dawUpscaleOverlay');
+const dawUpscaleBackdrop = document.getElementById('dawUpscaleBackdrop');
+const dawUpscaleClose = document.getElementById('dawUpscaleClose');
+const dawUpscaleRuler = document.getElementById('dawUpscaleRuler');
+const dawUpscaleCanvasA = document.getElementById('dawUpscaleCanvasA');
+const dawUpscaleCanvasB = document.getElementById('dawUpscaleCanvasB');
+const dawUpscaleLufsA = document.getElementById('dawUpscaleLufsA');
+const dawUpscaleLufsB = document.getElementById('dawUpscaleLufsB');
+const dawExpandBtn = document.getElementById('dawExpandBtn');
+
+function openDawUpscale() {
+  if (!dawUpscaleOverlay || !lastDawState) return;
+  const { origBuf, masteredBuf, lufsA, lufsB } = lastDawState;
+  const content = document.getElementById('dawUpscaleContent');
+  let contentW = content ? content.getBoundingClientRect().width : 0;
+  if (!contentW || contentW < 200) contentW = Math.min(1200, (window.innerWidth || 800) - 48);
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.floor(contentW * dpr);
+  const trackH = 100;
+  const rulerH = 28;
+  dawUpscaleRuler.width = W;
+  dawUpscaleRuler.height = Math.floor(rulerH * dpr);
+  dawUpscaleCanvasA.width = W;
+  dawUpscaleCanvasA.height = Math.floor(trackH * dpr);
+  dawUpscaleCanvasB.width = W;
+  dawUpscaleCanvasB.height = Math.floor(trackH * dpr);
+  const duration = Math.max(origBuf.duration, masteredBuf.duration);
+  dawDrawRuler(dawUpscaleRuler, duration);
+  const ctxA = dawUpscaleCanvasA.getContext('2d');
+  ctxA.clearRect(0, 0, W, Math.floor(trackH * dpr));
+  dawDrawWaveform(ctxA, origBuf, W, Math.floor(trackH * dpr), [108, 75, 255]);
+  const ctxB = dawUpscaleCanvasB.getContext('2d');
+  ctxB.clearRect(0, 0, W, Math.floor(trackH * dpr));
+  dawDrawWaveform(ctxB, masteredBuf, W, Math.floor(trackH * dpr), [52, 211, 153]);
+  if (dawUpscaleLufsA) dawUpscaleLufsA.textContent = lufsA != null ? 'A: ' + lufsA.toFixed(1) + ' LUFS' : '—';
+  if (dawUpscaleLufsB) dawUpscaleLufsB.textContent = lufsB != null ? 'B: ' + lufsB.toFixed(1) + ' LUFS' : '—';
+  dawUpscaleOverlay.style.display = 'flex';
+  dawUpscaleOverlay.setAttribute('data-open', 'true');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDawUpscale() {
+  if (!dawUpscaleOverlay) return;
+  dawUpscaleOverlay.style.display = 'none';
+  dawUpscaleOverlay.removeAttribute('data-open');
+  document.body.style.overflow = '';
+}
+
+if (dawExpandBtn) {
+  dawExpandBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (lastDawState) openDawUpscale();
+  });
+}
+if (dawUpscaleBackdrop) dawUpscaleBackdrop.addEventListener('click', closeDawUpscale);
+if (dawUpscaleClose) dawUpscaleClose.addEventListener('click', closeDawUpscale);
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && dawUpscaleOverlay && dawUpscaleOverlay.getAttribute('data-open') === 'true') {
+    closeDawUpscale();
+  }
+});
+
+/* Клик по самой карточке (не по кнопке) тоже открывает upscale */
+if (dawCard) {
+  dawCard.addEventListener('click', function (e) {
+    if (!lastDawState) return;
+    if (e.target.closest('.daw-expand-btn')) return;
+    openDawUpscale();
+  });
+}
+
 /* ─── Time formatting ─── */
 function fmtTime(sec) {
   const s = Math.floor(sec);
@@ -1981,7 +2054,8 @@ btnMaster.addEventListener('click', async()=>{
   }catch(e){
     const msg = friendlyError(e.message||'Ошибка мастеринга');
     setStatus(stMaster, msg, 'err');
-    toast(msg, 'err', msg.includes('ffmpeg') ? 10000 : 3000);
+    const toastDur = msg.includes('ffmpeg') ? 10000 : (msg.includes('Отключите') || msg.includes('тишину') ? 7000 : 3000);
+    toast(msg, 'err', toastDur);
     setProgress(0,'');
     progWrap.classList.remove('on');
     pipeline.classList.remove('visible');
@@ -1995,14 +2069,23 @@ btnMaster.addEventListener('click', async()=>{
 });
 
 /* ═══════ AI: рекомендация и авто-мастеринг ═══════ */
+function hasAnalysisForRecommend(report) {
+  if (!report || typeof report !== 'object') return false;
+  return report.lufs != null || report.peak_dbfs != null || report.duration_sec != null ||
+    (report.spectrum_bars && report.spectrum_bars.length > 0);
+}
 if (btnAiRecommend) {
   btnAiRecommend.addEventListener('click', async () => {
-    if (!currentFile) return;
+    const hasAnalysis = hasAnalysisForRecommend(lastAnalyzeReport);
+    if (!currentFile && !hasAnalysis) {
+      toast('Загрузите файл и нажмите «Измерить громкость» или только загрузите файл', 'err', 5000);
+      return;
+    }
     btnAiRecommend.disabled = true;
     setStatus(stMeasure, 'AI подбирает пресет…', '');
     try {
       let res;
-      if (lastAnalyzeReport && lastAnalyzeReport.lufs != null) {
+      if (hasAnalysis) {
         const r = await fetch(API + '/api/ai/recommend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...authHeaders() },

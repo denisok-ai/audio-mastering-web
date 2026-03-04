@@ -798,6 +798,19 @@ def admin_settings_patch(
     return {"ok": True, "message": "Настройки сохранены. Часть параметров (например CORS) применится после перезапуска."}
 
 
+@router.post("/llm/test")
+def admin_llm_test(admin: dict = Depends(_get_current_admin)):
+    """Проверка подключения к LLM без реального запроса к API (задача 2.3)."""
+    try:
+        from . import ai as ai_module
+        client, model = ai_module._get_llm_client()
+        if client and model:
+            return {"ok": True, "message": "Подключение успешно", "model": model}
+        return {"ok": False, "message": "Клиент не инициализирован. Задайте API-ключ для выбранного бэкенда и сохраните настройки."}
+    except Exception as e:
+        return {"ok": False, "message": str(e) or "Ошибка подключения"}
+
+
 # ─── Prompts (LLM) ────────────────────────────────────────────────────────────
 
 _PROMPT_SLUGS = ("recommend", "report", "nl_config", "chat")

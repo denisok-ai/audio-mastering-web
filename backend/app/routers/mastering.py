@@ -48,6 +48,7 @@ from ..pipeline import (
     apply_parallel_compression,
     apply_reference_match,
     apply_spectral_denoise,
+    validate_mastered_not_silent,
     apply_transient_designer,
     compute_lufs_timeline,
     compute_spectrum_bars,
@@ -320,6 +321,8 @@ def _run_mastering_job_v2(
         if pro_params.get("dynamic_eq_enabled"):
             job["message"] = "Dynamic EQ…"
             mastered = apply_dynamic_eq(mastered, sr)
+
+        validate_mastered_not_silent(mastered)
 
         job["after_lufs"] = measure_lufs(mastered, sr)
         job["progress"] = 98

@@ -1193,6 +1193,12 @@
       display:flex; align-items:center; gap:.45rem;
     }
     .daw-ttl svg { width:14px;height:14px;color:var(--accent) }
+    .daw-expand-btn {
+      padding:.35rem .5rem; border:1px solid var(--border); border-radius:6px;
+      background:var(--surface-2); color:var(--text-dim); cursor:pointer;
+      transition:background .15s, color .15s;
+    }
+    .daw-expand-btn:hover { background:var(--accent); color:var(--bg) }
     .daw-ruler-wrap {
       position:relative; height:20px;
       background:linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.18) 100%);
@@ -1245,6 +1251,71 @@
     }
     .daw-stat.a .daw-stat-val { color:var(--accent) }
     .daw-stat.b .daw-stat-val { color:var(--green) }
+
+    /* Upscale modal: увеличенный просмотр сравнения до/после */
+    .daw-upscale-overlay {
+      position:fixed; inset:0; z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      padding:1.5rem; box-sizing:border-box;
+    }
+    .daw-upscale-overlay[data-open="true"] { display:flex !important; }
+    .daw-upscale-backdrop {
+      position:absolute; inset:0; background:rgba(0,0,0,0.75);
+      cursor:pointer;
+    }
+    .daw-upscale-content {
+      position:relative; max-width:95vw; max-height:90vh; overflow:auto;
+      background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border:1px solid var(--border); border-radius:var(--r-lg);
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+      min-width:320px;
+    }
+    .daw-upscale-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem; border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);
+    }
+    .daw-upscale-ttl {
+      font-size:.75rem; font-weight:700; letter-spacing:.09em;
+      text-transform:uppercase; color:var(--text-dim);
+    }
+    .daw-upscale-close {
+      width:32px; height:32px; border:none; border-radius:6px;
+      background:var(--surface-2); color:var(--text); font-size:1.25rem; line-height:1;
+      cursor:pointer; transition:background .15s;
+    }
+    .daw-upscale-close:hover { background:var(--red); color:#fff }
+    .daw-upscale-ruler-wrap {
+      height:28px; background:linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.18) 100%);
+      border-bottom:1px solid var(--border); overflow:hidden;
+    }
+    .daw-upscale-ruler {
+      display:block; width:100%; height:100%;
+    }
+    .daw-upscale-tracks { display:flex; flex-direction:column; gap:0; }
+    .daw-upscale-track {
+      height:100px; position:relative;
+      background:linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.14) 100%);
+      border-bottom:1px solid var(--border); overflow:hidden;
+    }
+    .daw-upscale-track-label {
+      position:absolute; left:8px; top:50%; transform:translateY(-50%);
+      font-size:.65rem; font-weight:700; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--text-dim); z-index:2;
+    }
+    .daw-upscale-track.a .daw-upscale-track-label { color:rgba(108,75,255,0.9) }
+    .daw-upscale-track.b .daw-upscale-track-label { color:rgba(52,211,153,0.9) }
+    .daw-upscale-canvas {
+      display:block; width:100%; height:100%; position:absolute; left:0; top:0;
+    }
+    .daw-upscale-stats {
+      display:grid; grid-template-columns:1fr 1fr; gap:0;
+      padding:.6rem 1rem; border-top:1px solid var(--border);
+      font-family:'JetBrains Mono',monospace; font-size:.8rem;
+      background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.12) 100%);
+    }
+    .daw-upscale-stats span:first-child { color:var(--accent) }
+    .daw-upscale-stats span:last-child { color:var(--green) }
 
     /* ═══════════════════════ SPECTRUM CARD ═══════════════════════ */
     .spectrum-card {
@@ -2488,6 +2559,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
           <span data-i18n="app.comparison_before_after">Сравнение до / после</span>
         </span>
+        <button type="button" class="daw-expand-btn" id="dawExpandBtn" title="Увеличить для детального просмотра" aria-label="Увеличить">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </button>
       </div>
       <div class="daw-ruler-wrap">
         <canvas class="daw-ruler" id="dawRuler" width="400" height="20"></canvas>
@@ -2510,6 +2584,34 @@
         <div class="daw-stat b">
           <span class="daw-stat-lbl">B · LUFS</span>
           <span class="daw-stat-val" id="dawStatLufsB">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно: увеличенное сравнение до/после (upscale) -->
+    <div class="daw-upscale-overlay" id="dawUpscaleOverlay" role="dialog" aria-modal="true" aria-label="Сравнение до / после (увеличенный вид)" style="display:none;">
+      <div class="daw-upscale-backdrop" id="dawUpscaleBackdrop"></div>
+      <div class="daw-upscale-content" id="dawUpscaleContent">
+        <div class="daw-upscale-head">
+          <span class="daw-upscale-ttl">Сравнение до / после</span>
+          <button type="button" class="daw-upscale-close" id="dawUpscaleClose" aria-label="Закрыть">×</button>
+        </div>
+        <div class="daw-upscale-ruler-wrap">
+          <canvas class="daw-upscale-ruler" id="dawUpscaleRuler"></canvas>
+        </div>
+        <div class="daw-upscale-tracks">
+          <div class="daw-upscale-track a">
+            <span class="daw-upscale-track-label">A — оригинал</span>
+            <canvas class="daw-upscale-canvas" id="dawUpscaleCanvasA"></canvas>
+          </div>
+          <div class="daw-upscale-track b">
+            <span class="daw-upscale-track-label">B — мастер</span>
+            <canvas class="daw-upscale-canvas" id="dawUpscaleCanvasB"></canvas>
+          </div>
+        </div>
+        <div class="daw-upscale-stats">
+          <span id="dawUpscaleLufsA">—</span>
+          <span id="dawUpscaleLufsB">—</span>
         </div>
       </div>
     </div>

@@ -46,8 +46,8 @@ a{color:inherit;text-decoration:none}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .topbar{height:56px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;padding:0 1.5rem;box-shadow:0 1px 0 rgba(0,0,0,.04)}
 .topbar-title{font-weight:600;font-size:1.05rem;color:var(--text)}
-.topbar-auth{margin-left:auto;font-size:.9rem;color:var(--text-soft);display:flex;align-items:center;gap:.75rem}
-.topbar-logout{margin-left:.25rem}
+.topbar-auth{margin-left:auto;font-size:.9rem;color:var(--text-soft);display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+.topbar-logout{margin-left:.25rem;min-width:4.5rem;flex-shrink:0}
 .content{flex:1;overflow-y:auto;padding:1.5rem}
 
 /* Cards */
@@ -200,8 +200,8 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </div>
 
-<!-- Main layout -->
-<div class="layout">
+<!-- Main layout (показывается после успешной авторизации) -->
+<div class="layout" id="mainLayout" style="display:none">
   <!-- Sidebar -->
   <nav class="nav">
     <div class="nav-logo">Magic Master <small>Admin Panel</small></div>
@@ -700,7 +700,11 @@ async function apiFetch(url, opts = {}) {
     headers: { 'Content-Type': 'application/json', ...authH(), ...(opts.headers || {}) },
   });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.detail || r.statusText);
+  if (!r.ok) {
+    const d = data.detail;
+    const msg = typeof d === 'string' ? d : (Array.isArray(d) && d.length ? d.map(x => x.msg || x.loc?.join('. ') || JSON.stringify(x)).join('; ') : (d && typeof d === 'object' && !Array.isArray(d) ? (d.detail || d.message || JSON.stringify(d)) : (d || r.statusText)));
+    throw new Error(msg || r.statusText);
+  }
   return data;
 }
 
@@ -736,6 +740,7 @@ function statusBadge(s) {
 }
 
 // ─── Login ────────────────────────────────────────────────────────────────────
+const _layoutEl = () => document.querySelector('.layout');
 async function checkAuth() {
   if (!_token) { showLogin(); return; }
   try {
@@ -743,6 +748,8 @@ async function checkAuth() {
     if (!me.is_admin) { _token = ''; localStorage.removeItem('admin_token'); showLogin(); return; }
     _adminEmail = me.email;
     document.getElementById('loginOverlay').style.display = 'none';
+    const layout = _layoutEl();
+    if (layout) layout.style.display = 'flex';
     const topbarAuth = document.getElementById('topbarAuth');
     topbarAuth.textContent = '';
     topbarAuth.appendChild(document.createTextNode(me.email));
@@ -750,6 +757,7 @@ async function checkAuth() {
     logoutBtn.type = 'button';
     logoutBtn.className = 'btn btn-ghost btn-sm topbar-logout';
     logoutBtn.textContent = 'Выйти';
+    logoutBtn.title = 'Выйти из учётной записи';
     logoutBtn.addEventListener('click', doLogout);
     topbarAuth.appendChild(logoutBtn);
     document.getElementById('navBottom').textContent = me.email;
@@ -759,7 +767,11 @@ async function checkAuth() {
   }
 }
 
-function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  const layout = _layoutEl();
+  if (layout) layout.style.display = 'none';
+}
 
 function doLogout() {
   _token = '';
@@ -1412,6 +1424,8 @@ async function loadSettings() {
     wrap.innerHTML = `
       <div class="card" style="margin-bottom:1rem">
         <p style="font-size:.875rem;color:var(--text-soft);margin-bottom:.8rem">Версия: ${[d.app.version, d.app.build_date].filter(Boolean).join(' · ') || '—'} · JWT задан: ${d.app.jwt_secret_set ? 'Да' : 'Нет'} · Админ: ${d.admin_email || '—'}</p>
+        <p style="font-size:.8125rem;color:var(--text-soft);margin-bottom:.6rem;line-height:1.4">Настройки из вкладок Общие, SMTP, YooKassa, Telegram и LLM сохраняются в БД и применяются без перезапуска. Исключение: CORS, JWT secret и часть параметров читаются из .env при старте сервера.</p>
+        <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:.5rem">Поля «CORS origins» и JWT secret вступают в силу после перезапуска сервера.</p>
         <div class="settings-tabs" id="settingsTabs">
           <button type="button" class="settings-tab active" data-tab="app">Общие</button>
           <button type="button" class="settings-tab" data-tab="smtp">SMTP</button>
@@ -1552,10 +1566,10 @@ async function loadSettings() {
       if (Object.keys(o.telegram).length === 0) o.telegram = undefined;
       return o;
     }
-    document.getElementById('settingsFormApp').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildAppPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
-    document.getElementById('settingsFormSmtp').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildSmtpPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
-    document.getElementById('settingsFormYookassa').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildYookassaPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
-    document.getElementById('settingsFormTelegram').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildTelegramPayload(e.target)) }); toast('Сохранено', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
+    document.getElementById('settingsFormApp').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildAppPayload(e.target)) }); toast('Сохранено: Общие', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
+    document.getElementById('settingsFormSmtp').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildSmtpPayload(e.target)) }); toast('Сохранено: SMTP', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
+    document.getElementById('settingsFormYookassa').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildYookassaPayload(e.target)) }); toast('Сохранено: YooKassa', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
+    document.getElementById('settingsFormTelegram').addEventListener('submit', async (e) => { e.preventDefault(); try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(buildTelegramPayload(e.target)) }); toast('Сохранено: Telegram', 'ok'); } catch (err) { toast(err.message || 'Ошибка', 'err'); } });
 
     document.getElementById('btnTestSmtp')?.addEventListener('click', async () => {
       const el = document.getElementById('notifyTestResult');
@@ -1581,7 +1595,23 @@ async function loadLlmConnection() {
   try {
     const d = await apiFetch('/api/admin/settings');
     const llm = d.llm || {};
+    const backendLabel = { openai: 'OpenAI', deepseek: 'DeepSeek', anthropic: 'Anthropic' }[llm.backend] || llm.backend || '—';
+    const statusLines = [
+      'Активный бэкенд: ' + backendLabel,
+      'OpenAI: ' + (llm.openai_key_set ? 'ключ задан' : 'ключ не задан'),
+      'DeepSeek: ' + (llm.deepseek_key_set ? 'ключ задан' : 'ключ не задан'),
+      'Anthropic: ' + (llm.anthropic_key_set ? 'ключ задан' : 'ключ не задан'),
+      'Подключение: ' + (llm.connected ? 'OK (' + (llm.model_display || '—') + ')' : 'не подключено')
+    ];
     wrap.innerHTML = `
+      <div class="card" style="margin-bottom:1rem">
+        <h4 style="font-size:.9rem;margin:0 0 .5rem;color:var(--accent2)">Статус подключения</h4>
+        <p style="font-size:.875rem;color:var(--text-soft);margin:0 0 .6rem;line-height:1.5">${statusLines.join(' · ')}</p>
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-sm" id="btnLlmTest">Проверить подключение</button>
+          <span id="llmTestResult" style="font-size:.875rem;min-height:1.2em"></span>
+        </div>
+      </div>
       <div class="card">
         <form class="settings-form" id="llmConnectionForm">
           <div class="form-group"><label>Бэкенд</label><select name="backend"><option value="openai" ${llm.backend === 'openai' ? 'selected' : ''}>OpenAI</option><option value="deepseek" ${llm.backend === 'deepseek' ? 'selected' : ''}>DeepSeek</option><option value="anthropic" ${llm.backend === 'anthropic' ? 'selected' : ''}>Anthropic</option></select></div>
@@ -1625,7 +1655,18 @@ async function loadLlmConnection() {
       if ((fd.get('openai_api_key') || '').toString().trim()) o.llm.openai_api_key = fd.get('openai_api_key');
       if ((fd.get('anthropic_api_key') || '').toString().trim()) o.llm.anthropic_api_key = fd.get('anthropic_api_key');
       if ((fd.get('deepseek_api_key') || '').toString().trim()) o.llm.deepseek_api_key = fd.get('deepseek_api_key');
-      try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(o) }); toast('Сохранено', 'ok'); loadLlmConnection(); } catch (err) { toast(err.message || 'Ошибка', 'err'); }
+      try { await apiFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(o) }); toast('Ключи сохранены', 'ok'); loadLlmConnection(); } catch (err) { toast(err.message || 'Ошибка сохранения', 'err'); }
+    });
+    document.getElementById('btnLlmTest')?.addEventListener('click', async () => {
+      const el = document.getElementById('llmTestResult');
+      if (!el) return;
+      el.textContent = 'Проверка…';
+      el.style.color = 'var(--text-soft)';
+      try {
+        const r = await apiFetch('/api/admin/llm/test', { method: 'POST' });
+        if (r.ok) { el.textContent = '✓ ' + (r.message || 'Подключение успешно'); el.style.color = 'var(--green)'; toast(r.message || 'Подключение успешно', 'ok'); }
+        else { el.textContent = '✗ ' + (r.message || 'Ошибка'); el.style.color = 'var(--red)'; toast(r.message || 'Ошибка', 'err'); }
+      } catch (err) { el.textContent = '✗ ' + (err.message || 'Ошибка'); el.style.color = 'var(--red)'; toast(err.message || 'Ошибка', 'err'); }
     });
   } catch (e) {
     wrap.innerHTML = `<p style="color:var(--red)">Ошибка: ${e.message}</p>`;

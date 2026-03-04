@@ -314,3 +314,21 @@ def test_export_audio_wav_no_nan(stereo_2sec_44k):
     assert not np.any(np.isnan(decoded))
     assert not np.any(np.isinf(decoded))
     assert np.all(decoded >= -1.01) and np.all(decoded <= 1.01)
+
+
+def test_validate_mastered_not_silent_raises_on_silence():
+    """При тишине на выходе пайплайна возвращается ошибка с подсказкой (задача 1.5 / 5.3)."""
+    from app.pipeline import validate_mastered_not_silent
+    with pytest.raises(ValueError) as exc_info:
+        validate_mastered_not_silent(np.zeros(1000, dtype=np.float32))
+    msg = str(exc_info.value)
+    assert "тишину" in msg
+    assert "Отключите" in msg
+
+
+def test_validate_mastered_not_silent_passes_on_signal():
+    """При наличии сигнала выше порога валидация не поднимает исключение."""
+    from app.pipeline import validate_mastered_not_silent
+    x = np.zeros(1000, dtype=np.float32)
+    x[0] = 0.01
+    validate_mastered_not_silent(x)
