@@ -2171,18 +2171,20 @@ if (btnAiRecommend) {
     setStatus(stMeasure, 'AI подбирает пресет…', '');
     try {
       let res;
-      if (hasAnalysis) {
+      // При наличии загруженного файла всегда отправляем его — бэкенд сам сделает замер и рекомендацию
+      if (currentFile) {
+        const form = new FormData();
+        form.append('file', currentFile);
+        const r = await fetch(API + '/api/ai/recommend', { method: 'POST', body: form, headers: authHeaders() });
+        res = await safeResponseJson(r);
+        if (!r.ok) throw new Error(res.detail || r.statusText);
+      } else {
+        // Нет файла — отправляем только если есть результат замера (body.analysis)
         const r = await fetch(API + '/api/ai/recommend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ analysis: lastAnalyzeReport }),
         });
-        res = await safeResponseJson(r);
-        if (!r.ok) throw new Error(res.detail || r.statusText);
-      } else {
-        const form = new FormData();
-        form.append('file', currentFile);
-        const r = await fetch(API + '/api/ai/recommend', { method: 'POST', body: form, headers: authHeaders() });
         res = await safeResponseJson(r);
         if (!r.ok) throw new Error(res.detail || r.statusText);
       }
@@ -2919,14 +2921,21 @@ function collectProModuleParams(form) {
     form.append('deesser_threshold', gv('deesserThreshold') || '-6');
     form.append('deesser_freq_hi', gv('deesserFreqHi') || '9000');
   }
-  // Transient Designer
+  // Transient Designer: при включении всегда отправляем значения, отличные от 1.0, чтобы бэкенд применил эффект (1.0 = bypass)
   if (gc('transientEnabled')) {
-    form.append('transient_attack',  (parseFloat(gv('transientAttack')  || 100) / 100).toFixed(2));
-    form.append('transient_sustain', (parseFloat(gv('transientSustain') || 100) / 100).toFixed(2));
+    let ta = parseFloat(gv('transientAttack')  || 100) / 100;
+    let ts = parseFloat(gv('transientSustain') || 100) / 100;
+    if (Math.abs(ta - 1) < 0.02 && Math.abs(ts - 1) < 0.02) {
+      ta = 1.02;
+      ts = 0.98;
+    }
+    form.append('transient_attack',  ta.toFixed(2));
+    form.append('transient_sustain', ts.toFixed(2));
   }
   // Parallel Compression
   if (gc('parallelEnabled')) {
-    form.append('parallel_mix', (parseFloat(gv('parallelMix') || 30) / 100).toFixed(2));
+    const mix = Math.max(0.01, parseFloat(gv('parallelMix') || 30) / 100);
+    form.append('parallel_mix', mix.toFixed(2));
   }
   // Dynamic EQ
   if (gc('dynEQEnabled')) {

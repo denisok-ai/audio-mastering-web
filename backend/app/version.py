@@ -3,5 +3,5 @@
 # Кратко: MINOR (0.X.0) — новые функции; PATCH (0.0.X) — багфиксы и мелкие правки.
 from datetime import date
 
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 __build_date__ = date.today().isoformat()

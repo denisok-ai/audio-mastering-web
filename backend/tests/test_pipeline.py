@@ -382,3 +382,28 @@ def test_validate_mastered_not_silent_passes_on_signal():
     x = np.zeros(1000, dtype=np.float32)
     x[0] = 0.01
     validate_mastered_not_silent(x)
+
+
+def test_pro_modules_transient_parallel_dyn_eq_not_silent(stereo_2sec_44k):
+    """Transient Designer, Parallel Compression, Dynamic EQ не дают тишину на выходе (план 12.2)."""
+    from app.pipeline import (
+        apply_transient_designer,
+        apply_parallel_compression,
+        apply_dynamic_eq,
+    )
+    audio, sr = stereo_2sec_44k
+    # Transient Designer (attack 1.1, sustain 0.9)
+    out = apply_transient_designer(audio, sr, attack_gain=1.1, sustain_gain=0.9)
+    assert out.shape == audio.shape
+    assert not np.any(np.isnan(out))
+    assert np.max(np.abs(out)) > 0.001
+    # Parallel Compression mix 30%
+    out = apply_parallel_compression(out, sr, mix=0.3)
+    assert out.shape == audio.shape
+    assert not np.any(np.isnan(out))
+    assert np.max(np.abs(out)) > 0.001
+    # Dynamic EQ
+    out = apply_dynamic_eq(out, sr)
+    assert out.shape == audio.shape
+    assert not np.any(np.isnan(out))
+    assert np.max(np.abs(out)) > 0.001

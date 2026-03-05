@@ -386,6 +386,34 @@ async def test_api_v2_master_accepts_bitrate(minimal_wav_bytes):
 
 
 @pytest.mark.anyio
+async def test_api_v2_master_accepts_pro_params(minimal_wav_bytes):
+    """POST /api/v2/master принимает PRO-параметры (rumble, denoiser, deesser, transient, parallel, dynamic_eq)."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.post(
+            "/api/v2/master",
+            files={"file": ("test.wav", minimal_wav_bytes, "audio/wav")},
+            data={
+                "style": "standard",
+                "out_format": "wav",
+                "rumble_enabled": "true",
+                "rumble_cutoff": "80",
+                "denoise_preset": "light",
+                "deesser_enabled": "true",
+                "deesser_threshold": "-6",
+                "deesser_freq_hi": "9000",
+                "transient_attack": "1.1",
+                "transient_sustain": "0.9",
+                "parallel_mix": "0.3",
+                "dynamic_eq_enabled": "true",
+            },
+        )
+    assert r.status_code == 200, (r.status_code, r.text)
+    data = r.json()
+    assert "job_id" in data
+    assert data["status"] == "running"
+
+
+@pytest.mark.anyio
 async def test_api_v2_batch_requires_files():
     """POST /api/v2/batch без файлов или с пустым списком — 422 (валидация) или 400/503 (бизнес-логика)."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:

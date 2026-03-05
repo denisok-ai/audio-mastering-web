@@ -354,9 +354,10 @@ def _run_mastering_job_v2(
                 peak = float(np.max(np.abs(mastered))) + 1e-12
                 job["message"] = f"Transient Designer… (peak {20 * np.log10(peak):.1f} dB)"
 
-        if pro_params.get("parallel_mix", 0) > 0:
+        parallel_mix_val = pro_params.get("parallel_mix", 0)
+        if parallel_mix_val is not None and float(parallel_mix_val) > 0:
             job["message"] = "Parallel Compression…"
-            mastered = apply_parallel_compression(mastered, sr, mix=pro_params["parallel_mix"])
+            mastered = apply_parallel_compression(mastered, sr, mix=float(parallel_mix_val))
             if _is_debug_mode():
                 peak = float(np.max(np.abs(mastered))) + 1e-12
                 job["message"] = f"Parallel Compression… (peak {20 * np.log10(peak):.1f} dB)"

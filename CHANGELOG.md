@@ -9,6 +9,17 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.5.4] — 2026-03
+
+### Дополнительная обработка (план 12.2)
+- **frontend/app.js**: при включённом Transient Designer и ползунках 100/100 отправляются 1.02/0.98, чтобы эффект применялся; для Parallel Compression передаётся mix не ниже 0.01.
+- **backend/app/routers/mastering.py**: надёжное приведение `parallel_mix` к float при применении Parallel Compression.
+- **backend/tests/test_api.py**: тест `test_api_v2_master_accepts_pro_params` — POST /api/v2/master принимает все PRO-параметры (rumble, denoiser, deesser, transient, parallel, dynamic_eq).
+- **backend/tests/test_e2e_mastering.py**: тест `test_e2e_mastering_with_pro_rumble` — E2E мастеринг с румбл-фильтром до получения результата.
+- **backend/tests/test_pipeline.py**: тест `test_pro_modules_transient_parallel_dyn_eq_not_silent` — Transient Designer, Parallel Compression и Dynamic EQ не дают тишину на выходе.
+
+---
+
 ## [0.5.3] — 2026-03
 
 ### Админка и настройки

@@ -82,7 +82,10 @@ async def api_ai_recommend(
             analysis = await _analyze_file_for_ai(file)
 
         if not analysis:
-            raise HTTPException(400, "Передайте file (аудиофайл) или body.analysis.")
+            raise HTTPException(
+                400,
+                "Передайте file (аудиофайл) или body.analysis. Загрузите файл и нажмите «Рекомендовать пресет» или сначала «Измерить громкость».",
+            )
 
         result = ai_module.recommend_preset(analysis)
         ai_module.record_ai_usage(ident)
@@ -125,7 +128,10 @@ async def api_ai_report(
             analysis = await _analyze_file_for_ai(file, extended=False)
 
         if not analysis:
-            raise HTTPException(400, "Передайте file (аудиофайл) или body.analysis.")
+            raise HTTPException(
+                400,
+                "Передайте file (аудиофайл) или body.analysis. Загрузите файл и нажмите кнопку отчёта или сначала «Измерить громкость».",
+            )
 
         result = ai_module.report_with_recommendations(analysis)
         ai_module.record_ai_usage(ident)
