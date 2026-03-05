@@ -98,7 +98,12 @@ class Settings(BaseSettings):
     alert_queue_threshold: int = 0
     alert_throttle_minutes: int = 60
 
-    @field_validator("debug_mode", "require_email_verify", mode="before")
+    # Задача 9.2 — изоляция вокала (Demucs). При False эндпоинт /api/v2/isolate-vocal возвращает 503.
+    # MAGIC_MASTER_ENABLE_VOCAL_ISOLATION=1, MAGIC_MASTER_DEMUCS_MODEL=htdemucs
+    enable_vocal_isolation: bool = Field(False, validation_alias="ENABLE_VOCAL_ISOLATION")
+    demucs_model: str = "htdemucs"
+
+    @field_validator("debug_mode", "require_email_verify", "enable_vocal_isolation", mode="before")
     @classmethod
     def parse_bool_flag(cls, v):
         if isinstance(v, bool):

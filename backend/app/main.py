@@ -367,6 +367,7 @@ def api_health():
         "ai_enabled": feature_ai is None or feature_ai is True or (isinstance(feature_ai, str) and feature_ai.lower() in ("true", "1", "yes")),
         "batch_enabled": feature_batch is None or feature_batch is True or (isinstance(feature_batch, str) and feature_batch.lower() in ("true", "1", "yes")),
         "registration_enabled": feature_registration is None or feature_registration is True or (isinstance(feature_registration, str) and feature_registration.lower() in ("true", "1", "yes")),
+        "vocal_isolation_enabled": getattr(settings, "enable_vocal_isolation", False),
     }
 
     return {

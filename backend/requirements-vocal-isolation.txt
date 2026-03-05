@@ -1,0 +1,5 @@
+# Опциональные зависимости для задачи 9.2 — изоляция вокала.
+# Установка: pip install -r requirements-vocal-isolation.txt
+# Использование: python run_isolate_vocal.py /path/to/track.wav
+
+demucs>=4.0.0

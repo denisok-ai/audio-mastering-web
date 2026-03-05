@@ -37,7 +37,7 @@ audio-mastering-web/
 ├── deploy/
 │   ├── nginx/
 │   └── systemd/
-├── doc/                   # DLL-анализ iZotope (справочно)
+├── doc/                   # Справочная документация по пайплайну
 ├── start.sh               # Быстрый старт (проверка пакетов + venv + run)
 ├── install_and_run.sh     # Пошаговая установка + run
 ├── pack_for_deploy.sh     # Упаковка архива для сервера

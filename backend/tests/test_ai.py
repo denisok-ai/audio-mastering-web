@@ -57,7 +57,7 @@ def test_rule_based_recommend_returns_style_and_lufs():
     assert "style" in out
     assert "target_lufs" in out
     assert "reason" in out
-    assert out["style"] in ("standard", "edm", "hiphop", "classical", "podcast", "lofi", "house_basic")
+    assert out["style"] in ("standard", "edm", "hiphop", "classical", "podcast", "lofi", "house_basic", "dry_vocal")
     assert -24 <= out["target_lufs"] <= -6
 
 
@@ -94,6 +94,22 @@ def test_report_empty_analysis():
     assert "summary" in out
     assert "recommendations" in out
     assert len(out["recommendations"]) >= 1
+
+
+def test_report_recommendations_have_expected_structure():
+    """Каждая рекомендация в report — непустая строка или объект с текстом."""
+    from app.ai import report_with_recommendations
+    analysis = {"lufs": -18.0, "peak_dbfs": -6.0, "duration_sec": 120, "channels": 2}
+    out = report_with_recommendations(analysis)
+    assert "recommendations" in out
+    assert isinstance(out["recommendations"], list)
+    for rec in out["recommendations"]:
+        if isinstance(rec, str):
+            assert len(rec.strip()) > 0
+        elif isinstance(rec, dict):
+            assert "text" in rec or "message" in rec or "summary" in rec or len(rec) > 0
+        else:
+            assert rec is not None
 
 
 def test_nl_to_config_empty_string_returns_unchanged():

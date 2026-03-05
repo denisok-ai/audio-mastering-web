@@ -7,6 +7,25 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
+### Тесты
+- **backend/tests/test_api.py**: тест `test_api_v2_chain_default_style_dry_vocal` — GET /api/v2/chain/default?style=dry_vocal возвращает цепочку; тест `test_api_v2_master_unknown_style_fallback` — POST /api/v2/master с неизвестным style принимается (fallback на standard).
+
+---
+
+## [0.5.2] — 2026-03
+
+### Тесты
+- **backend/tests/test_api.py**: тест `test_api_measure_returns_lufs` — POST /api/measure возвращает lufs, sample_rate, peak_dbfs, duration, channels; тест `test_api_measure_rejects_bad_extension` — POST /api/measure с неподдерживаемым расширением → 400; тест `test_api_v2_analyze_extended` — POST /api/v2/analyze с extended=true проверяет опциональные поля spectrum_bars, lufs_timeline; тест `test_api_master_status_structure` — GET /api/master/status/{job_id} возвращает status, progress, message и корректные типы; тест `test_api_master_result_404` — GET /api/master/result/{job_id} с несуществующим id → 404; тест `test_api_styles_each_has_lufs` — GET /api/styles: у каждого стиля есть ключ lufs (число).
+
+---
+
+## [0.5.1] — 2026-03
+
+### Расширение тестов
+- **backend/tests/test_api.py**: тесты для `POST /api/v2/isolate-vocal` (503/400); `test_api_health_returns_features` (поля features в GET /api/health); `test_api_v2_batch_with_one_file_creates_job` (batch с одним файлом → jobs с job_id); расширена проверка GET /api/v2/chain/default (version, style, target_lufs, у каждого модуля id и label).
+- **backend/tests/test_pipeline.py**: тест `test_run_mastering_pipeline_style_dry_vocal` — пайплайн со стилем dry_vocal без NaN, корректная форма выхода.
+- **backend/tests/test_ai.py**: тест `test_report_recommendations_have_expected_structure` — проверка структуры рекомендаций в отчёте (строки или объекты с текстом).
+
 ### Рефакторинг архитектуры (2026-03-01)
 
 #### Деплой без Docker — systemd + Nginx
@@ -116,6 +135,24 @@ Format: `[Phase] Brief description — files changed`.
 
 - **backend/app/admin.py**: валидация PATCH настроек через Pydantic `Field` — `max_upload_mb` (1–500), `default_target_lufs` (−60…−1), `jobs_done_ttl_seconds` (0–30 дней), `global_rate_limit` (1–10000), `ai_limit_*`, `llm_guard_max_length_*`, SMTP `port` (1–65535). Согласованность с ограничениями на фронте.
 - **doc/AUDIT_ADMIN_REDESIGN.md**: раздел 1.3 приведён в соответствие с реализацией (maintenance_mode, флаги функций, журнал, валидация настроек отмечены как выполненные).
+
+---
+
+## [0.5.0] — 2026-03
+
+### Очередь 9 — Обработка вокала (полностью закрыта)
+
+- **Стиль dry_vocal:** пресет с ровной АЧХ, без эксайтера и параллельной компрессии; карточка в блоке стилей, локализация, дашборд.
+- **Пресеты Spectral Denoiser:** tape_hiss (ленточный шип), room_tone (тон комнаты); UI, API, локализация, тесты, doc/PIPELINE_AUDIO_QUALITY.md.
+- **Румбл-фильтр (9.1):** high-pass 80 Гц в блоке «Доп. обработка» — `backend/app/pipeline.py` (`apply_rumble_filter`), роутер, UI (чекбокс + срез 60–120 Гц), тест `test_apply_rumble_filter`.
+- **Полоса де-эссера 5–8 кГц (9.3):** выбор «5–9 кГц» / «5–8 кГц (вокал)» в UI, параметр `deesser_freq_hi` в API и пайплайне.
+- **Пакетный мастеринг (batch):** передача PRO-параметров (румбл, Denoiser, De-esser, Transient, Parallel, Dynamic EQ) — те же настройки «Доп. обработки» для всех файлов в пакете.
+- **Изоляция вокала (9.2):** опциональная фича на базе Demucs: `backend/run_isolate_vocal.py`, `backend/requirements-vocal-isolation.txt`, `backend/app/services/vocal_isolation.py`, эндпоинт `POST /api/v2/isolate-vocal`, конфиг `MAGIC_MASTER_ENABLE_VOCAL_ISOLATION`, `MAGIC_MASTER_DEMUCS_MODEL`; интеграция в пайплайн (опция «Сначала изолировать вокал») и блок в UI «Доп. обработка» (виден при `vocal_isolation_enabled` в /api/health). Документация: doc/PLAN_9_2_VOCAL_ISOLATION.md.
+
+### Версионность
+
+- **doc/VERSIONING.md:** правила версионности (SemVer, где хранится версия, когда менять MINOR/PATCH, связь с CHANGELOG).
+- Версия приложения: единственный источник — `backend/app/version.py`; отображается в /api/version, /api/health, в футере интерфейса.
 
 ---
 

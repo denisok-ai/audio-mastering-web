@@ -1,5 +1,5 @@
 # @file exciter.py
-# @description Модуль гармонического эксайтера (аналог iZotope Ozone 5 Exciter)
+# @description Модуль гармонического эксайтера
 from typing import Any
 import numpy as np
 from .base import BaseModule

@@ -47,6 +47,7 @@ from ..pipeline import (
     apply_dynamic_eq,
     apply_parallel_compression,
     apply_reference_match,
+    apply_rumble_filter,
     apply_spectral_denoise,
     validate_mastered_not_silent,
     apply_transient_designer,
@@ -73,14 +74,14 @@ _BATCH_MAX_FILES = 10
 CHAIN_MODULE_LABELS = {
     "dc_offset": "Удаление DC-смещения",
     "peak_guard": "Защита от пиков",
-    "target_curve": "Студийный EQ (Ozone 5 Equalizer)",
-    "dynamics": "Многополосная динамика (Ozone 5 Dynamics)",
+    "target_curve": "Студийный EQ",
+    "dynamics": "Многополосная динамика",
     "maximizer": "Максимайзер",
     "normalize_lufs": "Нормализация LUFS",
     "final_spectral_balance": "Финальная частотная коррекция",
     "style_eq": "Жанровый EQ",
-    "exciter": "Гармонический эксайтер (Ozone 5 Exciter)",
-    "imager": "Стерео-расширение (Ozone 5 Imager)",
+    "exciter": "Гармонический эксайтер",
+    "imager": "Стерео-расширение",
     "reverb": "Ревербератор (plate/room/hall/theater/cathedral)",
 }
 
@@ -266,9 +267,31 @@ def _run_mastering_job_v2(
         job["message"] = "Загрузка аудио…"
         audio, sr = load_audio_from_bytes(data, filename or "wav")
 
+        if pro_params.get("apply_vocal_isolation") and getattr(settings, "enable_vocal_isolation", False):
+            from ..services.vocal_isolation import isolate_vocal, is_demucs_available
+            if not is_demucs_available():
+                raise RuntimeError(
+                    "Изоляция вокала включена, но Demucs не установлен. "
+                    "Установите: pip install -r requirements-vocal-isolation.txt"
+                )
+            job["message"] = "Изоляция вокала (Demucs)…"
+            try:
+                vocal_bytes = isolate_vocal(data, filename or "audio.wav", getattr(settings, "demucs_model", "htdemucs"))
+                audio, sr = load_audio_from_bytes(vocal_bytes, "vocals.wav")
+            except RuntimeError as e:
+                raise RuntimeError("Изоляция вокала не удалась: %s" % e) from e
+
         job["progress"] = 4
         job["message"] = "Измерение исходного уровня…"
         job["before_lufs"] = measure_lufs(audio, sr)
+
+        if pro_params.get("rumble_enabled"):
+            job["message"] = "Румбл-фильтр…"
+            cutoff = float(pro_params.get("rumble_cutoff", 80.0))
+            audio = apply_rumble_filter(audio, sr, cutoff_hz=cutoff)
+            if _is_debug_mode():
+                peak = float(np.max(np.abs(audio))) + 1e-12
+                job["message"] = f"Румбл-фильтр… (peak {20 * np.log10(peak):.1f} dB)"
 
         denoise_strength = pro_params.get("denoise_strength", 0) or 0
         denoise_preset = (pro_params.get("denoise_preset") or "").strip().lower()
@@ -283,10 +306,22 @@ def _run_mastering_job_v2(
         if strength > 0.01:
             job["message"] = "Spectral Denoiser…"
             audio = apply_spectral_denoise(audio, sr, strength=strength, noise_percentile=noise_pct)
+            if _is_debug_mode():
+                peak = float(np.max(np.abs(audio))) + 1e-12
+                job["message"] = f"Spectral Denoiser… (peak {20 * np.log10(peak):.1f} dB)"
 
         if pro_params.get("deesser_enabled"):
             job["message"] = "De-esser…"
-            audio = apply_deesser(audio, sr, threshold_db=pro_params.get("deesser_threshold", -10.0))
+            thr = pro_params.get("deesser_threshold", -6.0)
+            freq_hi = float(pro_params.get("deesser_freq_hi", 9000.0))
+            audio = apply_deesser(
+                audio, sr,
+                threshold_db=thr,
+                freq_hi=freq_hi,
+            )
+            if _is_debug_mode():
+                peak = float(np.max(np.abs(audio))) + 1e-12
+                job["message"] = f"De-esser… (peak {20 * np.log10(peak):.1f} dB)"
 
         def on_progress(pct: int, msg: str) -> None:
             job["progress"] = pct
@@ -306,21 +341,32 @@ def _run_mastering_job_v2(
             progress_callback=on_progress,
         )
 
-        if pro_params.get("transient_attack") is not None:
+        ta = pro_params.get("transient_attack")
+        ts = pro_params.get("transient_sustain", 1.0)
+        if ta is not None and (abs(float(ta) - 1.0) > 0.02 or abs(float(ts) - 1.0) > 0.02):
             job["message"] = "Transient Designer…"
             mastered = apply_transient_designer(
                 mastered, sr,
-                attack_gain=pro_params.get("transient_attack", 1.0),
-                sustain_gain=pro_params.get("transient_sustain", 1.0),
+                attack_gain=float(ta),
+                sustain_gain=float(ts),
             )
+            if _is_debug_mode():
+                peak = float(np.max(np.abs(mastered))) + 1e-12
+                job["message"] = f"Transient Designer… (peak {20 * np.log10(peak):.1f} dB)"
 
         if pro_params.get("parallel_mix", 0) > 0:
             job["message"] = "Parallel Compression…"
             mastered = apply_parallel_compression(mastered, sr, mix=pro_params["parallel_mix"])
+            if _is_debug_mode():
+                peak = float(np.max(np.abs(mastered))) + 1e-12
+                job["message"] = f"Parallel Compression… (peak {20 * np.log10(peak):.1f} dB)"
 
         if pro_params.get("dynamic_eq_enabled"):
             job["message"] = "Dynamic EQ…"
             mastered = apply_dynamic_eq(mastered, sr)
+            if _is_debug_mode():
+                peak = float(np.max(np.abs(mastered))) + 1e-12
+                job["message"] = f"Dynamic EQ… (peak {20 * np.log10(peak):.1f} dB)"
 
         validate_mastered_not_silent(mastered)
 
@@ -437,12 +483,16 @@ async def api_master_v2(
     denoise_strength: Optional[float] = Form(None),
     denoise_preset: Optional[str] = Form(None),
     denoise_noise_percentile: Optional[float] = Form(None),
+    rumble_enabled: Optional[str] = Form(None),
+    rumble_cutoff: Optional[float] = Form(None),
     deesser_enabled: Optional[str] = Form(None),
     deesser_threshold: Optional[float] = Form(None),
+    deesser_freq_hi: Optional[float] = Form(None),
     transient_attack: Optional[float] = Form(None),
     transient_sustain: Optional[float] = Form(None),
     parallel_mix: Optional[float] = Form(None),
     dynamic_eq_enabled: Optional[str] = Form(None),
+    apply_vocal_isolation: Optional[str] = Form(None),
     user: Optional[dict] = Depends(_get_current_user_optional),
 ):
     """
@@ -490,15 +540,23 @@ async def api_master_v2(
             pass
 
         pro_params: dict = {}
-        if denoise_preset and denoise_preset.strip().lower() in ("light", "medium", "aggressive"):
+        if denoise_preset and denoise_preset.strip().lower() in (
+            "vocal", "light", "medium", "aggressive", "tape_hiss", "room_tone"
+        ):
             pro_params["denoise_preset"] = denoise_preset.strip().lower()
         elif denoise_strength is not None and denoise_strength > 0:
             pro_params["denoise_strength"] = float(denoise_strength)
         if denoise_noise_percentile is not None and 5 <= denoise_noise_percentile <= 40:
             pro_params["denoise_noise_percentile"] = float(denoise_noise_percentile)
+        if rumble_enabled and rumble_enabled.lower() in ("true", "1", "yes"):
+            pro_params["rumble_enabled"] = True
+            cutoff = float(rumble_cutoff) if rumble_cutoff is not None else 80.0
+            pro_params["rumble_cutoff"] = max(20.0, min(200.0, cutoff))
         if deesser_enabled and deesser_enabled.lower() in ("true", "1", "yes"):
             pro_params["deesser_enabled"] = True
-            pro_params["deesser_threshold"] = float(deesser_threshold) if deesser_threshold is not None else -10.0
+            pro_params["deesser_threshold"] = float(deesser_threshold) if deesser_threshold is not None else -6.0
+            f_hi = float(deesser_freq_hi) if deesser_freq_hi is not None else 9000.0
+            pro_params["deesser_freq_hi"] = max(5000.0, min(12000.0, f_hi))
         if transient_attack is not None and transient_sustain is not None:
             pro_params["transient_attack"] = float(transient_attack)
             pro_params["transient_sustain"] = float(transient_sustain)
@@ -506,6 +564,11 @@ async def api_master_v2(
             pro_params["parallel_mix"] = float(parallel_mix)
         if dynamic_eq_enabled and dynamic_eq_enabled.lower() in ("true", "1", "yes"):
             pro_params["dynamic_eq_enabled"] = True
+        if (
+            apply_vocal_isolation and apply_vocal_isolation.lower() in ("true", "1", "yes")
+            and getattr(settings, "enable_vocal_isolation", False)
+        ):
+            pro_params["apply_vocal_isolation"] = True
 
         sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
 
@@ -540,6 +603,19 @@ async def api_v2_batch(
     dither_type: Optional[str] = Form(None),
     auto_blank_sec: Optional[float] = Form(None),
     bitrate: Optional[str] = Form(None),
+    denoise_strength: Optional[float] = Form(None),
+    denoise_preset: Optional[str] = Form(None),
+    denoise_noise_percentile: Optional[float] = Form(None),
+    rumble_enabled: Optional[str] = Form(None),
+    rumble_cutoff: Optional[float] = Form(None),
+    deesser_enabled: Optional[str] = Form(None),
+    deesser_threshold: Optional[float] = Form(None),
+    deesser_freq_hi: Optional[float] = Form(None),
+    transient_attack: Optional[float] = Form(None),
+    transient_sustain: Optional[float] = Form(None),
+    parallel_mix: Optional[float] = Form(None),
+    dynamic_eq_enabled: Optional[str] = Form(None),
+    apply_vocal_isolation: Optional[str] = Form(None),
     user: Optional[dict] = Depends(_get_current_user_optional),
 ):
     """
@@ -609,6 +685,38 @@ async def api_v2_batch(
         _prune()
         dt = dither_type or "tpdf"
         ab = float(auto_blank_sec or 0)
+        # PRO-параметры (как в одиночном мастеринге)
+        batch_pro_params: dict = {}
+        if denoise_preset and denoise_preset.strip().lower() in (
+            "vocal", "light", "medium", "aggressive", "tape_hiss", "room_tone"
+        ):
+            batch_pro_params["denoise_preset"] = denoise_preset.strip().lower()
+        elif denoise_strength is not None and denoise_strength > 0:
+            batch_pro_params["denoise_strength"] = float(denoise_strength)
+        if denoise_noise_percentile is not None and 5 <= denoise_noise_percentile <= 40:
+            batch_pro_params["denoise_noise_percentile"] = float(denoise_noise_percentile)
+        if rumble_enabled and rumble_enabled.lower() in ("true", "1", "yes"):
+            batch_pro_params["rumble_enabled"] = True
+            cutoff = float(rumble_cutoff) if rumble_cutoff is not None else 80.0
+            batch_pro_params["rumble_cutoff"] = max(20.0, min(200.0, cutoff))
+        if deesser_enabled and deesser_enabled.lower() in ("true", "1", "yes"):
+            batch_pro_params["deesser_enabled"] = True
+            batch_pro_params["deesser_threshold"] = float(deesser_threshold) if deesser_threshold is not None else -6.0
+            f_hi = float(deesser_freq_hi) if deesser_freq_hi is not None else 9000.0
+            batch_pro_params["deesser_freq_hi"] = max(5000.0, min(12000.0, f_hi))
+        if transient_attack is not None and transient_sustain is not None:
+            batch_pro_params["transient_attack"] = float(transient_attack)
+            batch_pro_params["transient_sustain"] = float(transient_sustain)
+        if parallel_mix is not None and parallel_mix > 0:
+            batch_pro_params["parallel_mix"] = float(parallel_mix)
+        if dynamic_eq_enabled and dynamic_eq_enabled.lower() in ("true", "1", "yes"):
+            batch_pro_params["dynamic_eq_enabled"] = True
+        if (
+            apply_vocal_isolation and apply_vocal_isolation.lower() in ("true", "1", "yes")
+            and getattr(settings, "enable_vocal_isolation", False)
+        ):
+            batch_pro_params["apply_vocal_isolation"] = True
+
         jobs_created: List[dict] = []
         batch_sem = _jobs_store.sem_priority if _is_priority_user(user) else _jobs_store.sem_normal
 
@@ -640,7 +748,7 @@ async def api_v2_batch(
                         jid, d, fname,
                         target_lufs, out_format.lower(), style_key,
                         chain_config, dither_type=dt, auto_blank_sec=ab,
-                        bitrate=bitrate_val,
+                        bitrate=bitrate_val, pro_params=batch_pro_params,
                     )
 
             background_tasks.add_task(run_one)
@@ -1004,6 +1112,46 @@ async def api_v2_upscale(
     except Exception as e:
         logger.exception("api_v2_upscale: unhandled error")
         raise HTTPException(500, detail=f"Ошибка при upscale: {e!s}") from e
+
+
+@router.post("/api/v2/isolate-vocal")
+async def api_v2_isolate_vocal(file: UploadFile = File(...)):
+    """
+    Изоляция вокала (задача 9.2). Работает только при ENABLE_VOCAL_ISOLATION=1 и установленном demucs.
+    Принимает аудиофайл (WAV/MP3/FLAC), возвращает WAV с дорожкой вокала.
+    """
+    if not settings.enable_vocal_isolation:
+        raise HTTPException(
+            503,
+            "Изоляция вокала отключена. Включите MAGIC_MASTER_ENABLE_VOCAL_ISOLATION=1 и установите demucs (pip install -r requirements-vocal-isolation.txt).",
+        )
+    from ..services.vocal_isolation import isolate_vocal, is_demucs_available
+    if not is_demucs_available():
+        raise HTTPException(
+            503,
+            "Demucs не установлен. Установите: pip install -r requirements-vocal-isolation.txt",
+        )
+    if not _allowed_file(file.filename or ""):
+        raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
+    fname = file.filename or "audio.wav"
+    data = await file.read()
+    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+    _validate_upload(data, fname, max_mb)
+    try:
+        vocal_bytes = await asyncio.to_thread(
+            isolate_vocal, data, fname, settings.demucs_model
+        )
+    except RuntimeError as e:
+        logger.warning("isolate_vocal failed: %s", e)
+        raise HTTPException(500, detail=str(e)) from e
+    base = (fname or "audio").rsplit(".", 1)[0]
+    out_name = f"{base}_vocals.wav"
+    safe_name = _safe_content_disposition_filename(out_name, "vocals.wav")
+    return Response(
+        content=vocal_bytes,
+        media_type="audio/wav",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )
 
 
 @router.get("/api/master/status/{job_id}")

@@ -9,6 +9,7 @@
 - **Безопасность**: удаление DC-смещения, ограничение межвыборочных пиков.
 - **Нормализация**: выбор целевой громкости (LUFS) и пресетов.
 - **Интерфейс**: одна страница — загрузка, кнопка «Magic Master», индикатор громкости, экспорт в WAV/MP3/FLAC.
+- **Опционально — изоляция вокала (Demucs):** при включённой настройке сервера доступны опция «Сначала изолировать вокал» в цепочке мастеринга и кнопка «Только изолировать вокал» (скачать WAV). См. раздел «Изоляция вокала» ниже.
 
 ## Требования
 
@@ -184,8 +185,21 @@ audio-mastering-web/
 | `DEEPSEEK_API_KEY` или `MAGIC_MASTER_DEEPSEEK_API_KEY` | Ключ DeepSeek (при `AI_BACKEND=deepseek`) | — |
 | `MAGIC_MASTER_DEEPSEEK_BASE_URL` | URL API DeepSeek | https://api.deepseek.com |
 | `MAGIC_MASTER_DEEPSEEK_MODEL` | Модель DeepSeek | deepseek-chat |
+| **Изоляция вокала (опционально)** | | |
+| `MAGIC_MASTER_ENABLE_VOCAL_ISOLATION` | Включить фичу изоляции вокала (Demucs); требует установки `requirements-vocal-isolation.txt` | 0 |
+| `MAGIC_MASTER_DEMUCS_MODEL` | Модель Demucs (например `htdemucs`) | htdemucs |
 
 Чтобы использовать оплаченный аккаунт **DeepSeek**, задайте `MAGIC_MASTER_AI_BACKEND=deepseek` и `DEEPSEEK_API_KEY=ваш_ключ`. Все AI-фичи (рекомендатор пресета, отчёт, авто-мастеринг, NL→настройки, чат) будут работать через DeepSeek.
+
+### Изоляция вокала (опционально)
+
+Фича **изоляции вокала** (Demucs) позволяет выделить вокал из микса и при необходимости прогнать его через цепочку мастеринга или только скачать WAV. По умолчанию отключена.
+
+1. Установите опциональные зависимости: `pip install -r backend/requirements-vocal-isolation.txt` (включает Demucs, может потребовать заметного места на диске).
+2. Включите в конфиге: `MAGIC_MASTER_ENABLE_VOCAL_ISOLATION=1` (или через админку → Настройки).
+3. В интерфейсе в блоке «Дополнительная обработка» появятся опция «Сначала изолировать вокал» и кнопка «Только изолировать вокал (скачать WAV)». Эндпоинт API: `POST /api/v2/isolate-vocal`.
+
+Подробнее: [doc/PLAN_9_2_VOCAL_ISOLATION.md](doc/PLAN_9_2_VOCAL_ISOLATION.md).
 
 ## API (кратко)
 
@@ -198,7 +212,7 @@ audio-mastering-web/
 - `GET /api/v2/chain/default` — список модулей цепочки по умолчанию (style, target_lufs); для UI «Модули цепочки» и будущего drag-and-drop.
 - `POST /api/v2/analyze` — анализ загруженного файла: LUFS, peak_dbfs, duration_sec, sample_rate, channels; для стерео — stereo_correlation. При `extended=true`: дополнительно `spectrum_bars`, `lufs_timeline`, `timeline_step_sec`; для стерео — `vectorscope_points` (до 1000 точек [l, r] для векторскопа).
 
-Подробнее: **http://localhost:8000/docs**. Версия приложения отображается в футере и доступна по `GET /api/version`. История изменений — [CHANGELOG.md](CHANGELOG.md). Разделение функций на уровни (без регистрации / по подписке) — [doc/ФУНКЦИИ_И_УРОВНИ.md](doc/ФУНКЦИИ_И_УРОВНИ.md).
+Подробнее: **http://localhost:8000/docs**. Версия приложения отображается в футере и доступна по `GET /api/version`. Правила версионности — [doc/VERSIONING.md](doc/VERSIONING.md). История изменений — [CHANGELOG.md](CHANGELOG.md). Разделение функций на уровни (без регистрации / по подписке) — [doc/ФУНКЦИИ_И_УРОВНИ.md](doc/ФУНКЦИИ_И_УРОВНИ.md).
 
 ## Самодиагностика
 

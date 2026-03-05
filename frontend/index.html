@@ -1006,7 +1006,7 @@
       display: grid; grid-template-columns: repeat(3,1fr); gap: .55rem;
       margin-bottom: .7rem;
     }
-    /* House badge — Ozone 5 Exciter + Imager активны */
+    /* House badge — Exciter + Imager активны */
     .sc-ozone-badge {
       display: inline-block; font-size: .52rem; font-weight: 700;
       letter-spacing: .04em; text-transform: uppercase;
@@ -2186,7 +2186,15 @@
             <div class="sc-icon">🏠</div>
             <div class="sc-name">House</div>
             <div class="sc-lufs">−10 LUFS</div>
-            <div class="sc-ozone-badge">Ozone 5</div>
+            <div class="sc-ozone-badge">Exciter + Imager</div>
+            <div class="sc-lock">🔒 Pro</div>
+          </div>
+          <div class="style-card" data-style="dry_vocal" data-lufs="-14" data-tier="pro"
+               style="--sc-color:rgba(148,163,184,.08);--sc-active-border:#94a3b8;--sc-bg:rgba(148,163,184,.1);--sc-glow:rgba(148,163,184,.2)">
+            <div class="sc-icon">🎤</div>
+            <div class="sc-name" data-i18n="app.style_dry_vocal">Dry vocal</div>
+            <div class="sc-lufs">−14 LUFS</div>
+            <div class="pro-module-desc sc-hint" style="font-size:0.7rem;margin-top:2px;">Ровная АЧХ, камерный вокал</div>
             <div class="sc-lock">🔒 Pro</div>
           </div>
         </div>
@@ -2250,7 +2258,51 @@
         <div class="pro-section-body" id="proSectionBody">
           <div class="pro-modules-list">
 
-            <!-- Spectral Denoiser -->
+            <!-- Изоляция вокала (9.2): показывается при vocal_isolation_enabled в /api/health -->
+            <div class="pro-module pro-module-vocal-isolation" data-pro="vocal_isolation" id="modVocalIsolation" style="display:none">
+              <div class="pro-module-head">
+                <div class="pro-module-icon">🎤</div>
+                <div class="pro-module-info">
+                  <div class="pro-module-name" data-i18n="app.pro_vocal_isolation">Изоляция вокала</div>
+                  <div class="pro-module-desc" data-i18n="app.pro_vocal_isolation_desc">Сначала выделить вокал (Demucs), затем применить цепочку мастеринга.</div>
+                </div>
+                <label class="pro-module-toggle" title="Включить изоляцию вокала перед мастерингом">
+                  <input type="checkbox" id="vocalIsolationEnabled">
+                  <span class="pro-toggle-track"></span>
+                </label>
+              </div>
+              <div class="pro-module-body" id="vocalIsolationBody">
+                <div class="pro-slider-row" style="margin-top:.5rem;">
+                  <input type="file" id="isolateVocalFileInput" accept="audio/*,.wav,.mp3,.flac" style="display:none">
+                  <button type="button" class="btn btn-secondary" id="btnIsolateVocalOnly" data-i18n="app.isolate_vocal_only_btn">Только изолировать вокал (скачать WAV)</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Румбл-фильтр (очередь 9.1) -->
+            <div class="pro-module" data-pro="rumble" id="modRumble">
+              <div class="pro-module-head">
+                <div class="pro-module-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h2V4H2v16zm4 0h2V4H6v16zm12 0h2V4h-2v16z"/></svg>
+                </div>
+                <div class="pro-module-info">
+                  <div class="pro-module-name" data-i18n="app.pro_rumble">Румбл-фильтр</div>
+                  <div class="pro-module-desc" data-i18n="app.pro_rumble_desc">High-pass 80 Гц: убирает низкочастотный гул и вибрации.</div>
+                </div>
+                <label class="pro-module-toggle" title="Включить румбл-фильтр">
+                  <input type="checkbox" id="rumbleEnabled">
+                  <span class="pro-toggle-track"></span>
+                </label>
+              </div>
+              <div class="pro-module-body" id="rumbleBody">
+                <div class="pro-slider-row">
+                  <span class="pro-slider-label" data-i18n="app.pro_rumble_cutoff">Срез (Гц)</span>
+                  <input type="number" id="rumbleCutoff" min="60" max="120" value="80" step="10" class="pro-input-num" title="60–120 Гц">
+                  <span class="pro-slider-val" id="rumbleCutoffVal">80</span>
+                </div>
+              </div>
+            </div>
+
             <div class="pro-module" data-pro="denoiser" id="modDenoiser">
               <div class="pro-module-head">
                 <div class="pro-module-icon">
@@ -2258,7 +2310,7 @@
                 </div>
                 <div class="pro-module-info">
                   <div class="pro-module-name">Spectral Denoiser</div>
-                  <div class="pro-module-desc">Wiener-фильтр: удаляет шум фона без артефактов</div>
+                  <div class="pro-module-desc">Wiener-фильтр: удаляет шум фона без артефактов. Для вокала лучше начать с пресета «Вокал» или «Лёгкий».</div>
                 </div>
                 <label class="pro-module-toggle" title="Включить шумоподавление">
                   <input type="checkbox" id="denoiserEnabled">
@@ -2268,8 +2320,11 @@
               <div class="pro-module-body" id="denoiserBody">
                 <div class="pro-select-row">
                   <span class="pro-slider-label" data-i18n="app.pro_preset">Пресет</span>
-                  <select id="denoiserPreset" class="pro-select" title="Лёгкий / Средний / Агрессивный или свой уровень">
+                  <select id="denoiserPreset" class="pro-select" title="Вокал, ленточный шип, тон комнаты, лёгкий / средний / агрессивный или свой уровень">
                     <option value="" data-i18n="app.denoiser_custom">Свой</option>
+                    <option value="vocal" data-i18n="app.denoiser_vocal">Вокал</option>
+                    <option value="tape_hiss" data-i18n="app.denoiser_tape_hiss">Tape hiss</option>
+                    <option value="room_tone" data-i18n="app.denoiser_room_tone">Room tone</option>
                     <option value="light" data-i18n="app.denoiser_light">Лёгкий</option>
                     <option value="medium" selected data-i18n="app.denoiser_medium">Средний</option>
                     <option value="aggressive" data-i18n="app.denoiser_aggressive">Агрессивный</option>
@@ -2291,7 +2346,7 @@
                 </div>
                 <div class="pro-module-info">
                   <div class="pro-module-name">De-esser</div>
-                  <div class="pro-module-desc">Контроль сибилянтности 5–9 кГц (ss, ff, tt)</div>
+                  <div class="pro-module-desc">Контроль сибилянтности 5–9 кГц (ss, ff, tt). При слишком глухом звуке поднимите порог (например −6…−4 dB) или отключите De-esser.</div>
                 </div>
                 <label class="pro-module-toggle" title="Включить де-эссер">
                   <input type="checkbox" id="deesserEnabled">
@@ -2301,8 +2356,15 @@
               <div class="pro-module-body" id="deesserBody">
                 <div class="pro-slider-row">
                   <span class="pro-slider-label" data-i18n="app.pro_threshold">Порог</span>
-                  <input type="range" id="deesserThreshold" min="-30" max="-5" value="-10" step="1">
-                  <span class="pro-slider-val" id="deesserThrVal">−10 dB</span>
+                  <input type="range" id="deesserThreshold" min="-18" max="-4" value="-6" step="1">
+                  <span class="pro-slider-val" id="deesserThrVal">−6 dB</span>
+                </div>
+                <div class="pro-select-row">
+                  <span class="pro-slider-label" data-i18n="app.pro_deesser_band">Полоса</span>
+                  <select id="deesserFreqHi" class="pro-select" title="5–9 кГц или 5–8 кГц для вокала">
+                    <option value="9000" data-i18n="app.deesser_band_wide">5–9 кГц</option>
+                    <option value="8000" data-i18n="app.deesser_band_vocal">5–8 кГц (вокал)</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -2458,12 +2520,12 @@
       </div>
       <div class="pipe-step" data-step="eq">
         <div class="pipe-step-dot"></div>
-        <span class="pipe-step-label">Студийный EQ (Ozone 5 Equalizer)</span>
+        <span class="pipe-step-label">Студийный EQ</span>
         <span class="pipe-step-check">✓</span>
       </div>
       <div class="pipe-step" data-step="dyn">
         <div class="pipe-step-dot"></div>
-        <span class="pipe-step-label">Многополосная динамика (Ozone 5 Dynamics)</span>
+        <span class="pipe-step-label">Многополосная динамика</span>
         <span class="pipe-step-check">✓</span>
       </div>
       <div class="pipe-step" data-step="lufs">
@@ -2478,12 +2540,12 @@
       </div>
       <div class="pipe-step" id="pipeExciter" data-step="exciter" style="display:none">
         <div class="pipe-step-dot"></div>
-        <span class="pipe-step-label">Гармонический эксайтер (Ozone 5 Exciter)</span>
+        <span class="pipe-step-label">Гармонический эксайтер</span>
         <span class="pipe-step-check">✓</span>
       </div>
       <div class="pipe-step" id="pipeImager" data-step="imager" style="display:none">
         <div class="pipe-step-dot"></div>
-        <span class="pipe-step-label">Стерео-расширение (Ozone 5 Imager)</span>
+        <span class="pipe-step-label">Стерео-расширение</span>
         <span class="pipe-step-check">✓</span>
       </div>
     </div>
@@ -2740,6 +2802,7 @@
 </div>
 
 <script src="app.js"></script>
+<!-- Legacy/fallback: если app.js не загрузится, раскомментировать блок ниже. Активный поток мастеринга — в app.js (POST /api/v2/master). Закомментированный код использует POST /api/master (legacy). См. doc/AUDIT_FRONTEND_BACKEND.md §4.
 <!-- Inline script extracted to app.js; uncomment below if app.js is missing
 <script>
 /* ═══════ DOM ═══════ */
@@ -3291,7 +3354,7 @@ function resetPipelineSteps(){
     el.classList.remove('active','done');
   });
 }
-function updateOzoneSteps(style){
+function updateChainSteps(style){
   const isHouse = style === 'house_basic';
   const exciterEl = document.getElementById('pipeExciter');
   const imagerEl  = document.getElementById('pipeImager');
@@ -3335,7 +3398,7 @@ function setFile(f){
   pipeline.classList.remove('visible');
   resultPanel.classList.remove('visible');
   resetPipelineSteps();
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
   // reset audio state
   stopAll();
   audioBuffer=null;
@@ -3368,7 +3431,7 @@ function resetAll(){
   pipeline.classList.remove('visible');
   resultPanel.classList.remove('visible');
   resetPipelineSteps();
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
   // reset player
   stopAll();
   audioBuffer=null;
@@ -3393,7 +3456,7 @@ styleGrid.addEventListener('click', e => {
   card.classList.add('active');
   selectedStyle = card.dataset.style;
   targetLufsInput.value = card.dataset.lufs;
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
 });
 
 /* ═══════ A/B comparison ═══════ */
@@ -3464,7 +3527,7 @@ btnMaster.addEventListener('click', async()=>{
   progWrap.classList.add('on');
   pipeline.classList.add('visible');
   resetPipelineSteps();
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
   setProgress(0,'Инициализация…');
 
   const form=new FormData();

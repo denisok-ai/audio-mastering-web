@@ -10,20 +10,21 @@
 
 1. **remove_dc_offset** — удаление DC-смещения по каналам  
 2. **remove_intersample_peaks** — защита от пиков (headroom 0.5 dB)  
-3. **apply_spectral_denoise** (опционально, при denoise_strength > 0)  
-4. **apply_target_curve** — студийный EQ (Ozone 5 Equalizer)  
-5. **apply_deesser** — De-esser 5–9 kHz  
-6. **apply_dynamics** — многополосная динамика + максимайзер (Ozone 5 Dynamics/Maximizer)  
-7. **apply_parallel_compression** (опционально, при parallel_mix > 0)  
-8. **normalize_lufs** — нормализация по целевым LUFS  
-9. **apply_final_spectral_balance** — финальная частотная коррекция  
-10. **apply_reference_match** (опционально)  
-11. **apply_style_eq** — жанровый EQ  
-12. **apply_transient_designer** (опционально)  
-13. **apply_harmonic_exciter** (опционально)  
-14. **apply_stereo_imager** (опционально)  
-15. **remove_intersample_peaks** — финальная защита пиков  
-16. **clip** −1…+1, очистка NaN/Inf  
+3. **apply_rumble_filter** (опционально, при rumble_enabled) — high-pass для удаления румбла (по умолчанию 80 Гц).  
+4. **apply_spectral_denoise** (опционально, при denoise_strength > 0)  
+5. **apply_target_curve** — студийный EQ  
+6. **apply_deesser** — De-esser 5–9 кГц (или 5–8 кГц в режиме «вокал»)  
+7. **apply_dynamics** — многополосная динамика + максимайзер  
+8. **apply_parallel_compression** (опционально, при parallel_mix > 0)  
+9. **normalize_lufs** — нормализация по целевым LUFS  
+10. **apply_final_spectral_balance** — финальная частотная коррекция  
+11. **apply_reference_match** (опционально)  
+12. **apply_style_eq** — жанровый EQ  
+13. **apply_transient_designer** (опционально)  
+14. **apply_harmonic_exciter** (опционально)  
+15. **apply_stereo_imager** (опционально)  
+16. **remove_intersample_peaks** — финальная защита пиков  
+17. **clip** −1…+1, очистка NaN/Inf  
 
 ### MasteringChain (chain.py, v2)
 
@@ -40,11 +41,14 @@
 
 В `pipeline.py` заданы `DENOISE_PRESETS`:
 
-- **light:** (strength=0.20, noise_percentile=22) — мягкое подавление, меньше риска «металлического» фона на вокале.  
+- **vocal:** (0.15, 25) — самый мягкий пресет, рекомендован для вокала.  
+- **tape_hiss:** (0.25, 22) — ленточный шип (tape hiss): мягкое подавление высокочастотного шума.  
+- **room_tone:** (0.40, 18) — тон комнаты (room tone): умеренное подавление фонового гула и амбиента.  
+- **light:** (0.20, 22) — мягкое подавление.  
 - **medium:** (0.5, 15.0)  
 - **aggressive:** (0.75, 10.0)  
 
-В `apply_spectral_denoise` нижняя граница усиления Wiener `min_gain = 0.25`, чтобы не обнулять ячейки и не давать артефактов на тихих/классических записях.
+В `apply_spectral_denoise` нижняя граница усиления Wiener `min_gain = 0.25`, чтобы не обнулять ячейки и не давать артефактов на тихих/классических записях. Для вокала лучше начать с пресета «Вокал» или «Лёгкий»; при артефактах уменьшите силу или переключитесь на более мягкий пресет.
 
 ## 3. Компрессор и лимитер
 

@@ -60,7 +60,7 @@ PRESET_LUFS = {
 # Жанровые пресеты: целевой LUFS + мягкие EQ-корректировки по частотным полосам.
 # Поля: lufs, sub (≤80Hz), bass (80–250Hz), mids (800–2500Hz),
 #        presence (3–8kHz), air (10–18kHz), comp_mult (множитель компрессии),
-#        exciter_db (гармонический эксайтер, дБ, аналог iZotope Ozone 5 Exciter),
+#        exciter_db (гармонический эксайтер, дБ),
 #        imager_width (стерео-расширение 0.0=моно, 1.0=оригинал, 1.5=wide, аналог Imager)
 STYLE_CONFIGS: dict[str, dict] = {
     # parallel_mix: доля сигнала в параллельной компрессии (New York compression); 0.0 = выкл
@@ -70,13 +70,15 @@ STYLE_CONFIGS: dict[str, dict] = {
     "classical":   {"lufs": -18.0, "sub": -0.5, "bass":  0.0, "mids":  0.0, "presence":  0.3, "air":  0.6, "comp_mult": 0.45, "exciter_db": 0.0, "imager_width": 1.05, "parallel_mix": 0.0},
     "podcast":     {"lufs": -16.0, "sub": -1.2, "bass": -0.4, "mids":  0.9, "presence":  0.7, "air":  0.0, "comp_mult": 1.1,  "exciter_db": 0.0, "imager_width": 1.0,  "parallel_mix": 0.2},
     "lofi":        {"lufs": -18.0, "sub":  0.4, "bass":  0.6, "mids": -0.6, "presence": -1.0, "air": -1.8, "comp_mult": 0.65, "exciter_db": 0.2, "imager_width": 0.9,  "parallel_mix": 0.0},
-    # House Basic — пресет на основе анализа iZotope Ozone 5:
+    # House Basic — пресет расширенной цепочки:
     # Equalizer: буст суб/басов + воздух; срез мутных мидов
     # Dynamics: tight 4-band compression (comp_mult 1.35)
     # Maximizer: клубная громкость −10 LUFS
-    # Exciter: лёгкое гармоническое насыщение верхних частот (Ozone 5 Exciter)
-    # Imager: широкая стереобаза (Ozone 5 Imager)
+    # Exciter: лёгкое гармоническое насыщение верхних частот
+    # Imager: широкая стереобаза
     "house_basic": {"lufs": -10.0, "sub":  1.8, "bass":  0.9, "mids": -0.5, "presence":  0.8, "air":  1.0, "comp_mult": 1.35, "exciter_db": 0.8, "imager_width": 1.3,  "parallel_mix": 0.3},
+    # Dry vocal — сухой камерный вокал, ровная АЧХ (очередь 9): без эксайтера, без параллельной компрессии, плоский style_eq
+    "dry_vocal":   {"lufs": -14.0, "sub":  0.0, "bass":  0.0, "mids":  0.0, "presence":  0.0, "air":  0.0, "comp_mult": 1.0,  "exciter_db": 0.0, "imager_width": 1.0,  "parallel_mix": 0.0},
 }
 
 # Запас под межвыборочные пики (True Peak)
@@ -888,7 +890,7 @@ def resample_audio(audio: np.ndarray, sr: int, target_sr: int) -> np.ndarray:
 
 def validate_mastered_not_silent(mastered: np.ndarray) -> None:
     """Проверка, что результат мастеринга не пустой и не тишина (защита от пустого файла при доп. обработке, задача 1.5)."""
-    if mastered.size == 0 or float(np.max(np.abs(mastered))) < 1e-7:
+    if mastered.size == 0 or float(np.max(np.abs(mastered))) < 1e-5:
         raise ValueError(
             "Обработка дала тишину. Отключите часть доп. настроек (Spectral Denoiser, De-esser, "
             "Transient Designer, Parallel Compression, Dynamic EQ) и попробуйте снова."
@@ -1111,7 +1113,7 @@ def apply_reverb(
 
 def _exciter_saturate(x: np.ndarray, mode: str, k: float = 2.0) -> np.ndarray:
     """
-    Кривые насыщения по режиму эксайтера (Ozone 5-inspired).
+    Кривые насыщения по режиму эксайтера.
     x — нормализованный сигнал; k — коэффициент жёсткости.
     """
     x = np.clip(x, -1.0, 1.0)
@@ -1133,8 +1135,8 @@ def _exciter_saturate(x: np.ndarray, mode: str, k: float = 2.0) -> np.ndarray:
 def apply_deesser(
     audio: np.ndarray,
     sr: int,
-    threshold_db: float = -10.0,
-    ratio: float = 4.0,
+    threshold_db: float = -6.0,
+    ratio: float = 3.0,
     freq_lo: float = 5000.0,
     freq_hi: float = 9000.0,
     attack_ms: float = 1.0,
@@ -1144,8 +1146,8 @@ def apply_deesser(
     De-esser: частотно-зависимый компрессор для устранения сибилянтности в полосе 5–9 кГц.
     Принцип работы: боковая цепь анализирует уровень в полосе sibilance; при превышении порога
     применяет плавный gain reduction только к этой полосе, не затрагивая остальные частоты.
-    threshold_db: порог срабатывания относительно 0 dBFS (по умолчанию -10 dB).
-    ratio: степень сжатия (по умолчанию 4:1).
+    threshold_db: порог срабатывания относительно 0 dBFS (по умолчанию -6 dB).
+    ratio: степень сжатия (по умолчанию 3:1).
     freq_lo/freq_hi: границы полосы sibilance (Гц).
     attack_ms/release_ms: времена атаки и отпускания огибающей (мс).
     """
@@ -1179,7 +1181,7 @@ def apply_deesser(
             env,
         )
         gain_mult = np.where(env > 1e-10, gain_reduction / (env + 1e-12), 1.0)
-        gain_mult = np.clip(gain_mult, 0.0, 1.0).astype(np.float32)
+        gain_mult = np.clip(gain_mult, 0.35, 1.0).astype(np.float32)
 
         reduced_band = sidechain * gain_mult
         out[:, ch] = x - sidechain + reduced_band
@@ -1197,7 +1199,7 @@ def apply_harmonic_exciter(
     oversample: int = 1,
 ) -> np.ndarray:
     """
-    Аналог iZotope Ozone 5 Exciter.dll — гармонический эксайтер.
+    Гармонический эксайтер: насыщение высокочастотной полосы.
     Добавляет гармоническое насыщение к высокочастотной части (> 6 kHz).
     Нижняя граница поднята с 3 → 6 kHz: presence-зона вокала (2–5 kHz) не затрагивается,
     насыщение применяется только к «воздуху» и призвукам выше 6 kHz.
@@ -1360,12 +1362,38 @@ def apply_style_eq(audio: np.ndarray, sr: int, style: str = "standard") -> np.nd
 
 
 # Пресеты Spectral Denoiser: (strength 0–1, noise_percentile для оценки шума)
-# light — мягкое подавление (снижена агрессивность для вокала); medium / aggressive — выше.
+# vocal — самый мягкий, для вокала; tape_hiss / room_tone — под ленточный шип и тон комнаты (9.3).
 DENOISE_PRESETS: dict[str, tuple[float, float]] = {
+    "vocal": (0.15, 25.0),
     "light": (0.20, 22.0),
     "medium": (0.5, 15.0),
     "aggressive": (0.75, 10.0),
+    "tape_hiss": (0.25, 22.0),   # ленточный шип — мягкое подавление высокочастотного шума
+    "room_tone": (0.40, 18.0),   # тон комнаты — умеренное подавление фонового гула/амбиента
 }
+
+
+def apply_rumble_filter(
+    audio: np.ndarray,
+    sr: int,
+    cutoff_hz: float = 80.0,
+) -> np.ndarray:
+    """
+    Высокочастотный срез (high-pass) для удаления низкочастотного румбла (очередь 9.1).
+    Убирает гул, вибрации и суббас ниже cutoff_hz, не затрагивая основной спектр вокала.
+    cutoff_hz: частота среза (по умолчанию 80 Гц); 60–100 Гц типично для румбла.
+    """
+    from scipy import signal as sg
+    cutoff_hz = float(np.clip(cutoff_hz, 20.0, 200.0))
+    nyq = sr / 2.0
+    f_c = min(cutoff_hz / nyq, 0.99)
+    b, a = sg.butter(2, f_c, btype="high", output="ba")
+    if audio.ndim == 1:
+        return _safe_filtfilt(b, a, audio.astype(np.float64), sg).astype(np.float32)
+    out = np.zeros_like(audio, dtype=np.float32)
+    for ch in range(audio.shape[1]):
+        out[:, ch] = _safe_filtfilt(b, a, audio[:, ch].astype(np.float64), sg).astype(np.float32)
+    return out
 
 
 def apply_spectral_denoise(
@@ -1380,7 +1408,7 @@ def apply_spectral_denoise(
     Wiener gain: G[k,t] = max(0, 1 − strength × (noise[k] / |X[k,t]|)²)
     strength (0.0–1.0): интенсивность подавления. 0.0 = bypass.
     noise_percentile: процентиль для оценки шума (по умолчанию 15% — нижняя часть спектра по времени).
-    Пресеты: DENOISE_PRESETS["light"|"medium"|"aggressive"] → (strength, noise_percentile).
+    Пресеты: DENOISE_PRESETS (vocal, light, medium, aggressive, tape_hiss, room_tone) → (strength, noise_percentile).
     """
     from scipy import signal as sg
 
@@ -1579,6 +1607,7 @@ def apply_dynamic_eq(
                 ),
                 1.0,
             ).astype(np.float32)
+            gain_mult = np.clip(gain_mult, 0.3, 1.0).astype(np.float32)
             out[:, ch] = x - band_signal + band_signal * gain_mult
 
     out = np.clip(out, -1.0, 1.0).astype(np.float32)
@@ -1665,7 +1694,7 @@ def run_mastering_pipeline(
     reference_strength: float = 0.8,
 ) -> np.ndarray:
     """
-    Конвейер студийного мастеринга на основе модулей iZotope Ozone 5 + уникальные функции.
+    Конвейер студийного мастеринга (EQ, Dynamics, Maximizer, Exciter, Imager и др.).
     Опциональные параметры:
       denoise_strength (0.0–1.0): спектральное шумоподавление (0 = выкл).
       transient_attack (0.5–2.0): punch/атака транзиентного дизайнера (1.0 = bypass).
@@ -1694,11 +1723,11 @@ def run_mastering_pipeline(
         report(22, f"Шумоподавление · strength={denoise_strength:.2f}")
 
     audio = apply_target_curve(audio, sr)
-    report(32, "Студийный EQ (Ozone 5 Equalizer)")
+    report(32, "Студийный EQ")
     audio = apply_deesser(audio, sr)
     report(38, "De-esser (5–9 kHz)")
     audio = apply_dynamics(audio, sr)
-    report(52, "Многополосная динамика и максимайзер (Ozone 5 Dynamics / Maximizer)")
+    report(52, "Многополосная динамика и максимайзер")
 
     if parallel_mix > 0.01:
         audio = apply_parallel_compression(audio, sr, mix=parallel_mix)
@@ -1722,11 +1751,11 @@ def run_mastering_pipeline(
 
     if exciter_db > 0.05:
         audio = apply_harmonic_exciter(audio, sr, exciter_db)
-        report(89, f"Гармонический эксайтер (Ozone 5 Exciter) · +{exciter_db:.1f} dB")
+        report(89, f"Гармонический эксайтер · +{exciter_db:.1f} dB")
 
     if abs(imager_width - 1.0) > 0.01:
         audio = apply_stereo_imager(audio, imager_width)
-        report(92, f"Стерео-расширение (Ozone 5 Imager) · width={imager_width:.2f}")
+        report(92, f"Стерео-расширение · width={imager_width:.2f}")
 
     audio = remove_intersample_peaks(audio, headroom_db=0.5)
     report(95, "Финальная защита пиков")

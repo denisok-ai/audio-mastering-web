@@ -374,7 +374,7 @@
       </div>
       <p class="plan-orig" id="proOrig" style="visibility:hidden" data-i18n="pricing.pro_orig">$12 / мес</p>
       <p class="plan-desc" data-i18n="pricing.pro_desc">Для музыкантов и продюсеров. Все инструменты + уникальные PRO-модули.</p>
-      <button class="plan-btn primary" onclick="startPayment('pro_month')" data-i18n="pricing.pro_btn">Купить Pro →</button>
+      <button type="button" class="plan-btn primary" id="btnProPay" data-i18n="pricing.pro_btn">Купить Pro →</button>
       <hr class="plan-divider">
       <ul class="plan-features">
         <li><span class="ico ico-pro">✦</span> <span data-i18n="pricing.pro_f1">Безлимитные мастеринги</span></li>
@@ -403,7 +403,7 @@
       </div>
       <p class="plan-orig" id="studioOrig" style="visibility:hidden" data-i18n="pricing.studio_orig">$39 / мес</p>
       <p class="plan-desc" data-i18n="pricing.studio_desc">Для профессиональных студий. Пакетная обработка и API.</p>
-      <button class="plan-btn outline" onclick="startPayment('studio_month')" data-i18n="pricing.studio_btn">Купить Studio</button>
+      <button type="button" class="plan-btn outline" id="btnStudioPay" data-i18n="pricing.studio_btn">Купить Studio</button>
       <hr class="plan-divider">
       <ul class="plan-features">
         <li><span class="ico ico-yes">✓</span> <span data-i18n="pricing.studio_f1">Всё из Pro</span></li>
@@ -729,36 +729,77 @@
     }).catch(function() { applyI18n(); });
   })();
 
-  // Toggle monthly/annual prices
-  const proAmounts    = { monthly: '9',  annual: '7'  };
-  const studioAmounts = { monthly: '29', annual: '22' };
-  const proOrigs      = { monthly: '',   annual: '$9/мес' };
-  const studioOrigs   = { monthly: '',   annual: '$29/мес' };
+  // Планы и цены: с бэка (GET /api/payments/plans) или fallback
+  window.__paymentPlans = null;
+  const proAmountsFallback    = { monthly: '9',  annual: '7'  };
+  const studioAmountsFallback = { monthly: '29', annual: '22' };
+  const proOrigsFallback      = { monthly: '',   annual: '$9/мес' };
+  const studioOrigsFallback   = { monthly: '',   annual: '$29/мес' };
 
   let billingMode = 'monthly';
+
+  function formatPrice(amountStr, currency) {
+    if (amountStr == null || amountStr === '') return '';
+    var n = parseFloat(String(amountStr));
+    if (isNaN(n)) return amountStr;
+    if (currency === 'RUB') return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+    return n.toFixed(0) + (currency ? ' ' + currency : '');
+  }
 
   function updatePrices() {
     var t = typeof window.__t === 'function' ? window.__t : function(k) { return k; };
     var periodMonth = t('pricing.period_month');
     var periodAnnual = t('pricing.period_annual');
-    document.getElementById('proAmount').textContent     = proAmounts[billingMode];
-    document.getElementById('studioAmount').textContent  = studioAmounts[billingMode];
-    const proOrig    = document.getElementById('proOrig');
-    const studioOrig = document.getElementById('studioOrig');
+    var plans = window.__paymentPlans;
+
+    var proAmountEl = document.getElementById('proAmount');
+    var studioAmountEl = document.getElementById('studioAmount');
+    var proPlanKey = billingMode === 'annual' ? 'pro_year' : 'pro_month';
+    var studioPlanKey = billingMode === 'annual' ? 'studio_year' : 'studio_month';
+
+    if (plans && plans[proPlanKey]) {
+      proAmountEl.textContent = formatPrice(plans[proPlanKey].amount, plans[proPlanKey].currency);
+    } else {
+      proAmountEl.textContent = proAmountsFallback[billingMode];
+    }
+    if (plans && plans[studioPlanKey]) {
+      studioAmountEl.textContent = formatPrice(plans[studioPlanKey].amount, plans[studioPlanKey].currency);
+    } else {
+      studioAmountEl.textContent = studioAmountsFallback[billingMode];
+    }
+
+    var proOrig = document.getElementById('proOrig');
+    var studioOrig = document.getElementById('studioOrig');
+    if (billingMode === 'annual' && plans) {
+      if (plans.pro_month) proOrig.textContent = formatPrice(plans.pro_month.amount, plans.pro_month.currency) + '/мес';
+      else proOrig.textContent = proOrigsFallback.annual;
+      proOrig.style.visibility = 'visible';
+      if (plans.studio_month) studioOrig.textContent = formatPrice(plans.studio_month.amount, plans.studio_month.currency) + '/мес';
+      else studioOrig.textContent = studioOrigsFallback.annual;
+      studioOrig.style.visibility = 'visible';
+    } else if (billingMode === 'annual') {
+      proOrig.textContent = proOrigsFallback.annual; proOrig.style.visibility = 'visible';
+      studioOrig.textContent = studioOrigsFallback.annual; studioOrig.style.visibility = 'visible';
+    } else {
+      proOrig.style.visibility = 'hidden';
+      studioOrig.style.visibility = 'hidden';
+    }
+
     var freePeriod = document.getElementById('freePeriod');
     if (freePeriod) freePeriod.textContent = periodMonth;
-    if (billingMode === 'annual') {
-      proOrig.textContent    = proOrigs.annual;    proOrig.style.visibility    = 'visible';
-      studioOrig.textContent = studioOrigs.annual; studioOrig.style.visibility = 'visible';
-      document.getElementById('proPeriod').textContent    = periodAnnual;
-      document.getElementById('studioPeriod').textContent = periodAnnual;
-    } else {
-      proOrig.style.visibility    = 'hidden';
-      studioOrig.style.visibility = 'hidden';
-      document.getElementById('proPeriod').textContent    = periodMonth;
-      document.getElementById('studioPeriod').textContent = periodMonth;
-    }
+    document.getElementById('proPeriod').textContent = billingMode === 'annual' ? periodAnnual : periodMonth;
+    document.getElementById('studioPeriod').textContent = billingMode === 'annual' ? periodAnnual : periodMonth;
+
+    var proBtn = document.getElementById('btnProPay');
+    var studioBtn = document.getElementById('btnStudioPay');
+    if (proBtn) proBtn.onclick = function() { startPayment(proPlanKey); };
+    if (studioBtn) studioBtn.onclick = function() { startPayment(studioPlanKey); };
   }
+
+  fetch('/api/payments/plans').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+    if (d && d.plans && typeof d.plans === 'object') window.__paymentPlans = d.plans;
+    updatePrices();
+  }).catch(function() { updatePrices(); });
 
   document.getElementById('togMonthly').addEventListener('click', function() {
     billingMode = 'monthly';
@@ -772,7 +813,6 @@
     document.getElementById('togMonthly').classList.remove('active');
     updatePrices();
   });
-  // Apply period strings after locale loaded
   setTimeout(updatePrices, 400);
 
   // FAQ accordion

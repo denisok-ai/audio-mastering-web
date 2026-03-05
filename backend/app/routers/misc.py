@@ -115,7 +115,12 @@ def api_progress():
 
 @router.get("/api/presets")
 def get_presets():
-    """Список пресетов целевой громкости (LUFS)."""
+    """Список пресетов целевой громкости (LUFS) для API.
+
+    Возвращает словарь имя_пресета → целевой LUFS (например spotify: -14, club: -9, broadcast: -24).
+    Используется при вызове POST /api/master с параметром preset. Фронт основного приложения
+    использует /api/presets/community и /api/auth/presets; этот эндпоинт — для интеграций и скриптов.
+    """
     return {"presets": PRESET_LUFS}
 
 
@@ -177,7 +182,11 @@ def get_presets_community():
 
 @router.get("/api/extensions")
 def get_extensions_status():
-    """Минимальный API расширений: статус загрузки дополнительных пресетов и т.п."""
+    """Статус расширений (для API и мониторинга).
+
+    Возвращает community_presets_extra_configured и community_presets_extra_loaded.
+    Фронт не вызывает этот эндпоинт; предназначен для /docs и внешних интеграций.
+    """
     extra = getattr(settings, "community_presets_extra", None) or ""
     base = Path(__file__).resolve().parent.parent
     extra_path = Path(extra) if extra else None
@@ -196,7 +205,12 @@ def get_extensions_status():
 
 @router.get("/api/styles")
 def get_styles():
-    """Список жанровых пресетов с параметрами."""
+    """Список жанровых стилей и целевой LUFS по каждому (для API).
+
+    Возвращает словарь имя_стиля → { lufs }. Полная цепочка модулей по стилю — через
+    GET /api/v2/chain/default?style=... . Фронт использует chain/default; этот эндпоинт
+    удобен для скриптов и отображения списка стилей в документации.
+    """
     return {"styles": {k: {"lufs": v["lufs"]} for k, v in STYLE_CONFIGS.items()}}
 
 

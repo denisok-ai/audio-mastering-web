@@ -1,5 +1,5 @@
 # @file imaging.py
-# @description Модуль стерео-расширения (аналог iZotope Ozone 5 Imager)
+# @description Модуль стерео-расширения (Imager)
 from typing import Any, Optional
 import numpy as np
 from .base import BaseModule

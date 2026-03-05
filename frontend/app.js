@@ -1040,7 +1040,7 @@ function resetPipelineSteps(){
     el.classList.remove('active','done');
   });
 }
-function updateOzoneSteps(style){
+function updateChainSteps(style){
   const isHouse = style === 'house_basic';
   const exciterEl = document.getElementById('pipeExciter');
   const imagerEl  = document.getElementById('pipeImager');
@@ -1113,7 +1113,7 @@ function setFile(f){
   if (abLufsA) abLufsA.textContent = '—';
   if (abLufsB) abLufsB.textContent = '—';
   resetPipelineSteps();
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
   // reset audio state
   stopAll();
   audioBuffer=null;
@@ -1153,7 +1153,7 @@ function resetAll(){
   if (abLufsA) abLufsA.textContent = '—';
   if (abLufsB) abLufsB.textContent = '—';
   resetPipelineSteps();
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
   stopAll();
   audioBuffer=null;
   masteredBuffer=null;
@@ -1181,7 +1181,7 @@ styleGrid.addEventListener('click', e => {
   card.classList.add('active');
   selectedStyle = card.dataset.style;
   targetLufsInput.value = card.dataset.lufs;
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
   loadChainModules();
 });
 
@@ -1421,7 +1421,7 @@ function applyPresetToUI(p) {
       styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
       styleCard.classList.add('active');
     }
-    if (typeof updateOzoneSteps === 'function') updateOzoneSteps(selectedStyle);
+    if (typeof updateChainSteps === 'function') updateChainSteps(selectedStyle);
   }
   if (p.target_lufs != null && targetLufsInput) targetLufsInput.value = String(p.target_lufs);
   const modules = (p.config && p.config.modules) ? p.config.modules : (p.chain_config && p.chain_config.modules) ? p.chain_config.modules : (Array.isArray(p.config) ? p.config : null);
@@ -1906,7 +1906,7 @@ btnMaster.addEventListener('click', async()=>{
   progWrap.classList.add('on');
   pipeline.classList.add('visible');
   resetPipelineSteps();
-  updateOzoneSteps(selectedStyle);
+  updateChainSteps(selectedStyle);
   setProgress(0,'Инициализация…');
 
   const form=new FormData();
@@ -2109,7 +2109,7 @@ if (btnAiRecommend) {
         styleGrid.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
       }
-      updateOzoneSteps(style);
+      updateChainSteps(style);
       setStatus(stMeasure, res.reason || 'Пресет применён', 'ok');
       toast(res.reason || 'AI применил пресет', 'ok', 3000);
       loadAiLimits();
@@ -2233,7 +2233,7 @@ function logout() {
 let _tierInfo = { tier: 'free', remaining: 3, limit: 3, used: 0, reset_at: '' };
 let _debugMode = typeof window.__MAGIC_MASTER_DEBUG__ !== 'undefined' && window.__MAGIC_MASTER_DEBUG__ === true;
 /** Флаги функций из /api/health (админка). По умолчанию true. */
-let _features = { ai_enabled: true, batch_enabled: true, registration_enabled: true };
+let _features = { ai_enabled: true, batch_enabled: true, registration_enabled: true, vocal_isolation_enabled: false };
 
 if (_debugMode) {
   _tierInfo = { tier: 'pro', remaining: -1, limit: -1, used: 0, reset_at: null, debug: true };
@@ -2252,7 +2252,8 @@ async function loadTierLimits() {
         _features = {
           ai_enabled: healthData.features.ai_enabled !== false,
           batch_enabled: healthData.features.batch_enabled !== false,
-          registration_enabled: healthData.features.registration_enabled !== false
+          registration_enabled: healthData.features.registration_enabled !== false,
+          vocal_isolation_enabled: healthData.features.vocal_isolation_enabled === true
         };
       }
     }
@@ -2375,6 +2376,9 @@ function applyTierUI() {
   // Пакетная обработка — только для Pro / debug и если включена в настройках
   const batchSection = document.getElementById('batchSection');
   if (batchSection) batchSection.style.display = (isPro && _features.batch_enabled) ? 'block' : 'none';
+  // Изоляция вокала (9.2) — показывать блок только если сервер включил фичу
+  const vocalIsolationMod = document.getElementById('modVocalIsolation');
+  if (vocalIsolationMod) vocalIsolationMod.style.display = _features.vocal_isolation_enabled ? 'block' : 'none';
 
   // AI-блоки всегда видны при включённом AI; без файла — неактивны (updateNoFileState)
   const aiHelpersSection = document.getElementById('aiHelpersSection');
@@ -2580,6 +2584,7 @@ function refreshTierAfterMaster() {
     if (document.getElementById('ditherType')) form.append('dither_type', document.getElementById('ditherType').value || 'tpdf');
     var autoBlank = document.querySelector('[name="auto_blank_sec"]') || document.getElementById('autoBlankSec');
     if (autoBlank) form.append('auto_blank_sec', autoBlank.value || '0');
+    if (typeof collectProModuleParams === 'function') collectProModuleParams(form);
 
     try {
       const r = await fetch(API + '/api/v2/batch', { method: 'POST', body: form, headers: authHeaders() });
@@ -2616,6 +2621,8 @@ function refreshTierAfterMaster() {
             }
             if (st.status === 'error') {
               if (prog) prog.textContent = 'Ошибка';
+              var errMsg = (st.error && String(st.error).trim()) || 'Ошибка мастеринга';
+              toast(errMsg, 'err', 7000);
               return;
             }
             setTimeout(function() { poll(jobId, filename); }, 1200);
@@ -2718,6 +2725,47 @@ let refFile = null;
       if (mod) mod.classList.toggle('active', tog.checked);
     });
   }
+  wireModule('vocalIsolationEnabled', 'vocalIsolationBody', 'modVocalIsolation');
+
+  // Кнопка «Только изолировать вокал» (10.2): выбор файла → POST /api/v2/isolate-vocal → скачать WAV
+  (function() {
+    const btn = document.getElementById('btnIsolateVocalOnly');
+    const fileInput = document.getElementById('isolateVocalFileInput');
+    if (!btn || !fileInput) return;
+    btn.addEventListener('click', function() { fileInput.click(); });
+    fileInput.addEventListener('change', async function() {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const r = await fetch(API + '/api/v2/isolate-vocal', { method: 'POST', body: form, headers: authHeaders() });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          toast((err.detail || r.statusText) || 'Ошибка изоляции вокала', 'err');
+          return;
+        }
+        const blob = await r.blob();
+        const disp = r.headers.get('Content-Disposition');
+        let name = 'vocals.wav';
+        if (disp) {
+          const m = disp.match(/filename[*]?=(?:UTF-8'')?["']?([^"';]+)/i) || disp.match(/filename=["']?([^"';]+)/i);
+          if (m && m[1]) name = m[1].trim();
+        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast(typeof window.__t === 'function' ? window.__t('app.isolate_vocal_done') : 'Вокал изолирован, файл скачан', 'ok');
+      } catch (e) {
+        toast(e.message || 'Ошибка запроса', 'err');
+      }
+      fileInput.value = '';
+    });
+  })();
+
+  wireModule('rumbleEnabled',    'rumbleBody',    'modRumble');
   wireModule('denoiserEnabled',  'denoiserBody',  'modDenoiser');
   wireModule('deesserEnabled',   'deesserBody',   'modDeesser');
   wireModule('transientEnabled', 'transientBody', 'modTransient');
@@ -2737,6 +2785,13 @@ let refFile = null;
   wireSlider('transientSustain',  'transientSustainVal',v => (v / 100).toFixed(2) + '×');
   wireSlider('parallelMix',       'parallelMixVal',     v => v + '%');
 
+  var rumbleCutoffEl = document.getElementById('rumbleCutoff');
+  var rumbleCutoffValEl = document.getElementById('rumbleCutoffVal');
+  if (rumbleCutoffEl && rumbleCutoffValEl) {
+    rumbleCutoffEl.addEventListener('input', function() { rumbleCutoffValEl.textContent = rumbleCutoffEl.value; });
+    rumbleCutoffEl.addEventListener('change', function() { rumbleCutoffValEl.textContent = rumbleCutoffEl.value; });
+  }
+
   // Раскрытие тела модуля по клику на заголовок (toggle expand)
   document.querySelectorAll('.pro-module-head').forEach(h => {
     h.addEventListener('click', e => {
@@ -2751,19 +2806,32 @@ function collectProModuleParams(form) {
   const gv = id => { const el = document.getElementById(id); return el ? el.value : null; };
   const gc = id => { const el = document.getElementById(id); return el ? el.checked : false; };
 
-  // Spectral Denoiser: пресет (light/medium/aggressive) или свой уровень силы
+  // Изоляция вокала (9.2) — только если чекбокс включён
+  if (gc('vocalIsolationEnabled')) {
+    form.append('apply_vocal_isolation', 'true');
+  }
+  // Румбл-фильтр (очередь 9.1)
+  if (gc('rumbleEnabled')) {
+    form.append('rumble_enabled', 'true');
+    var cut = parseInt(gv('rumbleCutoff') || 80, 10);
+    form.append('rumble_cutoff', String(Math.max(60, Math.min(120, cut))));
+  }
+  // Spectral Denoiser: пресет (vocal/light/medium/aggressive) или свой уровень силы (макс. 70% в режиме «Свой» — план 2.3.2)
   if (gc('denoiserEnabled')) {
     const preset = (gv('denoiserPreset') || '').trim();
-    if (preset && ['light', 'medium', 'aggressive'].includes(preset)) {
+    if (preset && ['vocal', 'tape_hiss', 'room_tone', 'light', 'medium', 'aggressive'].includes(preset)) {
       form.append('denoise_preset', preset);
     } else {
-      form.append('denoise_strength', (parseFloat(gv('denoiserStrength') || 40) / 100).toFixed(2));
+      var rawStr = Math.min(100, Math.max(0, parseFloat(gv('denoiserStrength') || 40) || 0));
+      var capped = Math.min(rawStr / 100, 0.7);
+      form.append('denoise_strength', capped.toFixed(2));
     }
   }
-  // De-esser
+  // De-esser (полоса 5–9 или 5–8 кГц для вокала — очередь 9.3)
   if (gc('deesserEnabled')) {
     form.append('deesser_enabled', 'true');
-    form.append('deesser_threshold', gv('deesserThreshold') || '-10');
+    form.append('deesser_threshold', gv('deesserThreshold') || '-6');
+    form.append('deesser_freq_hi', gv('deesserFreqHi') || '9000');
   }
   // Transient Designer
   if (gc('transientEnabled')) {

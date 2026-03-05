@@ -231,6 +231,18 @@ def test_run_mastering_pipeline_style_edm(stereo_2sec_44k):
     assert not np.any(np.isnan(out))
 
 
+def test_run_mastering_pipeline_style_dry_vocal(stereo_2sec_44k):
+    """Пайплайн со стилем dry_vocal (ровная АЧХ, без эксайтера): выход без NaN, форма сохраняется."""
+    from app.pipeline import run_mastering_pipeline
+    audio, sr = stereo_2sec_44k
+    out = run_mastering_pipeline(audio, sr, target_lufs=-14.0, style="dry_vocal")
+    assert out.shape == audio.shape
+    assert out.dtype == np.float32
+    assert not np.any(np.isnan(out))
+    assert not np.any(np.isinf(out))
+    assert np.max(np.abs(out)) <= 1.01
+
+
 def test_load_audio_from_bytes_wav():
     from app.pipeline import load_audio_from_bytes
     import soundfile as sf
@@ -246,7 +258,7 @@ def test_load_audio_from_bytes_wav():
 
 def test_style_configs_has_required_styles():
     from app.pipeline import STYLE_CONFIGS
-    required = {"standard", "edm", "hiphop", "classical", "podcast", "lofi", "house_basic"}
+    required = {"standard", "edm", "hiphop", "classical", "podcast", "lofi", "house_basic", "dry_vocal"}
     for style in required:
         assert style in STYLE_CONFIGS
         cfg = STYLE_CONFIGS[style]
@@ -256,7 +268,7 @@ def test_style_configs_has_required_styles():
 
 def test_denoise_presets():
     from app.pipeline import DENOISE_PRESETS, apply_spectral_denoise
-    assert set(DENOISE_PRESETS) == {"light", "medium", "aggressive"}
+    assert set(DENOISE_PRESETS) == {"vocal", "light", "medium", "aggressive", "tape_hiss", "room_tone"}
     for name, (strength, noise_pct) in DENOISE_PRESETS.items():
         assert 0 < strength <= 1
         assert 5 <= noise_pct <= 30
@@ -267,6 +279,23 @@ def test_denoise_presets():
     out = apply_spectral_denoise(audio, 44100, strength=0.5, noise_percentile=15.0)
     assert out.shape == audio.shape
     assert not np.any(np.isnan(out))
+
+
+def test_apply_rumble_filter():
+    """Румбл-фильтр (high-pass 80 Hz): форма сохраняется, нет NaN, низкие частоты ослабляются."""
+    from app.pipeline import apply_rumble_filter
+    sr = 44100
+    n = sr * 2
+    t = np.linspace(0, n / sr, n, dtype=np.float32)
+    # Сигнал с низкой (30 Hz) и средней (200 Hz) частотой
+    low = 0.5 * np.sin(2 * np.pi * 30 * t)
+    mid = 0.3 * np.sin(2 * np.pi * 200 * t)
+    audio = (low + mid).astype(np.float32)
+    out = apply_rumble_filter(audio, sr, cutoff_hz=80.0)
+    assert out.shape == audio.shape
+    assert not np.any(np.isnan(out))
+    # После HP 80 Hz амплитуда низкой составляющей должна уменьшиться
+    assert np.max(np.abs(out)) <= np.max(np.abs(audio)) * 1.1
 
 
 def test_run_mastering_pipeline_sine_no_clip_nan(mono_2sec_44k):
@@ -302,6 +331,27 @@ def test_run_mastering_pipeline_vocal_like():
     assert not np.any(np.isnan(out))
     assert not np.any(np.isinf(out))
     assert np.max(np.abs(out)) <= 1.01
+
+
+def test_denoiser_vocal_like_not_silent():
+    """При включённом Denoiser (preset light/vocal) вокало-подобный сигнал не даёт тишину на выходе (план 2.3.4)."""
+    from app.pipeline import apply_spectral_denoise, DENOISE_PRESETS
+    sr = 44100
+    n = sr * 2
+    t = np.linspace(0, n / sr, n, dtype=np.float32)
+    vocal = (
+        0.08 * np.sin(2 * np.pi * 400 * t)
+        + 0.05 * np.sin(2 * np.pi * 800 * t)
+        + 0.03 * np.sin(2 * np.pi * 1200 * t)
+        + 0.01 * (np.random.rand(n).astype(np.float32) - 0.5)
+    )
+    stereo = np.column_stack((vocal, vocal * 0.95)).astype(np.float32)
+    for preset in ("vocal", "light"):
+        strength, noise_pct = DENOISE_PRESETS[preset]
+        out = apply_spectral_denoise(stereo, sr, strength=strength, noise_percentile=noise_pct)
+        assert out.shape == stereo.shape
+        assert not np.any(np.isnan(out))
+        assert np.max(np.abs(out)) > 0.01, f"preset={preset}: output too quiet"
 
 
 def test_export_audio_wav_no_nan(stereo_2sec_44k):

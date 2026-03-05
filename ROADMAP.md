@@ -41,7 +41,7 @@
 | classical | -18.0 | 0.0 | 1.05 | Классика |
 | podcast | -16.0 | 0.0 | 1.0 | Подкасты |
 | lofi | -18.0 | 0.2 | 0.9 | Lo-fi |
-| **house_basic** | **-10.0** | **0.8** | **1.3** | **House Basic (Ozone 5-inspired)** |
+| **house_basic** | **-10.0** | **0.8** | **1.3** | **House Basic (расширенная цепочка)** |
 
 ### Фронтенд (`frontend/index.html`)
 
@@ -53,21 +53,25 @@
 - Before/After LUFS панель
 - История мастеринга (localStorage, 8 записей)
 - Toast-уведомления
-- Шаги Ozone 5 Exciter / Imager (видны при house_basic)
+- Шаги Exciter / Imager (видны при house_basic)
 - Адаптивный дизайн (mobile 480px)
 
-### DLL-анализ (папка `/doc`)
+### Справочно: студийные модули (папка `/doc`)
 
-Проанализированы модули iZotope Ozone 5:
+Реализованные процессоры цепочки мастеринга:
 
-| DLL | Модуль | Реализовано |
+| Модуль | Назначение | Реализация |
 |---|---|---|
-| `iZotope Ozone 5 Equalizer.dll` | Параметрический EQ | apply_target_curve + apply_style_eq |
-| `iZotope Ozone 5 Dynamics.dll` | Multiband compressor | apply_multiband_dynamics |
-| `iZotope Ozone 5 Maximizer.dll` | Maximizer | apply_maximizer |
-| `iZotope Ozone 5 Exciter.dll` | Harmonic Exciter | apply_harmonic_exciter |
-| `iZotope Ozone 5 Imager.dll` | Stereo Imager | apply_stereo_imager |
-| `iZotope Insight.dll` | Metering | measure_lufs |
+| Equalizer | Параметрический EQ | apply_target_curve + apply_style_eq |
+| Dynamics | Multiband compressor | apply_multiband_dynamics |
+| Maximizer | Лимитер/максимайзер | apply_maximizer |
+| Exciter | Гармонический эксайтер | apply_harmonic_exciter |
+| Imager | Стерео-расширение | apply_stereo_imager |
+| Metering | LUFS, пики | measure_lufs |
+
+### Опционально: изоляция вокала (Demucs)
+
+При включённой настройке `MAGIC_MASTER_ENABLE_VOCAL_ISOLATION=1` и установленном Demucs (`pip install -r backend/requirements-vocal-isolation.txt`) доступны: опция «Сначала изолировать вокал» в цепочке мастеринга и кнопка «Только изолировать вокал» (скачать WAV). API: `POST /api/v2/isolate-vocal`. Подробнее: [README.md](README.md#изоляция-вокала-опционально), [doc/PLAN_9_2_VOCAL_ISOLATION.md](doc/PLAN_9_2_VOCAL_ISOLATION.md).
 
 ---
 
@@ -122,7 +126,7 @@
 
 ## Дорожная карта v2 — Magic Master следующего поколения
 
-> Вдохновлён архитектурой iZotope Ozone 5.0.3
+> Студийная цепочка мастеринга (EQ, Dynamics, Maximizer, Exciter, Imager).
 
 ### Фаза 0 — Текущий спринт (багфиксы + DAW UI)
 

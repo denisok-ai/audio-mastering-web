@@ -13,7 +13,7 @@
 | `id` | string | Уникальный идентификатор (латиница, без пробелов). |
 | `name` | string | Название для UI (например «Stream (−14 LUFS)»). |
 | `target_lufs` | number | Целевая громкость в LUFS (−60…−1). |
-| `style` | string | Ключ жанра из `STYLE_CONFIGS` в `pipeline.py`: `standard`, `edm`, `hiphop`, `classical`, `podcast`, `lofi`, `house_basic`. |
+| `style` | string | Ключ жанра из `STYLE_CONFIGS` в `pipeline.py`: `standard`, `edm`, `hiphop`, `classical`, `podcast`, `lofi`, `house_basic`, `dry_vocal`. |
 | `chain_config` | object \| null | Опционально: полный конфиг цепочки модулей. Если `null`, используется цепочка по умолчанию для выбранного `style` и `target_lufs`. |
 
 ## Как добавить пресет
