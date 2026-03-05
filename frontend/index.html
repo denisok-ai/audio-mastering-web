@@ -132,6 +132,8 @@
     html.theme-light select,
     html.theme-light input[type="number"],
     html.theme-light input[type="text"] { background: var(--surface); color: var(--text); border-color: var(--border); }
+    /* Все выпадающие списки (Целевой LUFS, формат, дизеринг и т.д.) — светлый фон в светлой теме */
+    html.theme-light select option { background: #f5f6f8; color: #1a1d21; }
     html.theme-light .drop { border-color: rgba(91,33,182,0.35); }
     html.theme-light .drop.has-file { border-color: rgba(21,128,61,0.4); }
     html.theme-light .tier-badge { background: #f5f3ff; border-color: #c4b5fd; color: var(--accent-2); }
