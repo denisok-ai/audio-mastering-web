@@ -934,7 +934,7 @@
     .wave-expand-btn:hover { opacity:1; background:rgba(6,182,212,0.25) }
     .wave-expand-btn svg { width:14px; height:14px }
 
-    /* Полноэкранный оверлей волновой формы */
+    /* Полноэкранный оверлей волновой формы — цветовая схема как у блока Спектр */
     .wave-fullscreen-overlay {
       position:fixed; inset:0; z-index:9998; display:none;
       align-items:center; justify-content:center; padding:1.5rem; box-sizing:border-box;
@@ -947,23 +947,53 @@
       position:relative; width:100%; max-width:1200px; max-height:85vh;
       display:flex; flex-direction:column;
       background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
-      border:1px solid var(--border); border-radius:var(--r-lg);
-      box-shadow:0 20px 60px rgba(0,0,0,0.5); overflow:hidden;
+      border:1px solid var(--border); border-radius:var(--r); overflow:hidden;
+      box-shadow:0 2px 16px rgba(0,0,0,0.25);
     }
     .wave-fullscreen-head {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:.6rem 1rem; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+      padding:.7rem 1rem; border-bottom:1px solid var(--border);
       background:rgba(0,0,0,0.25);
     }
-    .wave-fullscreen-ttl { font-size:.75rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--text-dim); }
+    .wave-fullscreen-head-left { display:flex; align-items:center; gap:.6rem; }
+    .wave-fullscreen-ttl {
+      font-size:.7rem; font-weight:700; letter-spacing:.09em;
+      text-transform:uppercase; color:var(--text-dim);
+      display:inline-flex; align-items:center; gap:.45rem;
+    }
+    .wave-fullscreen-ttl svg { width:14px; height:14px; color:var(--cyan); }
+    .wave-fullscreen-pp {
+      width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; flex-shrink:0;
+      box-shadow:0 2px 12px var(--accent-glow);
+      transition:box-shadow .18s, transform .1s;
+    }
+    .wave-fullscreen-pp:hover { box-shadow:0 4px 18px rgba(108,75,255,.6); transform:scale(1.05); }
+    .wave-fullscreen-pp svg { width:14px; height:14px; }
+    .wave-fullscreen-pp .icon-pause { display:none; }
+    .wave-fullscreen-pp.playing .icon-play { display:none; }
+    .wave-fullscreen-pp.playing .icon-pause { display:block; }
     .wave-fullscreen-close {
       width:32px; height:32px; border:none; border-radius:6px;
       background:var(--surface-2); color:var(--text); font-size:1.25rem; line-height:1;
-      cursor:pointer; transition:background .15s;
+      cursor:pointer; transition:background .15s; flex-shrink:0;
     }
     .wave-fullscreen-close:hover { background:var(--red); color:#fff }
-    .wave-fullscreen-canvas-wrap { flex:1; min-height:180px; padding:.75rem; display:flex; align-items:stretch; justify-content:stretch; }
-    .wave-fullscreen-canvas-wrap canvas { display:block; width:100%; height:100%; min-height:160px; border-radius:var(--r-sm); background:rgba(0,0,0,0.2); }
+    .wave-fullscreen-canvas-wrap {
+      flex:1; min-height:180px; padding:.75rem; display:flex; align-items:stretch; justify-content:stretch;
+      background:rgba(0,0,0,0.4);
+    }
+    .wave-fullscreen-canvas-wrap canvas {
+      display:block; width:100%; height:100%; min-height:160px; border-radius:var(--r-sm);
+      background:rgba(0,0,0,0.4);
+    }
+    html.theme-light .wave-fullscreen-content { background: var(--surface); border-color: rgba(91,33,182,0.15); }
+    html.theme-light .wave-fullscreen-head { background: var(--surface-2); }
+    html.theme-light .wave-fullscreen-ttl { color: var(--text-dim); }
+    html.theme-light .wave-fullscreen-canvas-wrap,
+    html.theme-light .wave-fullscreen-canvas-wrap canvas { background: #e2e6eb; }
 
     /* playhead overlay */
     .wave-wrap::after {
@@ -2726,7 +2756,16 @@
       <div class="wave-fullscreen-backdrop" id="waveFullscreenBackdrop"></div>
       <div class="wave-fullscreen-content" id="waveFullscreenContent">
         <div class="wave-fullscreen-head">
-          <span class="wave-fullscreen-ttl">Волновая форма</span>
+          <div class="wave-fullscreen-head-left">
+            <button type="button" class="wave-fullscreen-pp" id="waveFullscreenPP" title="Воспроизведение / пауза" aria-label="Воспроизведение">
+              <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
+            <span class="wave-fullscreen-ttl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Волновая форма
+            </span>
+          </div>
           <button type="button" class="wave-fullscreen-close" id="waveFullscreenClose" aria-label="Закрыть">×</button>
         </div>
         <div class="wave-fullscreen-canvas-wrap">

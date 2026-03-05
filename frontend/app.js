@@ -43,6 +43,7 @@ const waveFullscreenBackdrop = document.getElementById('waveFullscreenBackdrop')
 const waveFullscreenClose = document.getElementById('waveFullscreenClose');
 const waveFullscreenContent = document.getElementById('waveFullscreenContent');
 const waveFullscreenCanvas = document.getElementById('waveFullscreenCanvas');
+const waveFullscreenPP = document.getElementById('waveFullscreenPP');
 const btnPP       = document.getElementById('btnPP');
 const iconPlay    = document.getElementById('iconPlay');
 const iconPause   = document.getElementById('iconPause');
@@ -905,6 +906,10 @@ function togglePlay() {
 function updateTransport() {
   iconPlay.style.display  = isPlaying ? 'none'  : '';
   iconPause.style.display = isPlaying ? '' : 'none';
+  if (waveFullscreenPP) {
+    if (isPlaying) waveFullscreenPP.classList.add('playing');
+    else waveFullscreenPP.classList.remove('playing');
+  }
 }
 
 /* ─── RAF loop ─── */
@@ -945,6 +950,10 @@ function openWaveFullscreen() {
   if (!audioBuffer || !waveFullscreenOverlay || !waveFullscreenCanvas) return;
   waveFullscreenOverlay.setAttribute('data-open', 'true');
   waveFullscreenOverlay.style.display = 'flex';
+  if (waveFullscreenPP) {
+    if (isPlaying) waveFullscreenPP.classList.add('playing');
+    else waveFullscreenPP.classList.remove('playing');
+  }
   function sizeAndDraw() {
     const wrap = waveFullscreenCanvas.parentElement;
     if (wrap) {
@@ -980,6 +989,9 @@ waveWrap.addEventListener('dblclick', e => {
 });
 if (waveFullscreenBackdrop) waveFullscreenBackdrop.addEventListener('click', closeWaveFullscreen);
 if (waveFullscreenClose) waveFullscreenClose.addEventListener('click', closeWaveFullscreen);
+if (waveFullscreenPP) {
+  waveFullscreenPP.addEventListener('click', e => { e.stopPropagation(); if (audioBuffer) togglePlay(); });
+}
 document.addEventListener('keydown', e => {
   if (e.code === 'Escape' && waveFullscreenOverlay && waveFullscreenOverlay.getAttribute('data-open') === 'true') {
     closeWaveFullscreen();

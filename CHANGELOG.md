@@ -7,8 +7,21 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
+---
+
+## [0.5.3] — 2026-03
+
+### Админка и настройки
+- **backend/app/admin.py**: лимиты AI допускают -1 (без лимита); SMTP port ge=0; llm_guard min 1; при port=0 сохраняется 587; ослаблена валидация для устранения 422 при сохранении.
+- **backend/app/ai.py**: ключи OpenAI/DeepSeek читаются только из настроек админки (`_get_llm_setting_admin_only`), не из .env.
+- **frontend/admin.html**: buildSmtpPayload — порт в диапазоне 1–65535, иначе 587.
+
+### UI: волновая форма на весь экран
+- **frontend/index.html**: полноэкранный оверлей волновой формы (кнопка «Развернуть», двойной клик по графику); кнопка Play/Pause в оверлее; цветовая схема как у блока «Спектр» (фон, заголовок, область графика, светлая тема).
+- **frontend/app.js**: drawWaveformToCanvas(), открытие/закрытие оверлея, синхронизация кнопки воспроизведения с основным плеером.
+
 ### Тесты
-- **backend/tests/test_api.py**: тест `test_api_v2_chain_default_style_dry_vocal` — GET /api/v2/chain/default?style=dry_vocal возвращает цепочку; тест `test_api_v2_master_unknown_style_fallback` — POST /api/v2/master с неизвестным style принимается (fallback на standard).
+- **backend/tests/test_api.py**: тест `test_api_v2_chain_default_style_dry_vocal`; тест `test_api_v2_master_unknown_style_fallback`.
 
 ---
 
