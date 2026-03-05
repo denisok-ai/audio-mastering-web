@@ -37,6 +37,12 @@ const btnReset    = document.getElementById('btnReset');
 const playerEl    = document.getElementById('player');
 const waveWrap    = document.getElementById('waveWrap');
 const waveCanvas  = document.getElementById('waveCanvas');
+const waveExpandBtn = document.getElementById('waveExpandBtn');
+const waveFullscreenOverlay = document.getElementById('waveFullscreenOverlay');
+const waveFullscreenBackdrop = document.getElementById('waveFullscreenBackdrop');
+const waveFullscreenClose = document.getElementById('waveFullscreenClose');
+const waveFullscreenContent = document.getElementById('waveFullscreenContent');
+const waveFullscreenCanvas = document.getElementById('waveFullscreenCanvas');
 const btnPP       = document.getElementById('btnPP');
 const iconPlay    = document.getElementById('iconPlay');
 const iconPause   = document.getElementById('iconPause');
@@ -452,26 +458,24 @@ async function loadAudio(file) {
 }
 
 /* ─── Waveform drawing ─── */
-function drawWaveform(playPosFrac) {
-  if (!audioBuffer) return;
+/** Рисует волновую форму в любой canvas. playPosFrac 0..1 — позиция воспроизведения. */
+function drawWaveformToCanvas(canvas, playPosFrac) {
+  if (!audioBuffer || !canvas) return;
   const dpr = window.devicePixelRatio || 1;
-  const rect = waveCanvas.getBoundingClientRect();
-  const W = Math.floor(rect.width  * dpr) || 460 * dpr;
-  const H = Math.floor(rect.height * dpr) || 58  * dpr;
-  if (waveCanvas.width !== W || waveCanvas.height !== H) {
-    waveCanvas.width  = W;
-    waveCanvas.height = H;
+  const rect = canvas.getBoundingClientRect();
+  const W = Math.max(1, Math.floor(rect.width * dpr));
+  const H = Math.max(1, Math.floor(rect.height * dpr));
+  if (canvas.width !== W || canvas.height !== H) {
+    canvas.width = W;
+    canvas.height = H;
   }
-  const ctx = waveCanvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, W, H);
 
-  // Average channels
-  const n  = audioBuffer.numberOfChannels;
+  const n = audioBuffer.numberOfChannels;
   const len = audioBuffer.length;
-  const spp = Math.max(1, Math.floor(len / W)); // samples per pixel
+  const spp = Math.max(1, Math.floor(len / W));
   const mid = H / 2;
-
-  // Gradient: played = brighter accent, unplayed = dimmer
   const playedX = Math.floor(playPosFrac * W);
 
   for (let x = 0; x < W; x++) {
@@ -485,22 +489,23 @@ function drawWaveform(playPosFrac) {
     }
     const h = Math.max(1, maxAmp * mid * 0.93);
     const played = x < playedX;
-    // Бирюзовый цвет шкалы (как в блоке Спектр)
     ctx.fillStyle = played
       ? `rgba(6,182,212,${0.55 + maxAmp * 0.45})`
       : `rgba(6,182,212,${0.18 + maxAmp * 0.22})`;
     ctx.fillRect(x, mid - h, 1, h * 2);
   }
 
-  // Playhead line
   if (playPosFrac > 0 && playPosFrac < 1) {
     const px = Math.floor(playPosFrac * W);
     ctx.fillStyle = 'rgba(255,255,255,0.75)';
     ctx.fillRect(px, 0, Math.max(1, dpr), H);
-    // glow — бирюзовый
     ctx.fillStyle = 'rgba(6,182,212,0.35)';
     ctx.fillRect(Math.max(0, px - 2 * dpr), 0, 4 * dpr, H);
   }
+}
+
+function drawWaveform(playPosFrac) {
+  drawWaveformToCanvas(waveCanvas, playPosFrac);
 }
 
 /* ─── Spectrum (FFT, log scale 20 Hz – 20 kHz) ─── */
@@ -911,6 +916,9 @@ function startRaf() {
     const dur = audioBuffer.duration;
     const frac = Math.min(1, pos / dur);
     drawWaveform(frac);
+    if (waveFullscreenOverlay && waveFullscreenOverlay.getAttribute('data-open') === 'true' && waveFullscreenCanvas) {
+      drawWaveformToCanvas(waveFullscreenCanvas, frac);
+    }
     tElapsed.textContent = fmtTime(Math.min(pos, dur));
     tFill.style.width = (frac * 100).toFixed(2) + '%';
     waveWrap.setAttribute('data-time', fmtTime(Math.min(pos, dur)));
@@ -923,12 +931,59 @@ function stopRaf() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
 /* ─── Click on waveform to seek ─── */
 waveWrap.addEventListener('click', e => {
   if (!audioBuffer) return;
+  if (e.target === waveExpandBtn || waveExpandBtn.contains(e.target)) return;
   const rect = waveWrap.getBoundingClientRect();
   const frac = (e.clientX - rect.left) / rect.width;
   const newOffset = frac * audioBuffer.duration;
   pauseOffset = newOffset;
   if (isPlaying) playFrom(newOffset);
   else { drawWaveform(frac); tElapsed.textContent = fmtTime(newOffset); tFill.style.width = (frac*100)+'%'; }
+});
+
+/* ─── Полноэкранный вид волновой формы (график на весь экран) ─── */
+function openWaveFullscreen() {
+  if (!audioBuffer || !waveFullscreenOverlay || !waveFullscreenCanvas) return;
+  waveFullscreenOverlay.setAttribute('data-open', 'true');
+  waveFullscreenOverlay.style.display = 'flex';
+  function sizeAndDraw() {
+    const wrap = waveFullscreenCanvas.parentElement;
+    if (wrap) {
+      const r = wrap.getBoundingClientRect();
+      waveFullscreenCanvas.style.width = r.width + 'px';
+      waveFullscreenCanvas.style.height = Math.max(120, r.height) + 'px';
+    }
+    drawWaveformToCanvas(waveFullscreenCanvas, getCurrentFrac());
+  }
+  requestAnimationFrame(() => { requestAnimationFrame(sizeAndDraw); });
+  const ro = new ResizeObserver(sizeAndDraw);
+  if (waveFullscreenContent) ro.observe(waveFullscreenContent);
+  waveFullscreenOverlay._waveResizeObserver = ro;
+}
+
+function closeWaveFullscreen() {
+  if (!waveFullscreenOverlay) return;
+  waveFullscreenOverlay.setAttribute('data-open', '');
+  waveFullscreenOverlay.style.display = 'none';
+  if (waveFullscreenOverlay._waveResizeObserver) {
+    waveFullscreenOverlay._waveResizeObserver.disconnect();
+    waveFullscreenOverlay._waveResizeObserver = null;
+  }
+}
+
+if (waveExpandBtn) {
+  waveExpandBtn.addEventListener('click', e => { e.stopPropagation(); openWaveFullscreen(); });
+}
+waveWrap.addEventListener('dblclick', e => {
+  if (!audioBuffer) return;
+  if (e.target === waveExpandBtn || waveExpandBtn.contains(e.target)) return;
+  openWaveFullscreen();
+});
+if (waveFullscreenBackdrop) waveFullscreenBackdrop.addEventListener('click', closeWaveFullscreen);
+if (waveFullscreenClose) waveFullscreenClose.addEventListener('click', closeWaveFullscreen);
+document.addEventListener('keydown', e => {
+  if (e.code === 'Escape' && waveFullscreenOverlay && waveFullscreenOverlay.getAttribute('data-open') === 'true') {
+    closeWaveFullscreen();
+  }
 });
 
 /* ─── Click on scrub bar ─── */

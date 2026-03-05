@@ -924,6 +924,46 @@
     }
     .wave-wrap:hover { border-color:rgba(6,182,212,0.35) }
     .wave-canvas { display:block; width:100%; height:58px }
+    .wave-expand-btn {
+      position:absolute; top:6px; right:6px; z-index:2;
+      width:28px; height:28px; border:none; border-radius:6px;
+      background:rgba(0,0,0,0.4); color:var(--cyan);
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      opacity:0.85; transition:opacity .15s, background .15s;
+    }
+    .wave-expand-btn:hover { opacity:1; background:rgba(6,182,212,0.25) }
+    .wave-expand-btn svg { width:14px; height:14px }
+
+    /* Полноэкранный оверлей волновой формы */
+    .wave-fullscreen-overlay {
+      position:fixed; inset:0; z-index:9998; display:none;
+      align-items:center; justify-content:center; padding:1.5rem; box-sizing:border-box;
+    }
+    .wave-fullscreen-overlay[data-open="true"] { display:flex !important; }
+    .wave-fullscreen-backdrop {
+      position:absolute; inset:0; background:rgba(0,0,0,0.82); cursor:pointer;
+    }
+    .wave-fullscreen-content {
+      position:relative; width:100%; max-width:1200px; max-height:85vh;
+      display:flex; flex-direction:column;
+      background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border:1px solid var(--border); border-radius:var(--r-lg);
+      box-shadow:0 20px 60px rgba(0,0,0,0.5); overflow:hidden;
+    }
+    .wave-fullscreen-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.6rem 1rem; border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,0.25);
+    }
+    .wave-fullscreen-ttl { font-size:.75rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--text-dim); }
+    .wave-fullscreen-close {
+      width:32px; height:32px; border:none; border-radius:6px;
+      background:var(--surface-2); color:var(--text); font-size:1.25rem; line-height:1;
+      cursor:pointer; transition:background .15s;
+    }
+    .wave-fullscreen-close:hover { background:var(--red); color:#fff }
+    .wave-fullscreen-canvas-wrap { flex:1; min-height:180px; padding:.75rem; display:flex; align-items:stretch; justify-content:stretch; }
+    .wave-fullscreen-canvas-wrap canvas { display:block; width:100%; height:100%; min-height:160px; border-radius:var(--r-sm); background:rgba(0,0,0,0.2); }
 
     /* playhead overlay */
     .wave-wrap::after {
@@ -2003,6 +2043,9 @@
     <div class="player" id="player">
       <div class="wave-wrap" id="waveWrap">
         <canvas id="waveCanvas" class="wave-canvas"></canvas>
+        <button type="button" class="wave-expand-btn" id="waveExpandBtn" title="Развернуть график на весь экран" aria-label="Развернуть на весь экран">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </button>
       </div>
       <div class="transport">
         <button class="btn-pp" id="btnPP" title="Play / Pause  [Space]" aria-label="Воспроизведение и пауза">
@@ -2674,6 +2717,20 @@
         <div class="daw-upscale-stats">
           <span id="dawUpscaleLufsA">—</span>
           <span id="dawUpscaleLufsB">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Полноэкранный вид волновой формы (график на весь экран) -->
+    <div class="wave-fullscreen-overlay" id="waveFullscreenOverlay" role="dialog" aria-modal="true" aria-label="Волновая форма — полный экран" style="display:none;">
+      <div class="wave-fullscreen-backdrop" id="waveFullscreenBackdrop"></div>
+      <div class="wave-fullscreen-content" id="waveFullscreenContent">
+        <div class="wave-fullscreen-head">
+          <span class="wave-fullscreen-ttl">Волновая форма</span>
+          <button type="button" class="wave-fullscreen-close" id="waveFullscreenClose" aria-label="Закрыть">×</button>
+        </div>
+        <div class="wave-fullscreen-canvas-wrap">
+          <canvas id="waveFullscreenCanvas"></canvas>
         </div>
       </div>
     </div>
