@@ -992,6 +992,25 @@ if (waveFullscreenClose) waveFullscreenClose.addEventListener('click', closeWave
 if (waveFullscreenPP) {
   waveFullscreenPP.addEventListener('click', e => { e.stopPropagation(); if (audioBuffer) togglePlay(); });
 }
+/* Клик по полноэкранному графику — перемотка (как без увеличения) */
+if (waveFullscreenCanvas) {
+  waveFullscreenCanvas.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!audioBuffer) return;
+    const rect = waveFullscreenCanvas.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const newOffset = frac * audioBuffer.duration;
+    pauseOffset = newOffset;
+    if (isPlaying) playFrom(newOffset);
+    else {
+      drawWaveform(frac);
+      drawWaveformToCanvas(waveFullscreenCanvas, frac);
+      tElapsed.textContent = fmtTime(newOffset);
+      tFill.style.width = (frac * 100) + '%';
+    }
+  });
+  waveFullscreenCanvas.style.cursor = 'pointer';
+}
 document.addEventListener('keydown', e => {
   if (e.code === 'Escape' && waveFullscreenOverlay && waveFullscreenOverlay.getAttribute('data-open') === 'true') {
     closeWaveFullscreen();
