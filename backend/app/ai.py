@@ -14,11 +14,11 @@ from .config import settings
 _ai_rate_limits: dict[str, dict] = {}
 
 # Стили, доступные в STYLE_CONFIGS (pipeline)
-VALID_STYLES = {"standard", "edm", "hiphop", "classical", "podcast", "lofi", "house_basic"}
+VALID_STYLES = {"standard", "edm", "hiphop", "classical", "podcast", "lofi", "house_basic", "dry_vocal"}
 
 # Встроенные промпты (используются, если в config не заданы ai_prompt_*)
 DEFAULT_PROMPT_RECOMMEND = """Ты — звукоинженер. По JSON с анализом трека (LUFS, peak_dbfs, duration_sec, channels, spectrum_*) предложи пресет мастеринга.
-Доступные стили: standard, edm, hiphop, classical, podcast, lofi, house_basic.
+Доступные стили: standard, edm, hiphop, classical, podcast, lofi, house_basic, dry_vocal.
 Ответь строго в формате JSON с полями: "style" (один из стилей), "target_lufs" (число, например -14), "reason" (короткая фраза на русском).
 Правила: если LUFS сильно ниже -18 и много низких частот — edm или house_basic с target_lufs -9..-10; подкасты/длинный моно — podcast -16; классика — classical -18; по умолчанию standard -14."""
 
@@ -29,7 +29,7 @@ DEFAULT_PROMPT_NL_CONFIG = """Ты — помощник по настройке 
 Только допустимые ключи: target_lufs, denoise_strength, deesser_threshold, deesser_enabled, transient_attack, transient_sustain, transient_enabled, parallel_mix, dynamic_eq_enabled.
 Если не можешь извлечь параметры — верни пустой chain_config и target_lufs null."""
 
-DEFAULT_PROMPT_CHAT = "Ты — звукоинженер-консультант по мастерингу. Отвечай кратко на русском. Стили: standard (-14 LUFS), edm (-9), hiphop (-13), classical (-18), podcast (-16), lofi (-18), house_basic (-10). Можешь объяснять параметры цепочки: деноайзер, де-эссер, транзиенты, параллельная компрессия, динамический EQ."
+DEFAULT_PROMPT_CHAT = "Ты — звукоинженер-консультант по мастерингу. Отвечай кратко на русском. Стили: standard (-14 LUFS), edm (-9), hiphop (-13), classical (-18), podcast (-16), lofi (-18), house_basic (-10), dry_vocal (-14, сухой вокал, ровная АЧХ). Можешь объяснять параметры цепочки: деноайзер, де-эссер, транзиенты, параллельная компрессия, динамический EQ."
 
 _DEFAULT_BY_SLUG = {
     "recommend": DEFAULT_PROMPT_RECOMMEND,
@@ -113,9 +113,22 @@ def _get_llm_setting(key: str, default: str = ""):
     return (getattr(settings, key, None) or os.environ.get(key.upper().replace(".", "_"), "") or default).strip()
 
 
+def _get_llm_setting_admin_only(key: str) -> str:
+    """Читает настройку LLM только из настроек админки (БД). Ключи API не берутся из .env."""
+    try:
+        from . import settings_store
+        v = settings_store.get_setting(key)
+        if v is not None and str(v).strip() != "":
+            return str(v).strip()
+    except Exception:  # noqa: BLE001
+        pass
+    return ""
+
+
 def _get_llm_client() -> Tuple[Any, str]:
     """
     Возвращает (client, model) для настроенного бэкенда (OpenAI или DeepSeek).
+    Ключи API читаются только из настроек админки (интерфейс администратора), не из .env.
     Клиент совместим с OpenAI API (chat.completions.create). Если ключа нет — (None, "").
     """
     try:
@@ -125,7 +138,7 @@ def _get_llm_client() -> Tuple[Any, str]:
 
     backend = (_get_llm_setting("ai_backend") or getattr(settings, "ai_backend", "openai")).lower()
     if backend == "deepseek":
-        key = _get_llm_setting("deepseek_api_key") or os.environ.get("DEEPSEEK_API_KEY", "")
+        key = _get_llm_setting_admin_only("deepseek_api_key")
         if not key:
             return (None, "")
         base_url = _get_llm_setting("deepseek_base_url") or "https://api.deepseek.com"
@@ -133,7 +146,7 @@ def _get_llm_client() -> Tuple[Any, str]:
         client = OpenAI(api_key=key, base_url=base_url)
         return (client, model)
     # openai
-    key = _get_llm_setting("openai_api_key") or os.environ.get("OPENAI_API_KEY", "")
+    key = _get_llm_setting_admin_only("openai_api_key")
     if not key:
         return (None, "")
     client = OpenAI(api_key=key)

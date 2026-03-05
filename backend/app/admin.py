@@ -166,7 +166,7 @@ class SettingsAppUpdate(BaseModel):
 
 class SettingsSmtpUpdate(BaseModel):
     host: Optional[str] = None
-    port: Optional[int] = Field(None, ge=1, le=65535)
+    port: Optional[int] = Field(None, ge=0, le=65535)  # 0 = не менять / по умолчанию
     user: Optional[str] = None
     password: Optional[str] = None  # пусто = не менять
     from_: Optional[str] = None
@@ -192,13 +192,13 @@ class SettingsLlmUpdate(BaseModel):
     deepseek_api_key: Optional[str] = None
     deepseek_base_url: Optional[str] = None
     deepseek_model: Optional[str] = None
-    ai_limit_free: Optional[int] = Field(None, ge=0, le=1000)
-    ai_limit_pro: Optional[int] = Field(None, ge=0, le=10000)
-    ai_limit_studio: Optional[int] = Field(None, ge=0, le=100000)
+    ai_limit_free: Optional[int] = Field(None, ge=-1, le=1000)   # -1 = без лимита
+    ai_limit_pro: Optional[int] = Field(None, ge=-1, le=10000)
+    ai_limit_studio: Optional[int] = Field(None, ge=-1, le=100000)
     # Защита от LLM-инъекций
     llm_guard_enabled: Optional[bool] = None
-    llm_guard_max_length_chat: Optional[int] = Field(None, ge=100, le=100000)
-    llm_guard_max_length_nl: Optional[int] = Field(None, ge=50, le=5000)
+    llm_guard_max_length_chat: Optional[int] = Field(None, ge=1, le=100000)
+    llm_guard_max_length_nl: Optional[int] = Field(None, ge=1, le=5000)
     llm_guard_forbidden_substrings: Optional[list[str]] = None  # JSON array
     llm_guard_forbidden_regex: Optional[str] = None
     llm_guard_truncate_on_long: Optional[bool] = None
@@ -755,6 +755,8 @@ def _apply_settings_update(body: SettingsUpdate, admin_id: Optional[int]) -> Non
                 settings_store.set_setting(k, v, admin_id)
     if body.smtp:
         for k, v in body.smtp.model_dump(exclude_none=True).items():
+            if k == "port" and v == 0:
+                v = 587  # 0 в форме = подставить стандартный порт
             key = "smtp_from" if k == "from_" else f"smtp_{k}"
             settings_store.set_setting(key, v, admin_id)
     if body.yookassa:

@@ -1547,7 +1547,9 @@ async function loadSettings() {
     }
     function buildSmtpPayload(form) {
       const fd = new FormData(form);
-      const o = { smtp: { host: fd.get('host'), port: parseInt(fd.get('port'), 10) || 587, user: fd.get('user'), from_: fd.get('from_'), use_tls: !!fd.get('use_tls') } };
+      const portRaw = parseInt(fd.get('port'), 10);
+      const port = (portRaw >= 1 && portRaw <= 65535) ? portRaw : 587;
+      const o = { smtp: { host: fd.get('host'), port: port, user: fd.get('user'), from_: fd.get('from_'), use_tls: !!fd.get('use_tls') } };
       if ((fd.get('password') || '').toString().trim()) o.smtp.password = fd.get('password');
       return o;
     }
