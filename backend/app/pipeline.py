@@ -81,8 +81,8 @@ STYLE_CONFIGS: dict[str, dict] = {
     "dry_vocal":   {"lufs": -14.0, "sub":  0.0, "bass":  0.0, "mids":  0.0, "presence":  0.0, "air":  0.0, "comp_mult": 1.0,  "exciter_db": 0.0, "imager_width": 1.0,  "parallel_mix": 0.0},
 }
 
-# Запас под межвыборочные пики (True Peak)
-TRUE_PEAK_LIMIT_DB = -1.5
+# Запас под межвыборочные пики (True Peak ≤ −1 dBTP)
+TRUE_PEAK_LIMIT_DB = -2.0
 
 # Многополосная динамика: кроссоверы 214 Hz, 3.5 kHz, 10 kHz
 # Верхний кроссовер сдвинут с 2230 → 3500 Hz: вся presence-зона вокала (2–4 kHz)
@@ -99,9 +99,9 @@ MULTIBAND_CONFIG = (
     (-18.0, 1.8, -18.0, 2.0),
     (-20.0, 2.0, -20.0, 1.6),
 )
-# Максимайзер (скриншот 5): порог -2.5 dB, margin (потолок) -0.3 dB
+# Максимайзер: потолок −1 dB для запаса под True Peak (без перегрузки)
 MAXIMIZER_THRESHOLD_DB = -2.5
-MAXIMIZER_MARGIN_DB = -0.3
+MAXIMIZER_MARGIN_DB = -1.0
 # Финальный мастеринг по частотам (soothe2): trim +0.5 dB
 FINAL_TRIM_DB = 0.5
 
@@ -134,8 +134,8 @@ def remove_dc_offset(audio: np.ndarray) -> np.ndarray:
     return audio - np.mean(audio, axis=0, keepdims=True)
 
 
-def remove_intersample_peaks(audio: np.ndarray, headroom_db: float = 0.5) -> np.ndarray:
-    """Безопасное ограничение пиков с запасом (уменьшает межвыборочные пики)."""
+def remove_intersample_peaks(audio: np.ndarray, headroom_db: float = 2.0) -> np.ndarray:
+    """Ограничение пиков с запасом под True Peak (≤ −1 dBTP): по умолчанию −2 dB sample peak."""
     peak = np.nanmax(np.abs(audio))
     if not np.isfinite(peak) or peak <= 1e-12:
         return np.nan_to_num(audio, nan=0.0, posinf=1.0, neginf=-1.0)
@@ -1715,7 +1715,7 @@ def run_mastering_pipeline(
     report(5, "Подготовка…")
     audio = remove_dc_offset(audio)
     report(10, "Удаление DC-смещения")
-    audio = remove_intersample_peaks(audio, headroom_db=0.5)
+    audio = remove_intersample_peaks(audio, headroom_db=2.0)
     report(15, "Защита от пиков")
 
     if denoise_strength > 0.01:
@@ -1757,7 +1757,7 @@ def run_mastering_pipeline(
         audio = apply_stereo_imager(audio, imager_width)
         report(92, f"Стерео-расширение · width={imager_width:.2f}")
 
-    audio = remove_intersample_peaks(audio, headroom_db=0.5)
+    audio = remove_intersample_peaks(audio, headroom_db=2.0)
     report(95, "Финальная защита пиков")
     out = np.clip(audio, -1.0, 1.0).astype(np.float32)
     out = np.ascontiguousarray(out)

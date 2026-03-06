@@ -13,11 +13,11 @@ class PeakGuardModule(BaseModule):
         self,
         enabled: bool = True,
         amount: float = 1.0,
-        headroom_db: float = 0.5,
+        headroom_db: float = 2.0,
         **kwargs: Any,
     ):
         super().__init__(enabled=enabled, amount=amount, **kwargs)
-        self.headroom_db = float(self.params.get("headroom_db", headroom_db))
+        self.headroom_db = float(self.params.get("headroom_db", 2.0))
 
     @classmethod
     def from_config(cls, config: dict) -> "PeakGuardModule":
