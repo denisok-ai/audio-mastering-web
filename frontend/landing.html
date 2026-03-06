@@ -160,48 +160,46 @@
     }
     .trust-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
 
-    /* Hero drop zone */
+    /* Hero CTA — главная кнопка входа в приложение */
     .hero-drop {
       width: 100%; max-width: 560px;
-      border: 2px dashed rgba(108,75,255,0.35);
-      border-radius: var(--r-xl);
-      background: rgba(108,75,255,0.05);
-      padding: 2.5rem 2rem;
-      cursor: pointer;
-      transition: border-color .2s, background .2s, transform .2s;
-      position: relative;
       margin-bottom: 1.25rem;
-    }
-    .hero-drop:hover, .hero-drop.over {
-      border-color: rgba(108,75,255,0.7);
-      background: rgba(108,75,255,0.1);
-      transform: translateY(-2px);
-    }
-    .hero-drop input[type=file] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-    }
-    .hero-drop-icon {
-      width: 52px; height: 52px; border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent), var(--acc2));
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 1rem;
-      box-shadow: 0 0 30px var(--acc-glow);
+      padding: 1.5rem 1.5rem;
     }
-    .hero-drop-icon svg { width: 24px; height: 24px; color: #fff; }
-    .hero-drop-title { font-size: 1.1rem; font-weight: 600; margin-bottom: .4rem; }
-    .hero-drop-hint { font-size: .88rem; color: var(--soft); margin-bottom: 1rem; }
-    .hero-drop-fmts { display: flex; justify-content: center; gap: .5rem; }
-    .fmt-tag {
-      padding: .2rem .6rem; border-radius: 6px;
-      background: rgba(255,255,255,0.07); border: 1px solid var(--border);
-      font-size: .72rem; font-weight: 600; letter-spacing: .06em;
-      color: var(--soft); font-family: 'JetBrains Mono', monospace;
+    .hero-drop-cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      padding: 1rem 2.5rem; min-height: 56px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--acc2));
+      color: #fff;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+      font-weight: 700;
+      letter-spacing: -.02em;
+      text-decoration: none;
+      box-shadow: 0 0 32px var(--acc-glow), 0 4px 20px rgba(124,58,237,0.25);
+      transition: opacity .2s, transform .2s, box-shadow .2s;
     }
-    .hero-note {
-      font-size: .8rem; color: var(--dim);
+    .hero-drop-cta:hover {
+      opacity: .95;
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px var(--acc-glow), 0 6px 24px rgba(124,58,237,0.35);
     }
-    .hero-note a { color: var(--accent); text-decoration: none; }
-    .hero-note a:hover { text-decoration: underline; }
+    .hero-drop-cta:active { transform: translateY(0); }
+    .hero-drop-cta::after {
+      content: '→';
+      font-size: 1.1em;
+      opacity: .9;
+    }
+    @media (max-width: 480px) {
+      .hero-drop { padding: 1rem; }
+      .hero-drop-cta {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        font-size: 1.15rem;
+      }
+    }
 
     /* Waveform animation */
     .hero-wave {
@@ -593,23 +591,10 @@
   <!-- Waveform animation -->
   <div class="hero-wave" id="heroWave"></div>
 
-  <!-- One-click drop zone -->
+  <!-- Кнопка входа в приложение (стиль как у бывшего блока загрузки) -->
   <div class="hero-drop" id="heroDrop">
-    <input type="file" id="heroFileInput" accept=".wav,.mp3,.flac,audio/*">
-    <div class="hero-drop-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-      </svg>
-    </div>
-    <div class="hero-drop-title">Перетащите трек сюда или нажмите</div>
-    <div class="hero-drop-hint">WAV, MP3 или FLAC · до 100 МБ · бесплатно</div>
-    <div class="hero-drop-fmts">
-      <span class="fmt-tag">WAV</span>
-      <span class="fmt-tag">MP3</span>
-      <span class="fmt-tag">FLAC</span>
-    </div>
+    <a href="/app" class="hero-drop-cta">Войти в приложение</a>
   </div>
-  <p class="hero-note">Нет трека? <a href="/app">Войти в приложение</a> · Нужно больше? <a href="#pricing">Смотреть тарифы</a></p>
 </section>
 
 <!-- ═══════ STATS ═══════ -->
