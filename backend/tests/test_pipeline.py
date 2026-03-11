@@ -407,3 +407,30 @@ def test_pro_modules_transient_parallel_dyn_eq_not_silent(stereo_2sec_44k):
     assert out.shape == audio.shape
     assert not np.any(np.isnan(out))
     assert np.max(np.abs(out)) > 0.001
+
+
+def test_dynamic_eq_only_not_silent(stereo_2sec_44k):
+    """Только Dynamic EQ: выход не тишина, форма и тип корректны (для серийного теста и продакшена)."""
+    from app.pipeline import apply_dynamic_eq
+    audio, sr = stereo_2sec_44k
+    out = apply_dynamic_eq(audio, sr)
+    assert out.shape == audio.shape
+    assert out.dtype == audio.dtype
+    assert not np.any(np.isnan(out))
+    assert not np.any(np.isinf(out))
+    assert np.max(np.abs(out)) > 0.001, "Dynamic EQ выдал тишину"
+
+
+def test_high_freq_trim_cuts_highs(mono_2sec_44k):
+    """Срез верхов на 10%: высокие частоты ослабляются, низкие почти не меняются."""
+    from app.pipeline import apply_high_freq_trim
+    audio, sr = mono_2sec_44k
+    n = len(audio)
+    t = np.linspace(0, n / sr, n, dtype=np.float32)
+    # Сигнал выше 5 kHz (должен ослабляться на ~10%)
+    high_tone = (0.2 * np.sin(2 * np.pi * 10000 * t)).astype(np.float32)
+    out = apply_high_freq_trim(high_tone, sr, crossover_hz=5000.0, high_gain=0.9)
+    assert out.shape == high_tone.shape
+    # Амплитуда верхов должна уменьшиться (~0.9 от исходной)
+    assert np.max(np.abs(out)) <= np.max(np.abs(high_tone)) * 0.95
+    assert np.max(np.abs(out)) >= np.max(np.abs(high_tone)) * 0.8

@@ -24,6 +24,14 @@ class Settings(BaseSettings):
         extra="ignore",  # игнорировать переменные из .env без поля в Settings
     )
     max_upload_mb: int = 100
+    # Лимиты по формату (DJ-сеты, длинные WAV): WAV до 800 МБ, MP3 до 300 МБ
+    max_upload_mb_wav: int = 800
+    max_upload_mb_mp3: int = 300
+    max_upload_mb_flac: int = 500
+    # Лимиты по тарифу (эффективный лимит = min(тариф, формат))
+    max_upload_mb_free: int = 100
+    max_upload_mb_pro: int = 300
+    max_upload_mb_studio: int = 800
     allowed_extensions: set[str] = {"wav", "mp3", "flac"}
     temp_dir: str = "/tmp/masterflow"
     default_target_lufs: float = -14.0

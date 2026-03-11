@@ -98,3 +98,44 @@ async def test_e2e_mastering_with_pro_rumble(minimal_wav_bytes: bytes):
         assert r_result.status_code == 200
         assert len(r_result.content) > 100
         assert r_result.content[:4] == b"RIFF"
+
+
+@pytest.mark.anyio
+async def test_e2e_mastering_with_dynamic_eq(minimal_wav_bytes: bytes):
+    """
+    E2E с PRO-модулем Dynamic EQ: dynamic_eq_enabled=true → дождаться done → результат не пустой.
+    Проверяет, что 8-полосный Dynamic EQ применяется в полной цепочке мастеринга без ошибки.
+    """
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        timeout=60.0,
+    ) as ac:
+        r = await ac.post(
+            "/api/v2/master",
+            files={"file": ("test.wav", minimal_wav_bytes, "audio/wav")},
+            data={
+                "target_lufs": "-14",
+                "style": "standard",
+                "out_format": "wav",
+                "dynamic_eq_enabled": "true",
+            },
+        )
+        assert r.status_code == 200, r.text
+        data = r.json()
+        job_id = data["job_id"]
+        for _ in range(60):
+            r_status = await ac.get(f"/api/master/status/{job_id}")
+            assert r_status.status_code == 200
+            st = r_status.json()
+            if st.get("status") == "done":
+                break
+            if st.get("status") == "error":
+                pytest.fail(f"Mastering failed (Dynamic EQ): {st.get('error', 'unknown')}")
+            await asyncio.sleep(0.5)
+        else:
+            pytest.fail("Timeout waiting for job to complete")
+        r_result = await ac.get(f"/api/master/result/{job_id}")
+        assert r_result.status_code == 200
+        assert len(r_result.content) > 100
+        assert r_result.content[:4] == b"RIFF"

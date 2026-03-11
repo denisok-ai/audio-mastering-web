@@ -7,6 +7,27 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
+### Срез верхов и правки
+- **backend/app/pipeline.py:** срез верхних частот на 10% для всех пресетов (`apply_high_freq_trim`, кроссовер 5 kHz) — устраняет перегрузку верхов, в т.ч. с вокалом.
+- **backend/app/routers/mastering.py:** вызов `apply_high_freq_trim` после всех PRO-модулей.
+- **backend/tests:** тесты `test_high_freq_trim_cuts_highs`, `test_e2e_mastering_with_dynamic_eq`, `test_dynamic_eq_only_not_silent`.
+- **frontend/index.html:** исправление перевода — «гущина» → «плотность» в описании Parallel Compression.
+
+---
+
+## [0.5.6] — 2026-03
+
+### Тарифы с токенами и лимитами
+- **Backend:** Free — 1 мастеринг в неделю (IP); Pro — 50 токенов/мес, до 10 в день; Studio — 100 токенов/мес, до 30 в день. Баланс токенов в БД (`tokens_balance`), списание при мастеринге, доплата токенов через YooKassa. `deps.py`: недельный лимит для Free; `mastering.py`: проверка и списание для Pro/Studio; `payments.py`: планы и webhook с начислением токенов; `misc.py`: `/api/limits` возвращает `tokens_balance`, `daily_used`, `daily_limit`, `remaining`.
+- **Frontend:** pricing.html и локали — тексты тарифов (1 в неделю, 50/100 токенов, лимиты в день); убрана «Поддержка 24/7» из Studio. В шапке отображается баланс токенов для Pro/Studio; блокировка кнопки мастеринга при `remaining === 0`.
+
+### Мобильная шапка
+- **frontend/index.html:** реструктуризация шапки — `header-top-row`, `logo-inner`; медиа-запросы 640/480/360px: отступы, скрытие подписей темы/языка, увеличенные touch targets; кнопки больше не наезжают друг на друга.
+
+### Лимиты загрузки
+- **Backend:** лимиты по формату (WAV 800 МБ, MP3 300 МБ, FLAC 500 МБ) и по тарифу (Free 100, Pro 300, Studio 800 МБ). `config.py`, `settings_store.py`: `get_max_upload_mb(filename, tier)`; все эндпоинты мастеринга/анализа/measure/isolate-vocal используют его. Админка: поля `max_upload_mb_wav`, `max_upload_mb_mp3`, `max_upload_mb_flac`, `max_upload_mb_free/pro/studio`.
+- **doc/UPLOAD_LIMITS.md:** описание лимитов и рекомендации по RAM для больших файлов (DJ-сеты).
+
 ---
 
 ## [0.5.5] — 2026-03

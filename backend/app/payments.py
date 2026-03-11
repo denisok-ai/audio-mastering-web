@@ -27,6 +27,7 @@ from .database import (
     SessionLocal,
     Transaction,
     User,
+    add_tokens,
     create_transaction,
 )
 
@@ -34,35 +35,63 @@ logger = logging.getLogger("payments")
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 
-# ─── Цены по тарифам (в рублях) ───────────────────────────────────────────────
+# ─── Цены по тарифам (в рублях). 1 токен = 1 мастеринг = 100 ₽ ───────────────
 TIER_PRICES: dict[str, dict] = {
     "pro_month": {
         "tier": "pro",
         "label": "Pro — 1 месяц",
-        "amount": "990.00",
+        "amount": "1000.00",
         "currency": "RUB",
         "period_days": 30,
+        "tokens_included": 50,
     },
     "pro_year": {
         "tier": "pro",
         "label": "Pro — 1 год",
-        "amount": "7900.00",
+        "amount": "10000.00",
         "currency": "RUB",
         "period_days": 365,
+        "tokens_included": 600,
     },
     "studio_month": {
         "tier": "studio",
         "label": "Studio — 1 месяц",
-        "amount": "2990.00",
+        "amount": "2500.00",
         "currency": "RUB",
         "period_days": 30,
+        "tokens_included": 100,
     },
     "studio_year": {
         "tier": "studio",
         "label": "Studio — 1 год",
-        "amount": "24900.00",
+        "amount": "25000.00",
         "currency": "RUB",
         "period_days": 365,
+        "tokens_included": 1200,
+    },
+    "tokens_1": {
+        "tier": None,
+        "label": "1 токен (1 мастеринг)",
+        "amount": "100.00",
+        "currency": "RUB",
+        "period_days": 0,
+        "tokens_included": 1,
+    },
+    "tokens_5": {
+        "tier": None,
+        "label": "5 токенов",
+        "amount": "500.00",
+        "currency": "RUB",
+        "period_days": 0,
+        "tokens_included": 5,
+    },
+    "tokens_10": {
+        "tier": None,
+        "label": "10 токенов",
+        "amount": "1000.00",
+        "currency": "RUB",
+        "period_days": 0,
+        "tokens_included": 10,
     },
 }
 
@@ -143,7 +172,7 @@ async def create_payment(
                     db,
                     user_id=user_id,
                     amount=float(plan["amount"]),
-                    tier=plan["tier"],
+                    tier=plan.get("tier") or "tokens",
                     payment_system="yookassa",
                     currency=plan["currency"],
                     external_id="demo-" + idempotency_key[:8],
@@ -169,8 +198,9 @@ async def create_payment(
                 "metadata": {
                     "user_id": user_id,
                     "plan": body.plan,
-                    "tier": plan["tier"],
-                    "period_days": plan["period_days"],
+                    "tier": plan.get("tier") or "tokens",
+                    "period_days": plan.get("period_days", 0),
+                    "tokens_included": plan.get("tokens_included", 0),
                 },
             },
             idempotency_key,
@@ -187,7 +217,7 @@ async def create_payment(
                 db,
                 user_id=user_id,
                 amount=float(plan["amount"]),
-                tier=plan["tier"],
+                tier=plan.get("tier") or "tokens",
                 payment_system="yookassa",
                 currency=plan["currency"],
                 external_id=payment.id,
@@ -247,20 +277,24 @@ async def yookassa_webhook(request: Request):
         payment_id = obj.get("id")
         metadata = obj.get("metadata") or {}
         user_id = metadata.get("user_id")
-        tier = metadata.get("tier")
-        period_days = int(metadata.get("period_days", 30))
+        plan_key = metadata.get("plan")
         amount_obj = obj.get("amount") or {}
         amount_val = float(amount_obj.get("value", 0))
         currency_val = (amount_obj.get("currency") or "RUB").strip()
 
-        if not user_id or not tier:
-            logger.warning("Webhook: нет user_id или tier в metadata")
+        if not user_id:
+            logger.warning("Webhook: нет user_id в metadata")
             return {"status": "ignored"}
+
+        plan_info = TIER_PRICES.get(plan_key) if plan_key else None
+        tokens_included = int(plan_info.get("tokens_included", 0)) if plan_info else int(metadata.get("tokens_included", 0))
+        tier = plan_info.get("tier") if plan_info else metadata.get("tier")
+        period_days = int(plan_info.get("period_days", 0)) if plan_info else int(metadata.get("period_days", 0))
 
         if DB_AVAILABLE and SessionLocal:
             db = SessionLocal()
             try:
-                # Обновить транзакцию
+                tx_tier = tier if tier else "tokens"
                 tx = db.query(Transaction).filter(Transaction.external_id == payment_id).first()
                 if tx:
                     tx.status = "succeeded"
@@ -270,38 +304,40 @@ async def yookassa_webhook(request: Request):
                         db,
                         user_id=int(user_id),
                         amount=amount_val,
-                        tier=tier,
+                        tier=tx_tier,
                         payment_system="yookassa",
                         external_id=payment_id,
                         status="succeeded",
-                        description=metadata.get("plan", "YooKassa"),
+                        description=plan_info.get("label", plan_key or "YooKassa") if plan_info else metadata.get("plan", "YooKassa"),
                     )
 
-                # Апгрейд пользователя
                 u = db.query(User).filter(User.id == int(user_id)).first()
                 if u:
-                    u.tier = tier
-                    expires = time.time() + period_days * 86400
-                    u.subscription_expires_at = expires
-                    u.subscription_status = "active"
-                    db.commit()
-                    logger.info("Пользователь %s апгрейжен до %s (до %s)", user_id, tier, expires)
+                    if tier:
+                        u.tier = tier
+                        if period_days > 0:
+                            expires = time.time() + period_days * 86400
+                            u.subscription_expires_at = expires
+                            u.subscription_status = "active"
+                        db.commit()
+                        logger.info("Пользователь %s апгрейжен до %s (до %s)", user_id, tier, u.subscription_expires_at if period_days else "—")
 
-                    # Письмо об активации (P22)
-                    try:
-                        from .mailer import send_subscription_activated_email
-                        send_subscription_activated_email(
-                            u.email, tier, u.subscription_expires_at
-                        )
-                    except Exception:  # noqa: BLE001
-                        pass
-
-                    # P51: Telegram-уведомление об успешной оплате
-                    try:
-                        from .notifier import notify_payment
-                        notify_payment(u.email, amount_val, currency_val, tier)
-                    except Exception:  # noqa: BLE001
-                        pass
+                        if period_days > 0:
+                            try:
+                                from .mailer import send_subscription_activated_email
+                                send_subscription_activated_email(
+                                    u.email, tier, u.subscription_expires_at
+                                )
+                            except Exception:  # noqa: BLE001
+                                pass
+                        try:
+                            from .notifier import notify_payment
+                            notify_payment(u.email, amount_val, currency_val, tier or "tokens")
+                        except Exception:  # noqa: BLE001
+                            pass
+                    if tokens_included > 0:
+                        add_tokens(db, int(user_id), tokens_included)
+                        logger.info("Пользователю %s начислено %s токенов", user_id, tokens_included)
             finally:
                 db.close()
 

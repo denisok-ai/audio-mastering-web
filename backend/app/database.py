@@ -53,6 +53,8 @@ if DB_AVAILABLE:
         subscription_warning_sent: bool = Column(Boolean, nullable=False, default=False)
         # Email verification (P41): True = подтверждён; по умолчанию True для legacy-аккаунтов
         is_verified: bool = Column(Boolean, nullable=False, default=True)
+        # Токены мастеринга: 1 токен = 1 мастер; пополняются при оплате тарифа или докупке
+        tokens_balance: int = Column(Integer, nullable=False, default=0)
 
     class MasteringRecord(Base):  # type: ignore[misc]
         """История мастерингов для залогиненных пользователей."""
@@ -248,6 +250,7 @@ def _run_migrations() -> None:
             ("subscription_warning_sent", "BOOLEAN NOT NULL DEFAULT 0"),
             ("last_login_at",             "REAL"),
             ("is_verified",               "BOOLEAN NOT NULL DEFAULT 1"),
+            ("tokens_balance",            "INTEGER NOT NULL DEFAULT 0"),
         ],
         "mastering_records": [
             ("duration_sec", "REAL"),
@@ -365,6 +368,53 @@ def get_user_stats(db, user_id: int) -> dict:
     top_style = max(style_counts, key=style_counts.get) if style_counts else None
 
     return {"total": total, "avg_lufs_change": avg_change, "top_style": top_style}
+
+
+def get_user_tokens_balance(db, user_id: int) -> int:
+    """Баланс токенов пользователя (1 токен = 1 мастеринг)."""
+    if not DB_AVAILABLE or db is None or User is None:
+        return 0
+    u = db.query(User).filter(User.id == user_id).first()
+    return int(getattr(u, "tokens_balance", 0)) if u else 0
+
+
+def add_tokens(db, user_id: int, amount: int) -> bool:
+    """Пополнить баланс токенов (при оплате тарифа или докупке)."""
+    if not DB_AVAILABLE or db is None or User is None or amount <= 0:
+        return False
+    u = db.query(User).filter(User.id == user_id).first()
+    if not u:
+        return False
+    u.tokens_balance = getattr(u, "tokens_balance", 0) + amount
+    db.commit()
+    return True
+
+
+def deduct_tokens(db, user_id: int, amount: int = 1) -> bool:
+    """Списать токены (при запуске мастеринга). Возвращает True если списание прошло."""
+    if not DB_AVAILABLE or db is None or User is None or amount <= 0:
+        return False
+    u = db.query(User).filter(User.id == user_id).first()
+    if not u:
+        return False
+    balance = getattr(u, "tokens_balance", 0)
+    if balance < amount:
+        return False
+    u.tokens_balance = balance - amount
+    db.commit()
+    return True
+
+
+def count_mastering_jobs_today(db, user_id: int) -> int:
+    """Число запусков мастеринга за сегодня (UTC) для пользователя (по MasteringJobEvent)."""
+    if not DB_AVAILABLE or db is None or MasteringJobEvent is None:
+        return 0
+    now = time.time()
+    day_start_ts = (int(now) // 86400) * 86400  # начало текущих суток UTC
+    return db.query(MasteringJobEvent).filter(
+        MasteringJobEvent.user_id == user_id,
+        MasteringJobEvent.created_at >= day_start_ts,
+    ).count()
 
 
 def get_user_by_email(db, email: str):

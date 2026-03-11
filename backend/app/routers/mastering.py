@@ -22,7 +22,15 @@ from fastapi.responses import Response, StreamingResponse
 from ..chain import MasteringChain
 from ..config import settings
 from .. import settings_store
-from ..database import log_mastering_job_end, log_mastering_job_start
+from ..database import (
+    DB_AVAILABLE,
+    deduct_tokens,
+    get_db,
+    get_user_tokens_balance,
+    count_mastering_jobs_today,
+    log_mastering_job_end,
+    log_mastering_job_start,
+)
 from ..helpers import (
     allowed_file as _allowed_file,
     check_audio_magic_bytes as _check_audio_magic_bytes,
@@ -45,6 +53,7 @@ from ..pipeline import (
     STYLE_CONFIGS,
     apply_deesser,
     apply_dynamic_eq,
+    apply_high_freq_trim,
     apply_parallel_compression,
     apply_reference_match,
     apply_rumble_filter,
@@ -117,16 +126,76 @@ def _is_debug_mode() -> bool:
 
 
 def _check_mastering_rate_limit(user, request: Request) -> None:
-    """Поднимает 429 если гость исчерпал дневной лимит. В режиме отладки лимит не проверяется."""
+    """Поднимает 429 если гость исчерпал недельный лимит (Free: 1 мастеринг в неделю). В режиме отладки лимит не проверяется."""
     if not user and not _is_debug_mode():
         ip = _get_client_ip(request)
         limit_info = _check_rate_limit(ip)
         if not limit_info["ok"]:
             raise HTTPException(
                 429,
-                f"Лимит Free-тарифа исчерпан: {limit_info['limit']} мастеринга в день. "
-                f"Сброс: {limit_info['reset_at']}. Перейдите на Pro для безлимитного доступа.",
+                f"Лимит Free-тарифа исчерпан: {limit_info['limit']} мастеринг в неделю. "
+                f"Сброс: {limit_info['reset_at']}. Перейдите на Pro для большего лимита.",
             )
+
+
+def _check_and_deduct_paid_tier(user, db) -> None:
+    """Pro/Studio: проверяет баланс токенов и дневной лимит, списывает 1 токен. 429 при превышении."""
+    if not user or not db or not DB_AVAILABLE:
+        return
+    tier = (user.get("tier") or "").lower()
+    if tier not in ("pro", "studio"):
+        return
+    uid = _user_id_from_user(user)
+    if not uid:
+        return
+    balance = get_user_tokens_balance(db, uid)
+    if balance < 1:
+        raise HTTPException(
+            429,
+            "Недостаточно токенов. 1 мастеринг = 1 токен. Пополните баланс на странице тарифов или докупите токены.",
+        )
+    daily_cap = 30 if tier == "studio" else 10
+    used_today = count_mastering_jobs_today(db, uid)
+    if used_today >= daily_cap:
+        raise HTTPException(
+            429,
+            f"Дневной лимит тарифа {tier}: не более {daily_cap} мастерингов в день. Сброс в полночь UTC.",
+        )
+    if not deduct_tokens(db, uid, 1):
+        raise HTTPException(429, "Не удалось списать токен. Попробуйте снова.")
+
+
+def _check_and_deduct_paid_tier_batch(user, db, n_files: int) -> None:
+    """Pro/Studio при пакетной обработке: проверяет токены и дневной лимит, списывает n_files токенов."""
+    if not user or not db or not DB_AVAILABLE or n_files <= 0:
+        return
+    tier = (user.get("tier") or "").lower()
+    if tier not in ("pro", "studio"):
+        return
+    uid = _user_id_from_user(user)
+    if not uid:
+        return
+    balance = get_user_tokens_balance(db, uid)
+    if balance < n_files:
+        raise HTTPException(
+            429,
+            f"Недостаточно токенов. Нужно {n_files}, доступно {balance}. 1 мастеринг = 1 токен. Пополните баланс.",
+        )
+    daily_cap = 30 if tier == "studio" else 10
+    used_today = count_mastering_jobs_today(db, uid)
+    if used_today + n_files > daily_cap:
+        raise HTTPException(
+            429,
+            f"Дневной лимит тарифа {tier}: не более {daily_cap} мастерингов в день. Сегодня использовано {used_today}, запрошено {n_files}.",
+        )
+    if not deduct_tokens(db, uid, n_files):
+        raise HTTPException(429, "Не удалось списать токены. Попробуйте снова.")
+
+
+def _get_max_upload_mb(filename: str, user: Optional[dict]) -> int:
+    """Эффективный лимит загрузки (МБ): min(лимит тарифа, лимит формата). DJ-сеты: WAV до 800 МБ, MP3 до 300 МБ."""
+    tier = (user.get("tier") or "free").lower() if user else "free"
+    return settings_store.get_max_upload_mb(filename, tier)
 
 
 def _validate_upload(data: bytes, filename: str, max_mb: int) -> None:
@@ -369,6 +438,9 @@ def _run_mastering_job_v2(
                 peak = float(np.max(np.abs(mastered))) + 1e-12
                 job["message"] = f"Dynamic EQ… (peak {20 * np.log10(peak):.1f} dB)"
 
+        # Срез верхних частот на 10% на всех пресетах — устраняет перегрузку верхов (в т.ч. с вокалом)
+        mastered = apply_high_freq_trim(mastered, sr)
+
         validate_mastered_not_silent(mastered)
 
         job["after_lufs"] = measure_lufs(mastered, sr)
@@ -422,6 +494,7 @@ async def api_master(
     out_format: str = Form("wav"),
     style: str = Form("standard"),
     user: Optional[dict] = Depends(_get_current_user_optional),
+    db=Depends(get_db),
 ):
     """
     Запуск мастеринга: возвращает job_id. Статус — GET /api/master/status/{job_id}.
@@ -429,6 +502,7 @@ async def api_master(
     """
     _validate_format(file.filename or "", out_format)
     _check_mastering_rate_limit(user, request)
+    _check_and_deduct_paid_tier(user, db)
 
     if target_lufs is None:
         target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
@@ -436,7 +510,7 @@ async def api_master(
         target_lufs = PRESET_LUFS[preset.lower()]
 
     data = await file.read()
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+    max_mb = _get_max_upload_mb(file.filename or "", user)
     _validate_upload(data, file.filename or "", max_mb)
     try:
         load_audio_from_bytes(data, file.filename or "wav")
@@ -495,6 +569,7 @@ async def api_master_v2(
     dynamic_eq_enabled: Optional[str] = Form(None),
     apply_vocal_isolation: Optional[str] = Form(None),
     user: Optional[dict] = Depends(_get_current_user_optional),
+    db=Depends(get_db),
 ):
     """
     Мастеринг v2: цепочка из JSON-конфига.
@@ -509,11 +584,12 @@ async def api_master_v2(
         except (ValueError, TypeError):
             bitrate_val = None
         _check_mastering_rate_limit(user, request)
+        _check_and_deduct_paid_tier(user, db)
 
         if target_lufs is None:
             target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
         data = await file.read()
-        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        max_mb = _get_max_upload_mb(file.filename or "", user)
         _validate_upload(data, file.filename or "", max_mb)
         try:
             load_audio_from_bytes(data, file.filename or "wav")
@@ -618,11 +694,12 @@ async def api_v2_batch(
     dynamic_eq_enabled: Optional[str] = Form(None),
     apply_vocal_isolation: Optional[str] = Form(None),
     user: Optional[dict] = Depends(_get_current_user_optional),
+    db=Depends(get_db),
 ):
     """
     Пакетный мастеринг: несколько файлов с одинаковыми параметрами.
     Возвращает список { job_id, filename }. Статус и результат — как у одиночного.
-    Максимум файлов: 10. Для Free каждый файл считается за 1 использование в дневном лимите.
+    Максимум файлов: 10. Free: 1 мастеринг в неделю; Pro/Studio: по токенам и дневному лимиту.
     """
     try:
         _require_feature_batch()
@@ -651,9 +728,11 @@ async def api_v2_batch(
             if limit_info["remaining"] < len(files):
                 raise HTTPException(
                     429,
-                    f"Недостаточно лимита. Осталось {limit_info['remaining']} мастерингов, файлов — {len(files)}. "
+                    f"Недостаточно лимита. Осталось {limit_info['remaining']} мастеринг(ов) в неделю, файлов — {len(files)}. "
                     f"Сброс: {limit_info['reset_at']}.",
                 )
+        else:
+            _check_and_deduct_paid_tier_batch(user, db, len(files))
 
         if target_lufs is None:
             target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
@@ -665,10 +744,10 @@ async def api_v2_batch(
             except json.JSONDecodeError as e:
                 raise HTTPException(400, f"Неверный JSON в config: {e}") from e
 
-        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
         payloads: List[Tuple[bytes, str]] = []
         for f in files:
             data = await f.read()
+            max_mb = _get_max_upload_mb(f.filename or "", user)
             if len(data) > max_mb * 1024 * 1024:
                 raise HTTPException(400, f"Файл {f.filename} больше {max_mb} МБ.")
             if not _check_audio_magic_bytes(data, f.filename or ""):
@@ -794,7 +873,7 @@ async def api_v2_master_auto(
             )
 
         data = await file.read()
-        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        max_mb = _get_max_upload_mb(file.filename or "", user)
         _validate_upload(data, file.filename or "", max_mb)
         fname = file.filename or "audio.wav"
         try:
@@ -914,7 +993,11 @@ def api_v2_chain_default(style: str = "standard", target_lufs: float = -14.0):
 
 
 @router.post("/api/v2/analyze")
-async def api_v2_analyze(file: UploadFile = File(...), extended: bool = Form(False)):
+async def api_v2_analyze(
+    file: UploadFile = File(...),
+    extended: bool = Form(False),
+    user: Optional[dict] = Depends(_get_current_user_optional),
+):
     """
     Загрузить файл и вернуть анализ: LUFS, peak dBFS, длительность, sample rate, stereo_correlation.
     extended=true: дополнительно spectrum_bars, lufs_timeline, vectorscope_points.
@@ -926,7 +1009,7 @@ async def api_v2_analyze(file: UploadFile = File(...), extended: bool = Form(Fal
         if fname.lower().endswith(".mp3") and not shutil.which("ffmpeg"):
             raise HTTPException(400, "Чтение MP3 требует ffmpeg. Установите: sudo apt-get install -y ffmpeg")
         data = await file.read()
-        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        max_mb = _get_max_upload_mb(fname, user)
         _validate_upload(data, fname, max_mb)
         try:
             audio, sr = load_audio_from_bytes(data, fname)
@@ -1023,6 +1106,7 @@ async def api_v2_reference_match(
     strength: float = Form(0.8),
     out_format: str = Form("wav"),
     bitrate: Optional[str] = Form(None),
+    user: Optional[dict] = Depends(_get_current_user_optional),
 ):
     """
     Reference Track Mastering: подгоняет спектральный баланс треку к эталону.
@@ -1039,10 +1123,12 @@ async def api_v2_reference_match(
     strength = float(np.clip(strength, 0.0, 1.0))
     data_src = await file.read()
     data_ref = await reference.read()
-    if len(data_src) > 200 * 1024 * 1024:
-        raise HTTPException(400, "Основной файл больше 200 МБ.")
-    if len(data_ref) > 200 * 1024 * 1024:
-        raise HTTPException(400, "Эталонный файл больше 200 МБ.")
+    max_mb_src = _get_max_upload_mb(file.filename or "", user)
+    max_mb_ref = _get_max_upload_mb(reference.filename or "", user)
+    if len(data_src) > max_mb_src * 1024 * 1024:
+        raise HTTPException(400, f"Основной файл больше {max_mb_src} МБ.")
+    if len(data_ref) > max_mb_ref * 1024 * 1024:
+        raise HTTPException(400, f"Эталонный файл больше {max_mb_ref} МБ.")
     if not _check_audio_magic_bytes(data_src, file.filename or ""):
         raise HTTPException(400, "Содержимое основного файла не соответствует формату.")
     if not _check_audio_magic_bytes(data_ref, reference.filename or ""):
@@ -1080,6 +1166,7 @@ _UPSCALE_ALLOWED_SR = (48000, 96000, 192000)
 async def api_v2_upscale(
     file: UploadFile = File(...),
     target_sr: int = Form(96000),
+    user: Optional[dict] = Depends(_get_current_user_optional),
 ):
     """
     Upscale: ресемплинг аудио в более высокий sample rate (48k / 96k / 192k).
@@ -1092,7 +1179,7 @@ async def api_v2_upscale(
             raise HTTPException(400, f"target_sr допускает только: {_UPSCALE_ALLOWED_SR}.")
         fname = file.filename or "audio.wav"
         data = await file.read()
-        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        max_mb = _get_max_upload_mb(fname, user)
         _validate_upload(data, fname, max_mb)
         audio, sr = load_audio_from_bytes(data, fname)
         if target_sr <= sr:
@@ -1116,7 +1203,10 @@ async def api_v2_upscale(
 
 
 @router.post("/api/v2/isolate-vocal")
-async def api_v2_isolate_vocal(file: UploadFile = File(...)):
+async def api_v2_isolate_vocal(
+    file: UploadFile = File(...),
+    user: Optional[dict] = Depends(_get_current_user_optional),
+):
     """
     Изоляция вокала (задача 9.2). Работает только при ENABLE_VOCAL_ISOLATION=1 и установленном demucs.
     Принимает аудиофайл (WAV/MP3/FLAC), возвращает WAV с дорожкой вокала.
@@ -1136,7 +1226,7 @@ async def api_v2_isolate_vocal(file: UploadFile = File(...)):
         raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
     fname = file.filename or "audio.wav"
     data = await file.read()
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+    max_mb = _get_max_upload_mb(fname, user)
     _validate_upload(data, fname, max_mb)
     try:
         vocal_bytes = await asyncio.to_thread(

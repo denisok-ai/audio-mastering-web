@@ -15,7 +15,13 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 
 from ..config import settings
-from ..database import DB_AVAILABLE, get_news_posts
+from ..database import (
+    DB_AVAILABLE,
+    get_db,
+    get_news_posts,
+    get_user_tokens_balance,
+    count_mastering_jobs_today,
+)
 from ..deps import check_rate_limit, get_current_user_optional
 from ..helpers import allowed_file, check_audio_magic_bytes, json_safe_float
 from ..pipeline import PRESET_LUFS, STYLE_CONFIGS, load_audio_from_bytes, measure_lufs
@@ -63,28 +69,48 @@ def api_debug_mode():
 async def api_limits(
     request: Request,
     user: Optional[dict] = Depends(get_current_user_optional),
+    db=Depends(get_db),
 ):
-    """Текущий тариф и лимиты мастеринга."""
-    if user:
-        tier = (user.get("tier") or "pro").lower()
-        return {
-            "tier": tier,
-            "used": 0,
-            "limit": -1,
-            "remaining": -1,
-            "reset_at": None,
-            "email": user.get("email"),
-            "priority_queue": tier in ("pro", "studio"),
-        }
+    """Текущий тариф и лимиты мастеринга. Free: 1/неделю; Pro/Studio: токены + дневной лимит."""
     if getattr(settings, "debug_mode", False):
         return {
             "tier": "pro",
             "used": 0,
             "limit": -1,
-            "remaining": -1,
+            "remaining": 999,
+            "tokens_balance": 999,
+            "daily_used": 0,
+            "daily_limit": 30,
             "reset_at": None,
             "debug": True,
             "priority_queue": True,
+        }
+    if user:
+        tier = (user.get("tier") or "pro").lower()
+        uid = user.get("sub")
+        try:
+            uid = int(uid) if uid is not None else None
+        except (TypeError, ValueError):
+            uid = None
+        tokens = 0
+        daily_used = 0
+        daily_limit = 10 if tier == "pro" else 30 if tier == "studio" else 0
+        if db and uid and tier in ("pro", "studio"):
+            tokens = get_user_tokens_balance(db, uid)
+            daily_used = count_mastering_jobs_today(db, uid)
+        remaining_today = max(0, daily_limit - daily_used) if daily_limit else 0
+        remaining = min(tokens, remaining_today) if tier in ("pro", "studio") else tokens
+        return {
+            "tier": tier,
+            "used": daily_used,
+            "limit": daily_limit,
+            "remaining": remaining,
+            "tokens_balance": tokens,
+            "daily_used": daily_used,
+            "daily_limit": daily_limit,
+            "reset_at": None,
+            "email": user.get("email"),
+            "priority_queue": tier in ("pro", "studio"),
         }
     from ..helpers import get_client_ip
     ip = get_client_ip(request)
@@ -215,8 +241,11 @@ def get_styles():
 
 
 @router.post("/api/measure")
-async def api_measure(file: UploadFile = File(...)):
-    """Загрузить файл и вернуть текущую громкость в LUFS. Форматы: WAV, MP3, FLAC."""
+async def api_measure(
+    file: UploadFile = File(...),
+    user: Optional[dict] = Depends(get_current_user_optional),
+):
+    """Загрузить файл и вернуть текущую громкость в LUFS. Форматы: WAV, MP3, FLAC. Лимит по тарифу и формату (WAV до 800 МБ, MP3 до 300 МБ)."""
     try:
         if not allowed_file(file.filename or ""):
             raise HTTPException(400, "Формат не поддерживается. Разрешены: WAV, MP3, FLAC.")
@@ -228,7 +257,8 @@ async def api_measure(file: UploadFile = File(...)):
                 "Установите: sudo apt-get install -y ffmpeg",
             )
         data = await file.read()
-        max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+        tier = (user.get("tier") or "free").lower() if user else "free"
+        max_mb = settings_store.get_max_upload_mb(fname, tier)
         if len(data) > max_mb * 1024 * 1024:
             raise HTTPException(400, f"Файл больше {max_mb} МБ.")
         if not check_audio_magic_bytes(data, fname):

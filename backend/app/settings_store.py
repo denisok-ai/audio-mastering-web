@@ -11,6 +11,12 @@ from .config import settings as _config
 # Ключи, которые можно переопределять через админку (и типы для десериализации)
 _SETTING_TYPES: dict[str, str] = {
     "max_upload_mb": "int",
+    "max_upload_mb_wav": "int",
+    "max_upload_mb_mp3": "int",
+    "max_upload_mb_flac": "int",
+    "max_upload_mb_free": "int",
+    "max_upload_mb_pro": "int",
+    "max_upload_mb_studio": "int",
     "allowed_extensions": "json_list",  # список строк
     "temp_dir": "str",
     "default_target_lufs": "float",
@@ -151,6 +157,23 @@ def get_setting_bool(key: str, default: bool = False) -> bool:
     if isinstance(v, bool):
         return v
     return (str(v).strip().lower() in ("1", "true", "yes", "on"))
+
+
+def get_max_upload_mb(filename: str, tier: str = "free") -> int:
+    """Эффективный лимит загрузки (МБ): min(лимит тарифа, лимит формата).
+    По умолчанию: Free 100, Pro 300, Studio 800 МБ; WAV до 800, MP3 до 300, FLAC до 500 МБ.
+    Для DJ-сетов (длинные WAV) на тарифе Studio доступно до 800 МБ."""
+    ext = (filename or "").rsplit(".", 1)[-1].lower() if "." in (filename or "") else "wav"
+    if ext not in ("wav", "mp3", "flac"):
+        ext = "wav"
+    t = (tier or "free").lower()
+    if t not in ("free", "pro", "studio"):
+        t = "free"
+    tier_defaults = {"free": 100, "pro": 300, "studio": 800}
+    fmt_defaults = {"wav": 800, "mp3": 300, "flac": 500}
+    tier_limit = get_setting_int(f"max_upload_mb_{t}", tier_defaults.get(t, 100))
+    fmt_cap = get_setting_int(f"max_upload_mb_{ext}", fmt_defaults.get(ext, 100))
+    return min(tier_limit, fmt_cap)
 
 
 def set_setting(key: str, value: Any, admin_id: Optional[int] = None) -> None:

@@ -142,7 +142,13 @@ class CampaignCreate(BaseModel):
 
 
 class SettingsAppUpdate(BaseModel):
-    max_upload_mb: Optional[int] = Field(None, ge=1, le=500, description="1–500 МБ")
+    max_upload_mb: Optional[int] = Field(None, ge=1, le=1000, description="Общий лимит по умолчанию (1–1000 МБ)")
+    max_upload_mb_wav: Optional[int] = Field(None, ge=1, le=1000, description="WAV, DJ-сеты (до 800–1000 МБ)")
+    max_upload_mb_mp3: Optional[int] = Field(None, ge=1, le=500, description="MP3 (до 300 МБ)")
+    max_upload_mb_flac: Optional[int] = Field(None, ge=1, le=1000, description="FLAC")
+    max_upload_mb_free: Optional[int] = Field(None, ge=1, le=500, description="Лимит тарифа Free (МБ)")
+    max_upload_mb_pro: Optional[int] = Field(None, ge=1, le=1000, description="Лимит тарифа Pro (МБ)")
+    max_upload_mb_studio: Optional[int] = Field(None, ge=1, le=1000, description="Лимит тарифа Studio, DJ-сеты (МБ)")
     allowed_extensions: Optional[List[str]] = None
     temp_dir: Optional[str] = None
     default_target_lufs: Optional[float] = Field(None, ge=-60, le=-1)
@@ -699,6 +705,12 @@ def admin_settings(admin: dict = Depends(_get_current_admin)):
             "jwt_secret_set": bool(os.environ.get("MAGIC_MASTER_JWT_SECRET")),
             "allowed_extensions": allowed,
             "max_upload_mb": _effective_setting("max_upload_mb", 100),
+            "max_upload_mb_wav": _effective_setting("max_upload_mb_wav", 800),
+            "max_upload_mb_mp3": _effective_setting("max_upload_mb_mp3", 300),
+            "max_upload_mb_flac": _effective_setting("max_upload_mb_flac", 500),
+            "max_upload_mb_free": _effective_setting("max_upload_mb_free", 100),
+            "max_upload_mb_pro": _effective_setting("max_upload_mb_pro", 300),
+            "max_upload_mb_studio": _effective_setting("max_upload_mb_studio", 800),
             "jobs_done_ttl_seconds": _effective_setting("jobs_done_ttl_seconds", 3600),
             "debug_mode": _effective_setting("debug_mode", False),
             "default_target_lufs": _effective_setting("default_target_lufs", -14.0),

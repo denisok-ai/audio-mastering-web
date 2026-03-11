@@ -351,13 +351,11 @@ async def test_api_v2_master_creates_job(minimal_wav_bytes):
 
 @pytest.mark.anyio
 async def test_api_v2_master_rate_limit(minimal_wav_bytes):
-    """После 3 запросов с одного IP — должен вернуть 429."""
-    from app.deps import _FREE_DAILY_LIMIT
-    import datetime
+    """После исчерпания недельного лимита (1 мастеринг/неделю) — должен вернуть 429."""
+    from app.deps import _FREE_WEEKLY_LIMIT, _week_start
 
-    # Заполняем лимит напрямую (имитируем 3 успешных мастеринга)
-    today = datetime.date.today().isoformat()
-    _rate_limits["testclient"] = {"count": _FREE_DAILY_LIMIT, "day": today}
+    # Заполняем лимит напрямую (имитируем 1 мастеринг за неделю)
+    _rate_limits["testclient"] = {"count": _FREE_WEEKLY_LIMIT, "week": _week_start()}
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         r = await ac.post(

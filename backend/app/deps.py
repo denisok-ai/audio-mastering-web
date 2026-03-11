@@ -77,33 +77,42 @@ def get_current_user_optional(
     return payload
 
 
-# ─── Rate limiting (Free tier: 3 мастеринга / день по IP) ────────────────────
-_FREE_DAILY_LIMIT = 3
+# ─── Rate limiting (Free tier: 1 мастеринг в неделю по IP) ───────────────────
+_FREE_WEEKLY_LIMIT = 1
 _rate_limits: dict[str, dict] = {}
 
 
+def _week_start() -> str:
+    """Начало текущей недели (понедельник) в ISO для ключа сброса."""
+    today = datetime.date.today()
+    # Понедельник = today - (weekday), weekday() понедельник=0
+    monday = today - datetime.timedelta(days=today.weekday())
+    return monday.isoformat()
+
+
 def check_rate_limit(ip: str) -> dict:
-    """Возвращает {"ok": bool, "used": int, "limit": int, "remaining": int, "reset_at": str}."""
-    today = datetime.date.today().isoformat()
+    """Возвращает {"ok": bool, "used": int, "limit": int, "remaining": int, "reset_at": str}.
+    Free: 1 мастеринг в неделю, reset_at — понедельник следующей недели."""
+    week = _week_start()
     entry = _rate_limits.get(ip)
-    used = entry["count"] if (entry and entry.get("day") == today) else 0
-    remaining = max(0, _FREE_DAILY_LIMIT - used)
-    tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+    used = entry["count"] if (entry and entry.get("week") == week) else 0
+    remaining = max(0, _FREE_WEEKLY_LIMIT - used)
+    next_monday = datetime.date.today() + datetime.timedelta(days=(7 - datetime.date.today().weekday()))
     return {
-        "ok": used < _FREE_DAILY_LIMIT,
+        "ok": used < _FREE_WEEKLY_LIMIT,
         "used": used,
-        "limit": _FREE_DAILY_LIMIT,
+        "limit": _FREE_WEEKLY_LIMIT,
         "remaining": remaining,
-        "reset_at": tomorrow,
+        "reset_at": next_monday.isoformat(),
     }
 
 
 def record_usage(ip: str, n: int = 1) -> None:
-    """Увеличивает счётчик использований для IP за сегодня."""
-    today = datetime.date.today().isoformat()
+    """Увеличивает счётчик использований для IP за текущую неделю."""
+    week = _week_start()
     entry = _rate_limits.get(ip)
-    if not entry or entry.get("day") != today:
-        _rate_limits[ip] = {"count": n, "day": today}
+    if not entry or entry.get("week") != week:
+        _rate_limits[ip] = {"count": n, "week": week}
     else:
         _rate_limits[ip]["count"] = entry["count"] + n
 

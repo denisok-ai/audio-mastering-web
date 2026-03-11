@@ -79,7 +79,7 @@ async def api_ai_recommend(
         if body and body.analysis:
             analysis = body.analysis
         elif file and file.filename and allowed_file(file.filename):
-            analysis = await _analyze_file_for_ai(file)
+            analysis = await _analyze_file_for_ai(file, user=user)
 
         if not analysis:
             raise HTTPException(
@@ -125,7 +125,7 @@ async def api_ai_report(
         if body and body.analysis:
             analysis = body.analysis
         elif file and file.filename and allowed_file(file.filename):
-            analysis = await _analyze_file_for_ai(file, extended=False)
+            analysis = await _analyze_file_for_ai(file, extended=False, user=user)
 
         if not analysis:
             raise HTTPException(
@@ -214,13 +214,18 @@ async def api_ai_chat(
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async def _analyze_file_for_ai(file: UploadFile, extended: bool = True) -> dict:
-    """Читает аудиофайл и возвращает словарь анализа для AI-эндпоинтов."""
+async def _analyze_file_for_ai(
+    file: UploadFile,
+    extended: bool = True,
+    user: Optional[dict] = None,
+) -> dict:
+    """Читает аудиофайл и возвращает словарь анализа для AI-эндпоинтов. Лимит по тарифу и формату (WAV до 800 МБ, MP3 до 300 МБ)."""
     fname = file.filename or ""
     if fname.lower().endswith(".mp3") and not shutil.which("ffmpeg"):
         raise HTTPException(400, "Чтение MP3 требует ffmpeg.")
     data = await file.read()
-    max_mb = settings_store.get_setting_int("max_upload_mb", 100)
+    tier = (user.get("tier") or "free").lower() if user else "free"
+    max_mb = settings_store.get_max_upload_mb(fname, tier)
     if len(data) > max_mb * 1024 * 1024:
         raise HTTPException(400, f"Файл больше {max_mb} МБ.")
     if not check_audio_magic_bytes(data, fname):

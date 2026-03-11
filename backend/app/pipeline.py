@@ -890,7 +890,16 @@ def resample_audio(audio: np.ndarray, sr: int, target_sr: int) -> np.ndarray:
 
 def validate_mastered_not_silent(mastered: np.ndarray) -> None:
     """Проверка, что результат мастеринга не пустой и не тишина (защита от пустого файла при доп. обработке, задача 1.5)."""
-    if mastered.size == 0 or float(np.max(np.abs(mastered))) < 1e-5:
+    if mastered.size == 0:
+        raise ValueError(
+            "Обработка дала тишину. Отключите часть доп. настроек (Spectral Denoiser, De-esser, "
+            "Transient Designer, Parallel Compression, Dynamic EQ) и попробуйте снова."
+        )
+    if not np.all(np.isfinite(mastered)):
+        raise ValueError(
+            "Обработка дала недопустимые значения (NaN/Inf). Отключите Dynamic EQ или другие доп. модули и попробуйте снова."
+        )
+    if float(np.max(np.abs(mastered))) < 1e-5:
         raise ValueError(
             "Обработка дала тишину. Отключите часть доп. настроек (Spectral Denoiser, De-esser, "
             "Transient Designer, Parallel Compression, Dynamic EQ) и попробуйте снова."
@@ -1595,9 +1604,12 @@ def apply_dynamic_eq(
         max_cut_lin = 10 ** (max_cut_db / 20.0)
 
         for ch in range(n_ch):
-            x = out[:, ch]
+            x = out[:, ch].copy()
             band_signal = _safe_filtfilt(b_bell, a_bell, x.astype(np.float64), sg).astype(np.float32)
+            # Защита от NaN/Inf из нестабильного IIR — иначе на выходе тишина
+            band_signal = np.nan_to_num(band_signal, nan=0.0, posinf=0.0, neginf=0.0)
             env = _envelope_follower(np.abs(band_signal), float(sr), attack_ms / 1000.0, release_ms / 1000.0)
+            env = np.nan_to_num(env, nan=0.0, posinf=0.0, neginf=0.0)
             gain_mult = np.where(
                 env > thresh_lin,
                 np.clip(
@@ -1607,9 +1619,50 @@ def apply_dynamic_eq(
                 ),
                 1.0,
             ).astype(np.float32)
-            gain_mult = np.clip(gain_mult, 0.3, 1.0).astype(np.float32)
+            gain_mult = np.clip(np.nan_to_num(gain_mult, nan=1.0, posinf=1.0, neginf=1.0), 0.3, 1.0)
             out[:, ch] = x - band_signal + band_signal * gain_mult
 
+    # Восстановить сэмплы с NaN/Inf из оригинала, чтобы не было пустого файла
+    bad = ~np.isfinite(out)
+    if np.any(bad):
+        out = np.where(bad, audio.astype(np.float32), out)
+    out = np.clip(out, -1.0, 1.0).astype(np.float32)
+    if audio.shape[1] == 1:
+        return out[:, 0]
+    return out
+
+
+# Срез верхних частот на 10% для всех пресетов: устраняет перегрузку верхов (особенно с вокалом).
+# Кроссовер 5 kHz: низкая часть без изменений, высокая часть × 0.9.
+HIGH_FREQ_TRIM_CROSSOVER_HZ = 5000.0
+HIGH_FREQ_TRIM_GAIN = 0.9  # 10% срез на верхах
+
+
+def apply_high_freq_trim(
+    audio: np.ndarray,
+    sr: int,
+    crossover_hz: float = HIGH_FREQ_TRIM_CROSSOVER_HZ,
+    high_gain: float = HIGH_FREQ_TRIM_GAIN,
+) -> np.ndarray:
+    """
+    Срез уровня верхних частот на заданный процент (по умолчанию 10%).
+    Применяется ко всем пресетам для устранения перегрузки верхов (в т.ч. с вокалом).
+    crossover_hz: граница низ/верх (по умолчанию 5 kHz).
+    high_gain: множитель для высокой полосы (0.9 = срез 10%).
+    """
+    from scipy import signal as sg
+    if abs(high_gain - 1.0) < 0.001:
+        return audio
+    if audio.ndim == 1:
+        audio = audio[:, np.newaxis]
+    nyq = sr / 2.0
+    f_n = min(crossover_hz / nyq, 0.98)
+    b_lp, a_lp = sg.butter(2, f_n, btype="low", output="ba")
+    out = audio.copy().astype(np.float32)
+    for ch in range(out.shape[1]):
+        low = _safe_filtfilt(b_lp, a_lp, out[:, ch].astype(np.float64), sg).astype(np.float32)
+        high = out[:, ch].astype(np.float32) - low
+        out[:, ch] = low + high_gain * high
     out = np.clip(out, -1.0, 1.0).astype(np.float32)
     if audio.shape[1] == 1:
         return out[:, 0]
