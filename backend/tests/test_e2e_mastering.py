@@ -10,7 +10,7 @@ from app.main import app
 
 
 @pytest.mark.anyio
-async def test_e2e_mastering_flow(minimal_wav_bytes: bytes):
+async def test_e2e_mastering_flow(mastering_wav_bytes: bytes):
     """
     Полный сценарий: отправить WAV → получить job_id → дождаться done → скачать результат (WAV).
     """
@@ -22,7 +22,7 @@ async def test_e2e_mastering_flow(minimal_wav_bytes: bytes):
         # 1) Запуск мастеринга
         r = await ac.post(
             "/api/v2/master",
-            files={"file": ("test.wav", minimal_wav_bytes, "audio/wav")},
+            files={"file": ("test.wav", mastering_wav_bytes, "audio/wav")},
             data={
                 "target_lufs": "-14",
                 "style": "standard",
@@ -59,7 +59,7 @@ async def test_e2e_mastering_flow(minimal_wav_bytes: bytes):
 
 
 @pytest.mark.anyio
-async def test_e2e_mastering_with_pro_rumble(minimal_wav_bytes: bytes):
+async def test_e2e_mastering_with_pro_rumble(mastering_wav_bytes: bytes):
     """
     E2E с PRO-модулем: rumble_enabled=true → дождаться done → результат не пустой.
     Проверяет, что доп. обработка (румбл-фильтр) применяется без ошибки.
@@ -71,7 +71,7 @@ async def test_e2e_mastering_with_pro_rumble(minimal_wav_bytes: bytes):
     ) as ac:
         r = await ac.post(
             "/api/v2/master",
-            files={"file": ("test.wav", minimal_wav_bytes, "audio/wav")},
+            files={"file": ("test.wav", mastering_wav_bytes, "audio/wav")},
             data={
                 "target_lufs": "-14",
                 "style": "standard",
@@ -101,7 +101,7 @@ async def test_e2e_mastering_with_pro_rumble(minimal_wav_bytes: bytes):
 
 
 @pytest.mark.anyio
-async def test_e2e_mastering_with_dynamic_eq(minimal_wav_bytes: bytes):
+async def test_e2e_mastering_with_dynamic_eq(mastering_wav_bytes: bytes):
     """
     E2E с PRO-модулем Dynamic EQ: dynamic_eq_enabled=true → дождаться done → результат не пустой.
     Проверяет, что 8-полосный Dynamic EQ применяется в полной цепочке мастеринга без ошибки.
@@ -113,7 +113,7 @@ async def test_e2e_mastering_with_dynamic_eq(minimal_wav_bytes: bytes):
     ) as ac:
         r = await ac.post(
             "/api/v2/master",
-            files={"file": ("test.wav", minimal_wav_bytes, "audio/wav")},
+            files={"file": ("test.wav", mastering_wav_bytes, "audio/wav")},
             data={
                 "target_lufs": "-14",
                 "style": "standard",

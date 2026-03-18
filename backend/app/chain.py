@@ -104,7 +104,7 @@ class MasteringChain:
         return {
             "modules": [
                 {"id": "dc_offset", "enabled": True, "amount": 1.0},
-                {"id": "peak_guard", "enabled": True, "headroom_db": 2.0, "amount": 1.0},
+                {"id": "peak_guard", "enabled": True, "headroom_db": 0.5, "amount": 1.0},
                 {"id": "target_curve", "enabled": True, "phase_mode": "minimum", "eq_ms": False, "amount": 1.0},
                 {"id": "dynamics", "enabled": True, "knee_db": 6.0, "crossovers_hz": [214.0, 2230.0, 10000.0], "amount": 1.0},
                 {"id": "normalize_lufs", "enabled": True, "target_lufs": target_lufs, "amount": 1.0},
@@ -113,7 +113,7 @@ class MasteringChain:
                 {"id": "exciter", "enabled": abs(exciter_db) >= 0.05, "exciter_db": exciter_db, "mode": "warm", "oversample": 1, "amount": 1.0},
                 {"id": "imager", "enabled": abs(imager_width - 1.0) >= 0.01, "width": imager_width, "stereoize_delay_ms": 0.0, "stereoize_mix": 0.12, "band_widths": None, "crossovers_hz": [214.0, 2230.0, 10000.0], "amount": 1.0},
                 {"id": "reverb", "enabled": False, "reverb_type": "plate", "decay_sec": 1.2, "mix": 0.15, "mix_mid": None, "mix_side": None, "amount": 1.0},
-                {"id": "peak_guard", "enabled": True, "headroom_db": 2.0, "amount": 1.0},
+                {"id": "peak_guard", "enabled": True, "headroom_db": 0.5, "amount": 1.0},
             ]
         }
 

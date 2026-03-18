@@ -53,7 +53,6 @@ from ..pipeline import (
     STYLE_CONFIGS,
     apply_deesser,
     apply_dynamic_eq,
-    apply_high_freq_trim,
     apply_parallel_compression,
     apply_reference_match,
     apply_rumble_filter,
@@ -437,9 +436,6 @@ def _run_mastering_job_v2(
             if _is_debug_mode():
                 peak = float(np.max(np.abs(mastered))) + 1e-12
                 job["message"] = f"Dynamic EQ… (peak {20 * np.log10(peak):.1f} dB)"
-
-        # Срез верхних частот на 10% на всех пресетах — устраняет перегрузку верхов (в т.ч. с вокалом)
-        mastered = apply_high_freq_trim(mastered, sr)
 
         validate_mastered_not_silent(mastered)
 
