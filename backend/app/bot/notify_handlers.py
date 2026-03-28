@@ -1,7 +1,9 @@
 """Обработчики бота уведомлений: админское нижнее меню (отчёты); пользовательский бот — по ссылке."""
 import asyncio
+import logging
 
 from aiogram import F, Router
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
@@ -13,7 +15,6 @@ from .admin_reports import (
     format_health_ru,
     format_jobs_ru,
     format_revenue_ru,
-    format_server_oneline,
     format_stats_ru,
     format_users_ru,
 )
@@ -24,7 +25,19 @@ from .texts import txt
 
 router = Router(name="notify_bot")
 
+logger = logging.getLogger(__name__)
+
 _TELEGRAM_MSG_MAX = 4000
+
+
+async def _safe_answer(message: Message, text: str, **kwargs: object) -> None:
+    """В Topics-чатах message.answer() может дать message thread not found — повтор без топика."""
+    try:
+        await message.answer(text, **kwargs)  # type: ignore[arg-type]
+    except TelegramBadRequest as exc:
+        logger.debug("notify_bot: answer failed (%s), retry send_message without topic", exc)
+        safe = {k: v for k, v in kwargs.items() if k != "message_thread_id"}
+        await message.bot.send_message(chat_id=message.chat.id, text=text, **safe)  # type: ignore[arg-type]
 
 
 def _split_telegram_html(s: str, max_len: int = _TELEGRAM_MSG_MAX) -> list[str]:
@@ -44,7 +57,7 @@ def _split_telegram_html(s: str, max_len: int = _TELEGRAM_MSG_MAX) -> list[str]:
 
 async def _answer_chunks(message: Message, text: str, *, lang: str) -> None:
     for chunk in _split_telegram_html(text):
-        await message.answer(chunk, reply_markup=admin_menu_reply(lang))
+        await _safe_answer(message, chunk, reply_markup=admin_menu_reply(lang))
 
 
 def _hint_ru() -> str:
@@ -73,7 +86,8 @@ def _lang(message: Message) -> str:
 @router.message(CommandStart())
 async def notify_start(message: Message) -> None:
     lang = _lang(message)
-    await message.answer(
+    await _safe_answer(
+        message,
         _hint_en() if lang == "en" else _hint_ru(),
         reply_markup=admin_menu_reply(lang),
         disable_web_page_preview=True,
@@ -83,7 +97,8 @@ async def notify_start(message: Message) -> None:
 @router.message(Command("help"))
 async def notify_help(message: Message) -> None:
     lang = _lang(message)
-    await message.answer(
+    await _safe_answer(
+        message,
         _hint_en() if lang == "en" else _hint_ru(),
         reply_markup=admin_menu_reply(lang),
         disable_web_page_preview=True,
@@ -97,13 +112,14 @@ async def notify_broadcast(message: Message) -> None:
     parts = (message.text or "").split(maxsplit=1)
     body = parts[1].strip() if len(parts) > 1 else ""
     if not body:
-        await message.answer(
+        await _safe_answer(
+            message,
             txt("ru", "broadcast_usage") if lang == "ru" else "Usage: /broadcast &lt;message&gt;",
             reply_markup=admin_menu_reply(lang),
         )
         return
     if not DB_AVAILABLE or SessionLocal is None:
-        await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+        await _safe_answer(message, "DB недоступна.", reply_markup=admin_menu_reply(lang))
         return
     db = SessionLocal()
     try:
@@ -115,7 +131,8 @@ async def notify_broadcast(message: Message) -> None:
         if send_user_bot_text_sync(chat_id, body[:4000]):
             n += 1
         await asyncio.sleep(0.04)
-    await message.answer(
+    await _safe_answer(
+        message,
         txt("ru", "broadcast_done", n=n) if lang == "ru" else f"Sent to {n} chats.",
         reply_markup=admin_menu_reply(lang),
     )
@@ -152,7 +169,8 @@ async def notify_menu_button(message: Message) -> None:
     text = (message.text or "").strip()
 
     if text in (_BTN_HELP_RU, _BTN_HELP_EN):
-        await message.answer(
+        await _safe_answer(
+            message,
             _hint_en() if lang == "en" else _hint_ru(),
             reply_markup=admin_menu_reply(lang),
             disable_web_page_preview=True,
@@ -160,7 +178,8 @@ async def notify_menu_button(message: Message) -> None:
         return
 
     if text in (_BTN_BROADCAST_RU, _BTN_BROADCAST_EN):
-        await message.answer(
+        await _safe_answer(
+            message,
             (
                 "Отправьте команду в формате:\n<code>/broadcast текст сообщения</code>"
                 if lang == "ru"
@@ -171,7 +190,8 @@ async def notify_menu_button(message: Message) -> None:
         return
 
     if text in (_BTN_SERVER_RU, _BTN_SERVER_EN):
-        await message.answer(
+        await _safe_answer(
+            message,
             format_server_report(get_system_metrics()),
             reply_markup=admin_menu_reply(lang),
         )
@@ -179,68 +199,68 @@ async def notify_menu_button(message: Message) -> None:
 
     if text in (_BTN_STATS_RU, _BTN_STATS_EN):
         if not DB_AVAILABLE or SessionLocal is None:
-            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, "DB недоступна.", reply_markup=admin_menu_reply(lang))
             return
         db = SessionLocal()
         try:
             from ..services.stats_service import get_dashboard_stats
 
             st = get_dashboard_stats(db)
-            await message.answer(format_stats_ru(st), reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, format_stats_ru(st), reply_markup=admin_menu_reply(lang))
         finally:
             db.close()
         return
 
     if text in (_BTN_JOBS_RU, _BTN_JOBS_EN):
-        await message.answer(format_jobs_ru(), reply_markup=admin_menu_reply(lang))
+        await _safe_answer(message, format_jobs_ru(), reply_markup=admin_menu_reply(lang))
         return
 
     if text in (_BTN_ERRORS_RU, _BTN_ERRORS_EN):
-        await message.answer(format_errors_ru(15), reply_markup=admin_menu_reply(lang))
+        await _safe_answer(message, format_errors_ru(15), reply_markup=admin_menu_reply(lang))
         return
 
     if text in (_BTN_HEALTH_RU, _BTN_HEALTH_EN):
         if not DB_AVAILABLE or SessionLocal is None:
-            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, "DB недоступна.", reply_markup=admin_menu_reply(lang))
             return
         db = SessionLocal()
         try:
-            await message.answer(format_health_ru(db), reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, format_health_ru(db), reply_markup=admin_menu_reply(lang))
         finally:
             db.close()
         return
 
     if text in (_BTN_USERS_RU, _BTN_USERS_EN):
         if not DB_AVAILABLE or SessionLocal is None:
-            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, "DB недоступна.", reply_markup=admin_menu_reply(lang))
             return
         db = SessionLocal()
         try:
             from ..services.stats_service import get_dashboard_stats
 
             st = get_dashboard_stats(db)
-            await message.answer(format_users_ru(db, st), reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, format_users_ru(db, st), reply_markup=admin_menu_reply(lang))
         finally:
             db.close()
         return
 
     if text in (_BTN_REVENUE_RU, _BTN_REVENUE_EN):
         if not DB_AVAILABLE or SessionLocal is None:
-            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, "DB недоступна.", reply_markup=admin_menu_reply(lang))
             return
         db = SessionLocal()
         try:
             from ..services.stats_service import get_dashboard_stats
 
             st = get_dashboard_stats(db)
-            await message.answer(format_revenue_ru(st), reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, format_revenue_ru(st), reply_markup=admin_menu_reply(lang))
         finally:
             db.close()
         return
 
     if text in (_BTN_REPORT_RU, _BTN_REPORT_EN):
         if not DB_AVAILABLE or SessionLocal is None:
-            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            await _safe_answer(message, "DB недоступна.", reply_markup=admin_menu_reply(lang))
             return
         db = SessionLocal()
         try:

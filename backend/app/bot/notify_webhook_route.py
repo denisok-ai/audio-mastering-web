@@ -28,5 +28,4 @@ async def notify_bot_webhook(request: Request) -> dict:
         await dp.feed_update(bot, update)
     except Exception:  # noqa: BLE001
         logger.exception("notify_bot_webhook feed_update failed")
-        raise HTTPException(status_code=400, detail="Bad update")
     return {"ok": True}

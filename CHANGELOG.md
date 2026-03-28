@@ -9,6 +9,14 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.6.7] — 2026-03-28
+
+### Бот уведомлений — ответы при Topics в личке
+- **backend/app/bot/notify_handlers.py**: `_safe_answer` — при `TelegramBadRequest` повтор через `send_message` без топика (исправляет «message thread not found» и молчание кнопок / отсутствие клавиатуры на мобильном).
+- **backend/app/bot/notify_webhook_route.py**: при ошибке обработки апдейта всё равно **200** и `{"ok": true}`, чтобы Telegram не крутил бесконечные ретраи.
+
+---
+
 ## [0.6.6] — 2026-03-28
 
 ### Бот уведомлений — админское меню без боковой панели команд
