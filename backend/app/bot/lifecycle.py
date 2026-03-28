@@ -1,9 +1,10 @@
 """Установка / снятие webhook при старте приложения."""
 import logging
 
-from aiogram.types import BotCommand
+from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault
 
 from ..config import settings
+from ..database import DB_AVAILABLE, SessionLocal, get_user_by_telegram_id, list_admin_telegram_ids
 from .setup import get_bot_dp
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,8 @@ if not _root_bot_log.handlers:
     _root_bot_log.setLevel(logging.INFO)
 
 
-def _user_bot_commands() -> list[BotCommand]:
-    """Команды меню «/» для клиентского бота (RU, кратко)."""
+def _regular_user_bot_commands() -> list[BotCommand]:
+    """Меню «/» для обычных пользователей (без админских команд)."""
     return [
         BotCommand(command="start", description="Старт и главное меню"),
         BotCommand(command="master", description="Мастеринг аудио"),
@@ -33,8 +34,51 @@ def _user_bot_commands() -> list[BotCommand]:
         BotCommand(command="link", description="Привязка аккаунта сайта"),
         BotCommand(command="lang", description="Язык интерфейса"),
         BotCommand(command="help", description="Список команд"),
-        BotCommand(command="admin", description="Панель администратора"),
     ]
+
+
+def _admin_bot_commands() -> list[BotCommand]:
+    """Расширенное меню для админов сайта (привязанный Telegram + is_admin)."""
+    cmds = list(_regular_user_bot_commands())
+    cmds.extend(
+        [
+            BotCommand(command="admin", description="Панель администратора"),
+            BotCommand(command="server", description="Сервер (кратко)"),
+            BotCommand(command="stats", description="Статистика"),
+            BotCommand(command="jobs", description="Задачи мастеринга"),
+            BotCommand(command="errors", description="Ошибки мастеринга"),
+            BotCommand(command="report", description="Полный отчёт"),
+            BotCommand(command="broadcast", description="Рассылка в Telegram"),
+        ]
+    )
+    return cmds
+
+
+async def refresh_menu_for_telegram_chat(telegram_id: int) -> None:
+    """
+    Обновить меню «/» для одного приватного чата после /link, /code или /unlink.
+    Админы — расширенный список; остальные — сброс scope чата (действует меню по умолчанию).
+    """
+    bot, _ = get_bot_dp()
+    if not bot or not telegram_id:
+        return
+    tid = int(telegram_id)
+    if not DB_AVAILABLE or SessionLocal is None:
+        return
+    db = SessionLocal()
+    try:
+        u = get_user_by_telegram_id(db, tid)
+        scope = BotCommandScopeChat(chat_id=tid)
+        if u and getattr(u, "is_admin", False):
+            await bot.set_my_commands(_admin_bot_commands(), scope=scope)
+            logger.info("User bot: меню админа обновлено для chat_id=%s", tid)
+        else:
+            try:
+                await bot.delete_my_commands(scope=scope)
+            except Exception:  # noqa: BLE001
+                logger.debug("delete_my_commands chat_id=%s", tid)
+    finally:
+        db.close()
 
 
 async def bot_startup() -> None:
@@ -48,12 +92,27 @@ async def bot_startup() -> None:
         logger.warning("User bot: get_bot_dp() returned None — проверьте USER_BOT_TOKEN")
         return
 
-    cmds = _user_bot_commands()
+    regular = _regular_user_bot_commands()
+    admin_cmds = _admin_bot_commands()
     try:
-        await bot.set_my_commands(cmds)
-        logger.info("User bot: зарегистрировано команд в меню: %d", len(cmds))
+        await bot.set_my_commands(regular, scope=BotCommandScopeDefault())
+        logger.info("User bot: меню по умолчанию (пользователи): %d команд", len(regular))
     except Exception:
-        logger.exception("User bot: не удалось set_my_commands")
+        logger.exception("User bot: не удалось set_my_commands (default scope)")
+
+    n_admins = 0
+    if DB_AVAILABLE and SessionLocal is not None:
+        db = SessionLocal()
+        try:
+            for chat_id in list_admin_telegram_ids(db):
+                try:
+                    await bot.set_my_commands(admin_cmds, scope=BotCommandScopeChat(chat_id=chat_id))
+                    n_admins += 1
+                except Exception:
+                    logger.exception("User bot: set_my_commands для admin chat_id=%s", chat_id)
+        finally:
+            db.close()
+    logger.info("User bot: расширенное меню для админов: %d чат(ов)", n_admins)
 
     secret = (getattr(settings, "user_bot_webhook_secret", "") or "").strip()
     url = f"{base}/bot/webhook"

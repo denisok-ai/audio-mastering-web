@@ -1,6 +1,7 @@
 """Привязка аккаунта, баланс, история, pricing, ref."""
 import re
 import secrets
+from typing import Optional
 
 from aiogram import F, Router
 from aiogram.filters import Command
@@ -69,6 +70,7 @@ async def cmd_code(message: Message, state: FSMContext) -> None:
         return
     if not DB_AVAILABLE or SessionLocal is None:
         return
+    tid_for_menu: Optional[int] = None
     db = SessionLocal()
     try:
         user = verify_telegram_link_code(db, message.from_user.id, parts[1].strip())
@@ -85,8 +87,16 @@ async def cmd_code(message: Message, state: FSMContext) -> None:
             txt(lang, "code_ok", email=user.email),
             reply_markup=main_menu_reply(lang),
         )
+        tid_for_menu = int(message.from_user.id)
     finally:
         db.close()
+    if tid_for_menu is not None:
+        try:
+            from ..lifecycle import refresh_menu_for_telegram_chat
+
+            await refresh_menu_for_telegram_chat(tid_for_menu)
+        except Exception:
+            pass
 
 
 @router.message(LinkStates.waiting_code, F.text)
@@ -102,6 +112,7 @@ async def state_waiting_code_digits(message: Message, state: FSMContext) -> None
 async def cmd_unlink(message: Message) -> None:
     if not DB_AVAILABLE or SessionLocal is None:
         return
+    tid_for_menu: Optional[int] = None
     db = SessionLocal()
     try:
         u = get_linked_user(db, message.from_user.id)
@@ -109,11 +120,19 @@ async def cmd_unlink(message: Message) -> None:
         if not u:
             await message.answer(txt(lang, "unlink_none"))
             return
+        tid_for_menu = int(message.from_user.id)
         u.telegram_id = None
         db.commit()
         await message.answer(txt(lang, "unlink_ok"))
     finally:
         db.close()
+    if tid_for_menu is not None:
+        try:
+            from ..lifecycle import refresh_menu_for_telegram_chat
+
+            await refresh_menu_for_telegram_chat(tid_for_menu)
+        except Exception:
+            pass
 
 
 @router.message(Command("balance"))

@@ -1021,6 +1021,18 @@ def get_user_by_telegram_id(db, telegram_id: int):
     return db.query(User).filter(User.telegram_id == int(telegram_id)).first()
 
 
+def list_admin_telegram_ids(db) -> list[int]:
+    """Telegram user id (private chat id) для пользователей с is_admin и привязанным Telegram."""
+    if not DB_AVAILABLE or db is None or User is None:
+        return []
+    rows = (
+        db.query(User.telegram_id)
+        .filter(User.is_admin.is_(True), User.telegram_id.isnot(None))
+        .all()
+    )
+    return [int(r[0]) for r in rows if r[0] is not None]
+
+
 def clear_telegram_id_for_others(db, telegram_id: int, keep_user_id: int) -> None:
     """Снять telegram_id с других пользователей (один TG = один аккаунт)."""
     if not DB_AVAILABLE or db is None or User is None:
