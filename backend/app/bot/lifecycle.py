@@ -8,6 +8,15 @@ from .setup import get_bot_dp
 
 logger = logging.getLogger(__name__)
 
+# Uvicorn по умолчанию не выводит INFO сторонних логгеров в journald — дублируем в stderr.
+_root_bot_log = logging.getLogger("app.bot")
+if not _root_bot_log.handlers:
+    _h = logging.StreamHandler()
+    _h.setLevel(logging.INFO)
+    _h.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+    _root_bot_log.addHandler(_h)
+    _root_bot_log.setLevel(logging.INFO)
+
 
 def _user_bot_commands() -> list[BotCommand]:
     """Команды меню «/» для клиентского бота (RU, кратко)."""

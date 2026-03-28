@@ -13,7 +13,7 @@ Format: `[Phase] Brief description — files changed`.
 
 ### Telegram user bot — меню команд и webhook
 - **backend/app/main.py**: `logging.getLogger("app.bot").setLevel(INFO)` в lifespan — сообщения lifecycle видны в journald.
-- **backend/app/bot/lifecycle.py**: при старте `set_my_commands` — список команд в меню «/» (RU); логирование успеха/ошибки; при сбое `set_webhook` — `logger.exception` (видно в journalctl), лог «secret=yes|no».
+- **backend/app/bot/lifecycle.py**: при старте `set_my_commands` — список команд в меню «/» (RU); логирование успеха/ошибки; при сбое `set_webhook` — `logger.exception` (видно в journalctl), лог «secret=yes|no»; `StreamHandler` для `app.bot` → stderr/journald.
 - **backend/tests/test_bot_lifecycle.py**: проверка списка команд.
 
 ---
