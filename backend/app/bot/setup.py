@@ -15,7 +15,15 @@ def build_bot_dp() -> Tuple[Optional[Bot], Optional[Dispatcher]]:
     token = (getattr(settings, "user_bot_token", "") or "").strip()
     if not token:
         return None, None
-    bot = Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    try:
+        bot = Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning(
+            "USER_BOT_TOKEN невалиден — бот не будет запущен. "
+            "Формат: 123456789:AABBcc... (получите у @BotFather)"
+        )
+        return None, None
     dp = Dispatcher(storage=MemoryStorage())
     from .handlers import register_handlers
 
