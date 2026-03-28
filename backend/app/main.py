@@ -555,9 +555,25 @@ if _frontend.is_dir():
             return HTMLResponse("<h1>Страница недоступна</h1>", status_code=404)
         return FileResponse(str(p))
 
+    @app.get("/robots.txt", include_in_schema=False)
+    async def robots_txt():
+        p = _frontend / "robots.txt"
+        if p.is_file():
+            return FileResponse(str(p), media_type="text/plain")
+        return Response("User-agent: *\nAllow: /\n", media_type="text/plain")
+
+    @app.get("/sitemap.xml", include_in_schema=False)
+    async def sitemap_xml():
+        p = _frontend / "sitemap.xml"
+        if p.is_file():
+            return FileResponse(str(p), media_type="application/xml")
+        return Response(status_code=404)
+
     @app.get("/favicon.ico", include_in_schema=False)
     async def favicon():
-        """Убирает 404 в консоли: отдаём 204 No Content (иконки нет)."""
+        p = _frontend / "favicon.ico"
+        if p.is_file():
+            return FileResponse(str(p), media_type="image/x-icon")
         return Response(status_code=204)
 
     @app.get("/progress.html", include_in_schema=False)
