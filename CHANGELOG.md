@@ -9,6 +9,14 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.6.2] — 2026-03-28
+
+### Telegram user bot — меню команд и webhook
+- **backend/app/bot/lifecycle.py**: при старте `set_my_commands` — список команд в меню «/» (RU); логирование успеха/ошибки; при сбое `set_webhook` — `logger.exception` (видно в journalctl), лог «secret=yes|no».
+- **backend/tests/test_bot_lifecycle.py**: проверка списка команд.
+
+---
+
 ## [0.6.1] — 2026-03-28
 
 ### Админ-панель в Telegram-боте (RU)
