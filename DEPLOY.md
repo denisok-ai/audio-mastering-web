@@ -159,6 +159,11 @@ sudo ufw reload
 
 ---
 
+## Домен magicmaster.pro и SSL
+
+Пошаговая инструкция (DNS, certbot, `.env`, проверки): **[doc/MAGICMASTER_PRO.md](doc/MAGICMASTER_PRO.md)**.  
+Шаблон nginx под этот домен: [deploy/nginx/magic-master.conf](deploy/nginx/magic-master.conf).
+
 ## Шаг 8 (опционально). Nginx и HTTPS
 
 Если нужен доступ по домену и HTTPS (например, `https://master.example.com`):

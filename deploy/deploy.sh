@@ -115,6 +115,7 @@ do_install() {
             mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled 2>/dev/null || true
         fi
         if [ -d /etc/nginx/sites-available ]; then
+            mkdir -p /var/www/certbot
             cp "$INSTALL_DIR/deploy/nginx/magic-master.conf" /etc/nginx/sites-available/magic-master
             [ -f "$INSTALL_DIR/deploy/nginx/magic-master-proxy.inc" ] && \
                 cp "$INSTALL_DIR/deploy/nginx/magic-master-proxy.inc" /etc/nginx/sites-available/
