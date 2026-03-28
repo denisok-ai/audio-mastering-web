@@ -21,7 +21,7 @@ from typing import Optional
 
 from .config import settings
 from . import settings_store
-from .bot.keyboards import main_menu_reply_markup_dict
+from .bot.keyboards import admin_menu_reply_markup_dict
 
 
 def _is_configured() -> bool:
@@ -44,9 +44,9 @@ def _send_raw(text: str, *, attach_functional_menu: bool = True) -> None:
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }
-    # То же нижнее меню, что у @magicmasterpro_user_bot (обработка нажатий — webhook /bot/notify/webhook)
+    # Админское нижнее меню (обработка — webhook /bot/notify/webhook)
     if attach_functional_menu:
-        body["reply_markup"] = main_menu_reply_markup_dict("ru")
+        body["reply_markup"] = admin_menu_reply_markup_dict("ru")
     payload = json.dumps(body).encode("utf-8")
     try:
         req = urllib.request.Request(

@@ -1,19 +1,57 @@
-"""Обработчики бота уведомлений: то же нижнее меню, что у user bot; действия — в клиентском боте."""
+"""Обработчики бота уведомлений: админское нижнее меню (отчёты); пользовательский бот — по ссылке."""
+import asyncio
+
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from ..config import settings
-from .keyboards import all_main_menu_button_texts, main_menu_reply
+from ..database import DB_AVAILABLE, SessionLocal, list_telegram_ids_for_broadcast
+from .admin_reports import (
+    format_errors_ru,
+    format_full_report_ru,
+    format_health_ru,
+    format_jobs_ru,
+    format_revenue_ru,
+    format_server_oneline,
+    format_stats_ru,
+    format_users_ru,
+)
+from .keyboards import admin_menu_reply, all_admin_menu_button_texts
+from .notify_user import send_user_bot_text_sync
+from .server_metrics import format_server_report, get_system_metrics
+from .texts import txt
 
 router = Router(name="notify_bot")
+
+_TELEGRAM_MSG_MAX = 4000
+
+
+def _split_telegram_html(s: str, max_len: int = _TELEGRAM_MSG_MAX) -> list[str]:
+    s = (s or "").strip()
+    parts: list[str] = []
+    while s:
+        if len(s) <= max_len:
+            parts.append(s)
+            break
+        cut = s.rfind("\n", 0, max_len)
+        if cut < max_len // 2:
+            cut = max_len
+        parts.append(s[:cut])
+        s = s[cut:].lstrip()
+    return parts
+
+
+async def _answer_chunks(message: Message, text: str, *, lang: str) -> None:
+    for chunk in _split_telegram_html(text):
+        await message.answer(chunk, reply_markup=admin_menu_reply(lang))
 
 
 def _hint_ru() -> str:
     url = (getattr(settings, "user_bot_telegram_url", "") or "https://t.me/magicmasterpro_user_bot").strip()
     return (
         "Здесь приходят <b>служебные уведомления</b> (запуск сервера, оплаты, ошибки).\n\n"
-        "Мастеринг, анализ, AI и баланс — откройте клиентский бот:\n"
+        "Мастеринг, анализ, AI и баланс — в клиентском боте:\n"
         f'<a href="{url}">перейти в рабочий бот</a>'
     )
 
@@ -21,7 +59,7 @@ def _hint_ru() -> str:
 def _hint_en() -> str:
     url = (getattr(settings, "user_bot_telegram_url", "") or "https://t.me/magicmasterpro_user_bot").strip()
     return (
-        "This chat is for <b>service notifications</b> only.\n\n"
+        "This chat is for <b>service notifications</b> and admin reports.\n\n"
         "For mastering, analysis, AI — open the client bot:\n"
         f'<a href="{url}">open client bot</a>'
     )
@@ -37,7 +75,7 @@ async def notify_start(message: Message) -> None:
     lang = _lang(message)
     await message.answer(
         _hint_en() if lang == "en" else _hint_ru(),
-        reply_markup=main_menu_reply(lang),
+        reply_markup=admin_menu_reply(lang),
         disable_web_page_preview=True,
     )
 
@@ -47,17 +85,170 @@ async def notify_help(message: Message) -> None:
     lang = _lang(message)
     await message.answer(
         _hint_en() if lang == "en" else _hint_ru(),
-        reply_markup=main_menu_reply(lang),
+        reply_markup=admin_menu_reply(lang),
         disable_web_page_preview=True,
     )
 
 
-@router.message(F.text.in_(all_main_menu_button_texts()))
-async def notify_menu_button(message: Message) -> None:
-    """Те же подписи, что у user bot — поясняем, где реальная обработка."""
+@router.message(Command("broadcast"))
+async def notify_broadcast(message: Message) -> None:
+    """Рассылка в user bot всем подписчикам (чат уведомлений = доверенный)."""
     lang = _lang(message)
+    parts = (message.text or "").split(maxsplit=1)
+    body = parts[1].strip() if len(parts) > 1 else ""
+    if not body:
+        await message.answer(
+            txt("ru", "broadcast_usage") if lang == "ru" else "Usage: /broadcast &lt;message&gt;",
+            reply_markup=admin_menu_reply(lang),
+        )
+        return
+    if not DB_AVAILABLE or SessionLocal is None:
+        await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+        return
+    db = SessionLocal()
+    try:
+        ids = list_telegram_ids_for_broadcast(db)
+    finally:
+        db.close()
+    n = 0
+    for chat_id in ids:
+        if send_user_bot_text_sync(chat_id, body[:4000]):
+            n += 1
+        await asyncio.sleep(0.04)
     await message.answer(
-        _hint_en() if lang == "en" else _hint_ru(),
-        reply_markup=main_menu_reply(lang),
-        disable_web_page_preview=True,
+        txt("ru", "broadcast_done", n=n) if lang == "ru" else f"Sent to {n} chats.",
+        reply_markup=admin_menu_reply(lang),
     )
+
+
+# Кнопки RU
+_BTN_SERVER_RU = "🖥 Сервер"
+_BTN_STATS_RU = "📊 Статистика"
+_BTN_JOBS_RU = "⚙️ Задачи"
+_BTN_ERRORS_RU = "🔴 Ошибки"
+_BTN_HEALTH_RU = "❤️ Здоровье"
+_BTN_USERS_RU = "👥 Пользователи"
+_BTN_REVENUE_RU = "💰 Выручка"
+_BTN_REPORT_RU = "📋 Отчёт"
+_BTN_BROADCAST_RU = "📢 Рассылка"
+_BTN_HELP_RU = "❓ Помощь"
+
+# Кнопки EN
+_BTN_SERVER_EN = "🖥 Server"
+_BTN_STATS_EN = "📊 Stats"
+_BTN_JOBS_EN = "⚙️ Jobs"
+_BTN_ERRORS_EN = "🔴 Errors"
+_BTN_HEALTH_EN = "❤️ Health"
+_BTN_USERS_EN = "👥 Users"
+_BTN_REVENUE_EN = "💰 Revenue"
+_BTN_REPORT_EN = "📋 Report"
+_BTN_BROADCAST_EN = "📢 Broadcast"
+_BTN_HELP_EN = "❓ Help"
+
+
+@router.message(F.text.in_(all_admin_menu_button_texts()))
+async def notify_menu_button(message: Message) -> None:
+    lang = _lang(message)
+    text = (message.text or "").strip()
+
+    if text in (_BTN_HELP_RU, _BTN_HELP_EN):
+        await message.answer(
+            _hint_en() if lang == "en" else _hint_ru(),
+            reply_markup=admin_menu_reply(lang),
+            disable_web_page_preview=True,
+        )
+        return
+
+    if text in (_BTN_BROADCAST_RU, _BTN_BROADCAST_EN):
+        await message.answer(
+            (
+                "Отправьте команду в формате:\n<code>/broadcast текст сообщения</code>"
+                if lang == "ru"
+                else "Send:\n<code>/broadcast your message</code>"
+            ),
+            reply_markup=admin_menu_reply(lang),
+        )
+        return
+
+    if text in (_BTN_SERVER_RU, _BTN_SERVER_EN):
+        await message.answer(
+            format_server_report(get_system_metrics()),
+            reply_markup=admin_menu_reply(lang),
+        )
+        return
+
+    if text in (_BTN_STATS_RU, _BTN_STATS_EN):
+        if not DB_AVAILABLE or SessionLocal is None:
+            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            return
+        db = SessionLocal()
+        try:
+            from ..services.stats_service import get_dashboard_stats
+
+            st = get_dashboard_stats(db)
+            await message.answer(format_stats_ru(st), reply_markup=admin_menu_reply(lang))
+        finally:
+            db.close()
+        return
+
+    if text in (_BTN_JOBS_RU, _BTN_JOBS_EN):
+        await message.answer(format_jobs_ru(), reply_markup=admin_menu_reply(lang))
+        return
+
+    if text in (_BTN_ERRORS_RU, _BTN_ERRORS_EN):
+        await message.answer(format_errors_ru(15), reply_markup=admin_menu_reply(lang))
+        return
+
+    if text in (_BTN_HEALTH_RU, _BTN_HEALTH_EN):
+        if not DB_AVAILABLE or SessionLocal is None:
+            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            return
+        db = SessionLocal()
+        try:
+            await message.answer(format_health_ru(db), reply_markup=admin_menu_reply(lang))
+        finally:
+            db.close()
+        return
+
+    if text in (_BTN_USERS_RU, _BTN_USERS_EN):
+        if not DB_AVAILABLE or SessionLocal is None:
+            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            return
+        db = SessionLocal()
+        try:
+            from ..services.stats_service import get_dashboard_stats
+
+            st = get_dashboard_stats(db)
+            await message.answer(format_users_ru(db, st), reply_markup=admin_menu_reply(lang))
+        finally:
+            db.close()
+        return
+
+    if text in (_BTN_REVENUE_RU, _BTN_REVENUE_EN):
+        if not DB_AVAILABLE or SessionLocal is None:
+            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            return
+        db = SessionLocal()
+        try:
+            from ..services.stats_service import get_dashboard_stats
+
+            st = get_dashboard_stats(db)
+            await message.answer(format_revenue_ru(st), reply_markup=admin_menu_reply(lang))
+        finally:
+            db.close()
+        return
+
+    if text in (_BTN_REPORT_RU, _BTN_REPORT_EN):
+        if not DB_AVAILABLE or SessionLocal is None:
+            await message.answer("DB недоступна.", reply_markup=admin_menu_reply(lang))
+            return
+        db = SessionLocal()
+        try:
+            from ..services.stats_service import get_dashboard_stats
+
+            st = get_dashboard_stats(db)
+            full = format_full_report_ru(db, st)
+            await _answer_chunks(message, full, lang=lang)
+        finally:
+            db.close()
+        return

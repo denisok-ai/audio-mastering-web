@@ -1,5 +1,5 @@
 """Тесты меню команд и списка команд lifecycle бота."""
-from app.bot.keyboards import all_main_menu_button_texts, main_menu_reply_markup_dict
+from app.bot.keyboards import all_admin_menu_button_texts, admin_menu_reply_markup_dict
 from app.bot.lifecycle import _admin_bot_commands, _regular_user_bot_commands
 
 
@@ -29,9 +29,9 @@ def test_admin_commands_superset():
     assert len(cmds) == 19
 
 
-def test_main_menu_markup_dict_for_notifier():
-    d = main_menu_reply_markup_dict("ru")
+def test_admin_menu_markup_dict_for_notifier():
+    d = admin_menu_reply_markup_dict("ru")
     assert d.get("resize_keyboard") is True
-    assert len(d["keyboard"]) == 3
-    assert "🎛 Мастеринг" in all_main_menu_button_texts()
-    assert "🎛 Master" in all_main_menu_button_texts()
+    assert len(d["keyboard"]) == 5
+    assert "🖥 Сервер" in all_admin_menu_button_texts()
+    assert "🖥 Server" in all_admin_menu_button_texts()

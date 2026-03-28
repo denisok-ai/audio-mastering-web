@@ -154,6 +154,11 @@ async def notify_bot_startup() -> None:
     if not bot:
         logger.warning("Notify bot: get_notify_bot_dp() вернул None")
         return
+    try:
+        await bot.delete_my_commands(scope=BotCommandScopeDefault())
+        logger.info("Notify bot: боковое меню команд снято (delete_my_commands default)")
+    except Exception:
+        logger.exception("Notify bot: delete_my_commands не удался")
     secret = (getattr(settings, "telegram_bot_webhook_secret", "") or "").strip()
     url = f"{base}/bot/notify/webhook"
     try:

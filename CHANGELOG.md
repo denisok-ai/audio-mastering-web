@@ -9,6 +9,17 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.6.6] — 2026-03-28
+
+### Бот уведомлений — админское меню без боковой панели команд
+- **backend/app/bot/keyboards.py**: `admin_menu_button_rows`, `admin_menu_reply_markup_dict`, `all_admin_menu_button_texts`, `admin_menu_reply` (RU/EN).
+- **backend/app/bot/notify_handlers.py**: нижнее меню — Сервер, Статистика, Задачи, Ошибки, Здоровье, Пользователи, Выручка, Отчёт, Рассылка, Помощь; отчёты как в user bot `/admin`; `/broadcast`; Помощь — ссылка на клиентский бот.
+- **backend/app/notifier.py**: в уведомлениях — админская клавиатура.
+- **backend/app/bot/lifecycle.py**: `notify_bot_startup` — `delete_my_commands` (убрать меню «/» слева).
+- **backend/tests/test_bot_lifecycle.py**: тест разметки админ-меню.
+
+---
+
 ## [0.6.5] — 2026-03-28
 
 ### Бот уведомлений (magicmaster.pro) — меню как у клиентского бота

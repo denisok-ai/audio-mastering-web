@@ -46,6 +46,50 @@ def main_menu_reply(lang: str) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
 
 
+def admin_menu_button_rows(lang: str) -> list[list[str]]:
+    """Нижнее меню бота уведомлений (TELEGRAM_BOT_TOKEN) — только админские действия."""
+    if (lang or "ru").lower()[:2] == "en":
+        return [
+            ["🖥 Server", "📊 Stats"],
+            ["⚙️ Jobs", "🔴 Errors"],
+            ["❤️ Health", "👥 Users"],
+            ["💰 Revenue", "📋 Report"],
+            ["📢 Broadcast", "❓ Help"],
+        ]
+    return [
+        ["🖥 Сервер", "📊 Статистика"],
+        ["⚙️ Задачи", "🔴 Ошибки"],
+        ["❤️ Здоровье", "👥 Пользователи"],
+        ["💰 Выручка", "📋 Отчёт"],
+        ["📢 Рассылка", "❓ Помощь"],
+    ]
+
+
+def admin_menu_reply_markup_dict(lang: str = "ru") -> dict:
+    """reply_markup для notifier (Bot API JSON)."""
+    rows = admin_menu_button_rows(lang)
+    return {
+        "keyboard": [[{"text": t} for t in row] for row in rows],
+        "resize_keyboard": True,
+    }
+
+
+@lru_cache
+def all_admin_menu_button_texts() -> frozenset[str]:
+    """Подписи кнопок админ-меню (RU+EN) для матчинга в notify_handlers."""
+    s: set[str] = set()
+    for lang in ("ru", "en"):
+        for row in admin_menu_button_rows(lang):
+            s.update(row)
+    return frozenset(s)
+
+
+def admin_menu_reply(lang: str) -> ReplyKeyboardMarkup:
+    rows_txt = admin_menu_button_rows(lang)
+    rows = [[KeyboardButton(text=t) for t in row] for row in rows_txt]
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
+
+
 def presets_inline(prefix: str = "p") -> InlineKeyboardMarkup:
     """prefix:master -> callback p:m:standard"""
     styles = list(STYLE_CONFIGS.keys())
