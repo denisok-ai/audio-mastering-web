@@ -1,0 +1,20 @@
+# Mail.ru SMTP для msmtp (алерты Magic Master)
+# На сервере: sudo cp deploy/msmtprc.mailru.example /etc/msmtprc && sudo chmod 600 /etc/msmtprc
+# Пароль — в отдельном файле (не в git):
+#   printf '%s\n' 'ВАШ_ПАРОЛЬ_ИЛИ_ПАРОЛЬ_ПРИЛОЖЕНИЯ' > /root/.msmtp-mailru-secret
+#   chmod 600 /root/.msmtp-mailru-secret
+# При двухфакторной аутентификации Mail.ru: Почта → Настройки → Пароли для внешних приложений.
+
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile        /var/log/msmtp.log
+
+account        default
+host           smtp.mail.ru
+port           465
+tls_starttls   off
+from           dsosin@mail.ru
+user           dsosin@mail.ru
+passwordeval   "cat /root/.msmtp-mailru-secret"
