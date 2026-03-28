@@ -21,6 +21,7 @@ from typing import Optional
 
 from .config import settings
 from . import settings_store
+from .bot.keyboards import main_menu_reply_markup_dict
 
 
 def _is_configured() -> bool:
@@ -30,19 +31,23 @@ def _is_configured() -> bool:
     )
 
 
-def _send_raw(text: str) -> None:
+def _send_raw(text: str, *, attach_functional_menu: bool = True) -> None:
     """Синхронная отправка; вызывается из фонового потока."""
     if not _is_configured():
         return
     token   = settings.telegram_bot_token.strip()
     chat_id = settings.telegram_admin_chat_id.strip()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = json.dumps({
+    body: dict = {
         "chat_id": chat_id,
         "text": text,
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
-    }).encode("utf-8")
+    }
+    # То же нижнее меню, что у @magicmasterpro_user_bot (обработка нажатий — webhook /bot/notify/webhook)
+    if attach_functional_menu:
+        body["reply_markup"] = main_menu_reply_markup_dict("ru")
+    payload = json.dumps(body).encode("utf-8")
     try:
         req = urllib.request.Request(
             url,

@@ -9,6 +9,28 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.6.5] — 2026-03-28
+
+### Бот уведомлений (magicmaster.pro) — меню как у клиентского бота
+- **backend/app/notifier.py**: к каждому уведомлению в `TELEGRAM_ADMIN_CHAT_ID` добавляется та же **ReplyKeyboard**, что у user bot (Мастеринг, Анализ, Пресеты, AI чат, Баланс, Помощь).
+- **backend/app/bot/keyboards.py**: `main_menu_button_rows`, `main_menu_reply_markup_dict`, `all_main_menu_button_texts` — единый источник подписей.
+- **backend/app/bot/notify_bot_setup.py**, **notify_handlers.py**, **notify_webhook_route.py**: webhook `POST /bot/notify/webhook` для бота уведомлений; `/start`, кнопки меню — подсказка и ссылка на клиентский бот (`MAGIC_MASTER_USER_BOT_TELEGRAM_URL`).
+- **backend/app/bot/lifecycle.py**: `notify_bot_startup` / `notify_bot_shutdown` (токен не должен совпадать с `USER_BOT_TOKEN`).
+- **backend/app/config.py**: `telegram_bot_webhook_secret`, `user_bot_telegram_url`.
+- **.env.example**: комментарии к новым переменным.
+
+---
+
+## [0.6.4] — 2026-03-28
+
+### Telegram user bot — раздельное меню «/»
+- **backend/app/bot/lifecycle.py**: `BotCommandScopeDefault` — 12 команд без `/admin` и без служебных админ-команд; для каждого `telegram_id` с `is_admin` + привязкой — `BotCommandScopeChat` с расширенным меню (+ `/admin`, `/server`, `/stats`, `/jobs`, `/errors`, `/report`, `/broadcast`). `refresh_menu_for_telegram_chat` после успешного `/code` и `/unlink`.
+- **backend/app/database.py**: `list_admin_telegram_ids(db)`.
+- **backend/app/bot/handlers/account.py**: обновление меню после привязки/отвязки.
+- **backend/tests/test_bot_lifecycle.py**: проверки списков команд.
+
+---
+
 ## [0.6.3] — 2026-03-28
 
 ### Telegram AI-консультант

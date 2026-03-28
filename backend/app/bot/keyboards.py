@@ -1,22 +1,48 @@
 """Клавиатуры Telegram."""
+from functools import lru_cache
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 
 from ..pipeline import STYLE_CONFIGS
 
 
+def main_menu_button_rows(lang: str) -> list[list[str]]:
+    """Тексты кнопок нижнего меню (RU/EN) — единый источник для ReplyKeyboard и sendMessage API."""
+    if (lang or "ru").lower()[:2] == "en":
+        return [
+            ["🎛 Master", "📊 Analyze"],
+            ["🎨 Presets", "💬 AI chat"],
+            ["💰 Balance", "❓ Help"],
+        ]
+    return [
+        ["🎛 Мастеринг", "📊 Анализ"],
+        ["🎨 Пресеты", "💬 AI чат"],
+        ["💰 Баланс", "❓ Помощь"],
+    ]
+
+
+def main_menu_reply_markup_dict(lang: str = "ru") -> dict:
+    """Словарь reply_markup для Telegram Bot API (urllib / notifier), без aiogram."""
+    rows = main_menu_button_rows(lang)
+    return {
+        "keyboard": [[{"text": t} for t in row] for row in rows],
+        "resize_keyboard": True,
+    }
+
+
+@lru_cache
+def all_main_menu_button_texts() -> frozenset[str]:
+    """Все подписи кнопок главного меню (RU+EN) для матчинга входящих сообщений."""
+    s: set[str] = set()
+    for lang in ("ru", "en"):
+        for row in main_menu_button_rows(lang):
+            s.update(row)
+    return frozenset(s)
+
+
 def main_menu_reply(lang: str) -> ReplyKeyboardMarkup:
-    if lang == "en":
-        rows = [
-            [KeyboardButton(text="🎛 Master"), KeyboardButton(text="📊 Analyze")],
-            [KeyboardButton(text="🎨 Presets"), KeyboardButton(text="💬 AI chat")],
-            [KeyboardButton(text="💰 Balance"), KeyboardButton(text="❓ Help")],
-        ]
-    else:
-        rows = [
-            [KeyboardButton(text="🎛 Мастеринг"), KeyboardButton(text="📊 Анализ")],
-            [KeyboardButton(text="🎨 Пресеты"), KeyboardButton(text="💬 AI чат")],
-            [KeyboardButton(text="💰 Баланс"), KeyboardButton(text="❓ Помощь")],
-        ]
+    rows_txt = main_menu_button_rows(lang)
+    rows = [[KeyboardButton(text=t) for t in row] for row in rows_txt]
     return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)
 
 

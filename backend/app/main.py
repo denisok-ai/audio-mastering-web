@@ -75,17 +75,24 @@ _is_debug = getattr(settings, "debug_mode", False) or (
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
     from .bot.anomaly_monitor import anomaly_monitor_shutdown, anomaly_monitor_start
-    from .bot.lifecycle import bot_shutdown, bot_startup
+    from .bot.lifecycle import (
+        bot_shutdown,
+        bot_startup,
+        notify_bot_shutdown,
+        notify_bot_startup,
+    )
 
     # Логи app.bot (webhook, меню команд) в journald / stdout на уровне INFO
     logging.getLogger("app.bot").setLevel(logging.INFO)
 
     await bot_startup()
+    await notify_bot_startup()
     anomaly_monitor_start()
     try:
         yield
     finally:
         await anomaly_monitor_shutdown()
+        await notify_bot_shutdown()
         await bot_shutdown()
 
 
@@ -266,8 +273,10 @@ app.include_router(ai_router_module)
 app.include_router(auth_router)
 app.include_router(mastering_router)
 
+from .bot.notify_webhook_route import router as _notify_bot_webhook_router
 from .bot.webhook_route import router as _bot_webhook_router
 
+app.include_router(_notify_bot_webhook_router)
 app.include_router(_bot_webhook_router)
 
 

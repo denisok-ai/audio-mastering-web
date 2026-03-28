@@ -5,6 +5,7 @@ from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefaul
 
 from ..config import settings
 from ..database import DB_AVAILABLE, SessionLocal, get_user_by_telegram_id, list_admin_telegram_ids
+from .notify_bot_setup import get_notify_bot_dp
 from .setup import get_bot_dp
 
 logger = logging.getLogger(__name__)
@@ -136,3 +137,42 @@ async def bot_shutdown() -> None:
         await bot.session.close()
     except Exception as e:  # noqa: BLE001
         logger.debug("bot shutdown: %s", e)
+
+
+async def notify_bot_startup() -> None:
+    """Webhook для бота уведомлений (отдельный токен от USER_BOT)."""
+    token = (getattr(settings, "telegram_bot_token", "") or "").strip()
+    user_tok = (getattr(settings, "user_bot_token", "") or "").strip()
+    base = (getattr(settings, "public_base_url", "") or "").strip().rstrip("/")
+    if not token or not base:
+        logger.info("Notify bot: skipped (no TELEGRAM_BOT_TOKEN or PUBLIC_BASE_URL)")
+        return
+    if user_tok and token == user_tok:
+        logger.info("Notify bot: skipped (TELEGRAM_BOT_TOKEN совпадает с USER_BOT_TOKEN)")
+        return
+    bot, _ = get_notify_bot_dp()
+    if not bot:
+        logger.warning("Notify bot: get_notify_bot_dp() вернул None")
+        return
+    secret = (getattr(settings, "telegram_bot_webhook_secret", "") or "").strip()
+    url = f"{base}/bot/notify/webhook"
+    try:
+        await bot.set_webhook(
+            url=url,
+            secret_token=secret or None,
+            drop_pending_updates=False,
+        )
+        logger.info("Notify bot webhook set: %s (secret=%s)", url, "yes" if secret else "no")
+    except Exception:
+        logger.exception("Notify bot set_webhook FAILED")
+
+
+async def notify_bot_shutdown() -> None:
+    bot, _ = get_notify_bot_dp()
+    if not bot:
+        return
+    try:
+        await bot.delete_webhook(drop_pending_updates=False)
+        await bot.session.close()
+    except Exception as e:  # noqa: BLE001
+        logger.debug("notify bot shutdown: %s", e)

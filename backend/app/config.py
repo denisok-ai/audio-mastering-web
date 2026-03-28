@@ -95,6 +95,10 @@ class Settings(BaseSettings):
     # Создайте бота через @BotFather, узнайте chat_id через @userinfobot
     telegram_bot_token: str = ""
     telegram_admin_chat_id: str = ""
+    # Секрет webhook бота уведомлений (если задан — проверяется на POST /bot/notify/webhook)
+    telegram_bot_webhook_secret: str = ""
+    # Ссылка на клиентский бот (кнопки меню в уведомительном боте ведут пользователя туда)
+    user_bot_telegram_url: str = "https://t.me/magicmasterpro_user_bot"
 
     # Telegram user bot (отдельный от админ-уведомлений): интерактивный бот + webhook
     user_bot_token: str = ""
