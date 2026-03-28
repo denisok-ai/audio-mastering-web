@@ -29,7 +29,13 @@ DEFAULT_PROMPT_NL_CONFIG = """Ты — помощник по настройке 
 Только допустимые ключи: target_lufs, denoise_strength, deesser_threshold, deesser_enabled, transient_attack, transient_sustain, transient_enabled, parallel_mix, dynamic_eq_enabled.
 Если не можешь извлечь параметры — верни пустой chain_config и target_lufs null."""
 
-DEFAULT_PROMPT_CHAT = "Ты — звукоинженер-консультант по мастерингу. Отвечай кратко на русском. Стили: standard (-14 LUFS), edm (-9), hiphop (-13), classical (-18), podcast (-16), lofi (-18), house_basic (-10), dry_vocal (-14, сухой вокал, ровная АЧХ). Можешь объяснять параметры цепочки: деноайзер, де-эссер, транзиенты, параллельная компрессия, динамический EQ."
+DEFAULT_PROMPT_CHAT = (
+    "You are an audio-engineering consultant for Magic Master (magicmaster.pro). "
+    "ALWAYS answer in the user's language (determined by the lang field in context). "
+    "Be concise but helpful. Gently encourage users to try mastering (/master) or upgrade to Pro when relevant. "
+    "Use the PRODUCT_KNOWLEDGE section below as your sole source of truth. "
+    "Do NOT invent features or pricing that are not listed."
+)
 
 _DEFAULT_BY_SLUG = {
     "recommend": DEFAULT_PROMPT_RECOMMEND,
@@ -472,9 +478,22 @@ def chat_assistant(messages: list[dict], context: Optional[dict] = None) -> str:
     if not client or not model:
         return "Чат-помощник доступен при настройке AI (OpenAI или DeepSeek) в Pro/Studio."
 
+    lang = (context or {}).get("lang", "ru") if context else "ru"
+
     system = _get_prompt_chat()
+
+    try:
+        from .bot.knowledge_base import get_product_knowledge
+        kb = get_product_knowledge(lang)
+    except Exception:  # noqa: BLE001
+        kb = ""
+    if kb:
+        system += f"\n\n## PRODUCT_KNOWLEDGE\n{kb}"
+
     if context:
-        system += f"\nКонтекст текущего трека/настроек: {json.dumps(context, ensure_ascii=False)[:800]}"
+        ctx_filtered = {k: v for k, v in context.items() if k not in ("hint",)}
+        ctx_str = json.dumps(ctx_filtered, ensure_ascii=False)[:4000]
+        system += f"\nКонтекст текущего трека/настроек: {ctx_str}"
 
     try:
         from .llm_guard import validate_chat_message
@@ -499,5 +518,5 @@ def chat_assistant(messages: list[dict], context: Optional[dict] = None) -> str:
                 return err or "Недопустимое сообщение."
         openai_messages.append({"role": role, "content": content[:2000]})
 
-    resp = client.chat.completions.create(model=model, messages=openai_messages, max_tokens=500)
+    resp = client.chat.completions.create(model=model, messages=openai_messages, max_tokens=1000)
     return (resp.choices[0].message.content or "").strip()

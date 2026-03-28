@@ -5,18 +5,12 @@ from aiogram.types import Message
 
 from ... import ai as ai_module
 from ... import settings_store
+from ...config import settings
 from ...database import DB_AVAILABLE, SessionLocal, log_ai_usage
 from ..helpers import get_linked_user, public_url
 from ..texts import lang_for_user, txt
 
 router = Router(name="ai_chat")
-
-BOT_CHAT_CONTEXT = (
-    "Продукт: Magic Master (magicmaster.pro) — онлайн-мастеринг: загрузка трека, стили "
-    "(standard, edm, hiphop, classical, podcast, lofi, house_basic, dry_vocal), LUFS, цепочка PRO-модулей. "
-    "Пользователи с LLM-музыкой: советуй подготовку (headroom, не клиповать), затем мастеринг на сайте или в Telegram-боте. "
-    "Тарифы и токены — страница /pricing. Отвечай кратко; в конце мягко предложи попробовать /master."
-)
 
 
 def _tier_for_bot(u) -> str:
@@ -94,7 +88,7 @@ async def _do_chat(message: Message, user_text: str) -> None:
         if not lim["ok"]:
             await message.answer(txt(lang, "ai_limit"))
             return
-        ctx = {"product": "Magic Master", "lang": lang, "hint": BOT_CHAT_CONTEXT}
+        ctx = {"product": "Magic Master", "lang": lang}
         reply = ai_module.chat_assistant(
             [{"role": "user", "content": user_text}],
             context=ctx,

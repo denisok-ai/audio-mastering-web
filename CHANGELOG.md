@@ -7,6 +7,18 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
+---
+
+## [0.6.0] — 2026-03-28
+
+### AI Consultant Bot (DeepSeek)
+- **backend/app/bot/knowledge_base.py**: двуязычная база знаний (RU + EN) — стили, тарифы, FAQ, PRO-модули, команды бота, рекомендации по AI-музыке, конверсионные фразы. Функция `get_product_knowledge(lang)`.
+- **backend/app/ai.py**: обновлён системный промпт консультанта — `PRODUCT_KNOWLEDGE` из knowledge_base, ответ на языке пользователя. Контекст увеличен с 800 до 4000 символов, max_tokens с 500 до 1000. Поле `hint` из контекста больше не дублируется в промпте.
+- **backend/app/bot/handlers/ai_chat.py**: исправлен `NameError: settings` (добавлен `from ...config import settings`). Удалён устаревший `BOT_CHAT_CONTEXT` — знания теперь из knowledge_base. Передаётся `lang` из Telegram-профиля.
+- **frontend/app.js**: веб-чат передаёт `lang` (из UI-локали) в контекст `/api/ai/chat` для выбора нужной KB.
+- **.env.example**, **deploy/env.production**: `AI_BACKEND=deepseek` по умолчанию, документация DeepSeek.
+- **backend/tests/test_bot_knowledge.py**: 7 тестов на KB и интеграцию с `chat_assistant`.
+
 ### Telegram user bot
 - **backend/app/bot/**: клиентский бот (aiogram 3) — `/start`, мастеринг, анализ, AI `/ask`, привязка `/link` + `/code`, админ `/admin`, webhook `/bot/webhook`, push при готовности мастеринга с сайта.
 - **backend/app/database.py**: `telegram_id`, `telegram_lang`, таблицы `telegram_link_codes`, `telegram_engagement`.

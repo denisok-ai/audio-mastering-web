@@ -1924,9 +1924,11 @@ if (btnNlConfigInline && nlConfigInputInline) {
     appendMsg('user', text);
     _chatHistory.push({ role: 'user', content: text });
 
-    // Контекст: анализ если есть
-    const context = (typeof lastAnalyzeReport !== 'undefined' && lastAnalyzeReport)
-      ? lastAnalyzeReport : null;
+    var uiLang = 'ru';
+    try { uiLang = (localStorage.getItem('magic_master_lang') || 'ru').toLowerCase(); } catch (_e) {}
+    var context = (typeof lastAnalyzeReport !== 'undefined' && lastAnalyzeReport)
+      ? Object.assign({}, lastAnalyzeReport, { lang: uiLang })
+      : { lang: uiLang };
 
     const typingEl = appendMsg('assistant', '…');
 
