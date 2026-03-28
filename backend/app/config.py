@@ -108,6 +108,9 @@ class Settings(BaseSettings):
     # Публичный URL сайта (https://magicmaster.pro) — ссылки и setWebhook
     public_base_url: str = ""
 
+    # Microsoft Clarity (heatmaps / session replay). Пусто — /analytics/clarity.js не загружает тег.
+    clarity_project_id: str = ""
+
     # Расширения: дополнительный путь к пресетам сообщества (файл .json или каталог с .json)
     # MAGIC_MASTER_COMMUNITY_PRESETS_EXTRA — подгружаются после presets_community.json
     community_presets_extra: str = ""

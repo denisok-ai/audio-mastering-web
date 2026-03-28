@@ -253,8 +253,8 @@ function friendlyError(msg) {
     return 'Ошибка на сервере при обработке. Попробуйте отключить часть модулей «Дополнительная обработка» или другой файл.';
   }
   /* Короткое сообщение при лимите мастерингов (429), чтобы не показывать длинный текст в тосте */
-  if (msg.includes('Лимит Free-тарифа исчерпан') || msg.includes('исчерпан') && msg.includes('мастеринг')) {
-    return 'Лимит мастерингов на сегодня исчерпан. Перейдите на Pro для безлимита.';
+  if (msg.includes('Лимит Free-тарифа исчерпан') || (msg.includes('исчерпан') && msg.includes('мастеринг'))) {
+    return 'Лимит бесплатного тарифа исчерпан. Оформите Pro или Studio для большего числа мастерингов.';
   }
   if (msg.includes('ffprobe') || msg.includes('ffmpeg') || msg.includes('ffmpeg')) {
     const base = msg.replace(/\[Errno \d+\][^.]*\.\s*/g, '').trim();
@@ -2110,6 +2110,24 @@ btnMaster.addEventListener('click', async()=>{
         toast('Reference Track: ' + (refErr.message || 'ошибка'), 'err', 4000);
       }
     }
+    /* P0: один раз за сессию — призыв к регистрации после успешного мастера (гость) */
+    (function scheduleGuestRegisterHint() {
+      setTimeout(function() {
+        if (typeof isLoggedIn === 'function' && isLoggedIn()) return;
+        try {
+          if (sessionStorage.getItem('mm_guest_post_master_prompt')) return;
+          sessionStorage.setItem('mm_guest_post_master_prompt', '1');
+        } catch (_e) {
+          return;
+        }
+        if (typeof showUpgradeModal !== 'function') return;
+        showUpgradeModal(
+          '🎉',
+          'Первый мастер готов!',
+          'Зарегистрируйтесь — в бета-период доступен Pro: все жанры, MP3/FLAC, цепочку модулей. Регистрация займёт минуту: раздел «Войти / Зарегистрироваться» или страница /register.'
+        );
+      }, 2000);
+    })();
     refreshTierAfterMaster();
     // Сохраняем в localStorage (локальная история)
     saveToHistory({
@@ -2276,7 +2294,7 @@ if (btnAutoMaster) {
       toast(msg, 'err', 5000);
       if (!_debugMode && isLimit) {
         if (typeof showUpgradeModal === 'function') {
-          showUpgradeModal('📊', 'Лимит мастерингов исчерпан', 'На тарифе Free — 3 мастеринга в день. Перейдите на Pro для безлимитного доступа.');
+          showUpgradeModal('📊', 'Лимит мастерингов исчерпан', 'Лимит бесплатного тарифа исчерпан. Перейдите на Pro или Studio — актуальные лимиты и токены в тарифах.');
         }
         loadLimits();
       }
@@ -2320,7 +2338,7 @@ function logout() {
 }
 
 /* ═══════ Тариф и лимиты (Free tier / Pro) + режим отладки ═══════ */
-let _tierInfo = { tier: 'free', remaining: 3, limit: 3, used: 0, reset_at: '' };
+let _tierInfo = { tier: 'free', remaining: 1, limit: 1, used: 0, reset_at: '' };
 let _debugMode = typeof window.__MAGIC_MASTER_DEBUG__ !== 'undefined' && window.__MAGIC_MASTER_DEBUG__ === true;
 /** Флаги функций из /api/health (админка). По умолчанию true. */
 let _features = { ai_enabled: true, batch_enabled: true, registration_enabled: true, vocal_isolation_enabled: false };
@@ -2563,7 +2581,7 @@ styleGrid.addEventListener('click', function(e) {
   }
   const name = card.querySelector('.sc-name')?.textContent || '';
   showUpgradeModal('⚡', `Жанр "${name}" — функция Pro`,
-    'Жанровые пресеты EDM, Hip-Hop, Classical, Podcast, Lo-fi, House доступны в тарифах Pro и Studio.\nЗарегистрируйтесь бесплатно — в бета-период все пользователи получают Pro!');
+    'Жанровые пресеты (8 стилей, включая Dry Vocal) доступны в тарифах Pro и Studio. Зарегистрируйтесь и выберите план на странице тарифов.');
 }, true); // capture — раньше обычного обработчика
 
 /* Обновляем лимиты после успешного мастеринга */
@@ -2573,7 +2591,7 @@ function refreshTierAfterMaster() {
   _tierInfo.remaining = Math.max(0, (_tierInfo.remaining || 0) - 1);
   applyTierUI();
   if (_tierInfo.remaining === 0) {
-    toast('Лимит Free-тарифа исчерпан (3/3). Сброс: ' + _tierInfo.reset_at + '. Перейти на Pro →', 'err', 7000);
+    toast('Лимит бесплатного тарифа исчерпан. Сброс: ' + (_tierInfo.reset_at || '—') + '. Смотрите тарифы Pro →', 'err', 7000);
   }
 }
 

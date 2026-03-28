@@ -14,7 +14,10 @@
   <meta property="og:description" content="Бесплатный мастеринг, Pro для музыкантов, Studio для студий. Прозрачные цены без сюрпризов.">
   <meta property="og:site_name" content="Magic Master">
   <meta property="og:locale" content="ru_RU">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://magicmaster.pro/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://magicmaster.pro/og-image.png">
+  <script async src="/analytics/clarity.js"></script>
   <meta name="twitter:title" content="Тарифы — Magic Master">
   <meta name="twitter:description" content="Бесплатный мастеринг, Pro и Studio тарифы. AI-музыка, стриминг, подкасты.">
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
@@ -358,8 +361,7 @@
     <div class="plan-card">
       <p class="plan-name">Free</p>
       <div class="plan-price">
-        <span class="currency">$</span>
-        <span class="amount">0</span>
+        <span class="amount">0 ₽</span>
         <span class="period" id="freePeriod">/ мес</span>
       </div>
       <p class="plan-desc" data-i18n="pricing.free_desc">Попробуйте без регистрации. 3 мастеринга в день.</p>
@@ -383,8 +385,7 @@
       <div class="popular-badge" data-i18n="pricing.popular_badge">Популярный</div>
       <p class="plan-name">Pro</p>
       <div class="plan-price">
-        <span class="currency">$</span>
-        <span class="amount" id="proAmount">9</span>
+        <span class="amount" id="proAmount">1 000 ₽</span>
         <span class="period" id="proPeriod">/ мес</span>
       </div>
       <p class="plan-orig" id="proOrig" style="visibility:hidden" data-i18n="pricing.pro_orig">$12 / мес</p>
@@ -412,8 +413,7 @@
     <div class="plan-card">
       <p class="plan-name">Studio</p>
       <div class="plan-price">
-        <span class="currency">$</span>
-        <span class="amount" id="studioAmount">29</span>
+        <span class="amount" id="studioAmount">2 500 ₽</span>
         <span class="period" id="studioPeriod">/ мес</span>
       </div>
       <p class="plan-orig" id="studioOrig" style="visibility:hidden" data-i18n="pricing.studio_orig">$39 / мес</p>
@@ -437,7 +437,7 @@
   <div style="margin-bottom:3rem;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(168,85,247,.05));border:1px solid rgba(124,58,237,.2);border-radius:var(--r-lg);padding:2rem 1.75rem;">
     <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.25rem;">
       <span style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" data-i18n="pricing.pro_only_label">Только в Pro и Studio</span>
-      <span style="font-size:.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:2px 8px;border-radius:4px;">5 уникальных модулей</span>
+      <span style="font-size:.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:2px 8px;border-radius:4px;">6 уникальных модулей</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.65rem;">
       <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.2);border-radius:8px;">
@@ -496,21 +496,27 @@
       <tbody>
         <tr>
           <td>Мастерингов в день</td>
-          <td>3</td>
-          <td class="val-yes">∞</td>
-          <td class="val-yes">∞</td>
+          <td>По лимиту Free</td>
+          <td class="val-pro">10</td>
+          <td class="val-pro">30</td>
+        </tr>
+        <tr>
+          <td>Токены / мес</td>
+          <td>—</td>
+          <td class="val-pro">50</td>
+          <td class="val-pro">100</td>
         </tr>
         <tr>
           <td>Макс. размер файла</td>
-          <td>50 МБ</td>
-          <td class="val-pro">200 МБ</td>
-          <td class="val-pro">500 МБ</td>
+          <td>100 МБ</td>
+          <td class="val-pro">300 МБ</td>
+          <td class="val-pro">800 МБ</td>
         </tr>
         <tr>
           <td>Жанровые пресеты</td>
           <td>Stream</td>
-          <td class="val-pro">7 пресетов</td>
-          <td class="val-pro">7 пресетов</td>
+          <td class="val-pro">8 пресетов</td>
+          <td class="val-pro">8 пресетов</td>
         </tr>
         <tr>
           <td>Форматы экспорта</td>
@@ -636,17 +642,17 @@
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Что значит «3 мастеринга в день»?
+      <div class="faq-q">Какие лимиты у бесплатного тарифа?
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">На Free тарифе вы можете обработать до 3 файлов в сутки с одного IP-адреса. Счётчик сбрасывается в полночь по UTC. Без регистрации это лучший способ попробовать сервис.</div>
+      <div class="faq-a">Без регистрации можно попробовать мастеринг бесплатно; точные лимиты (по IP и времени) показываются в приложении и могут меняться. Зарегистрированные пользователи видят оставшиеся мастеринги в интерфейсе.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Когда появится возможность оплатить Pro?
+      <div class="faq-q">Как оплатить Pro или Studio?
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Pro и Studio тарифы находятся в разработке. Сейчас все функции Pro доступны бесплатно в рамках бета-периода — пользуйтесь! Мы уведомим о запуске оплаты.</div>
+      <div class="faq-a">Оплата подключена через ЮKassa: выберите тариф на этой странице, войдите в аккаунт и завершите оплату. После успешной оплаты тариф активируется автоматически.</div>
     </div>
 
     <div class="faq-item">
@@ -667,14 +673,14 @@
       <div class="faq-q">Есть ли API для автоматизации?
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Да! REST API доступен по адресу <a href="/docs" style="color:var(--accent)" target="_blank">/docs</a>. API-ключ для автоматизации в рамках Studio тарифа — в разработке. Сейчас API открыт без аутентификации.</div>
+      <div class="faq-a">Да! REST API описан в <a href="/docs" style="color:var(--accent)" target="_blank">/docs</a>. Для коммерческой автоматизации и ключа API предусмотрен тариф Studio; условия использования уточняйте в документации и в приложении.</div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">Что такое уникальные PRO-модули?
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Magic Master включает 5 уникальных функций, которых нет у других онлайн-сервисов мастеринга: Reference Track Mastering (подгонка спектра под эталонный трек), Dynamic EQ (8-полосный EQ реагирующий на уровень), Transient Designer (контроль атаки и сустейна), Spectral Denoiser (Wiener-фильтр для удаления шума) и Parallel Compression (NY-техника для музыкальной плотности). Все модули доступны в бета-период бесплатно.</div>
+      <div class="faq-a">Magic Master включает 6 уникальных функций: Reference Track Mastering, Dynamic EQ (8 полос), Transient Designer, Spectral Denoiser, Parallel Compression и De-esser. Доступность по тарифам — в таблице сравнения выше и в приложении.</div>
     </div>
 
     <div class="faq-item">
@@ -746,10 +752,10 @@
 
   // Планы и цены: с бэка (GET /api/payments/plans) или fallback
   window.__paymentPlans = null;
-  const proAmountsFallback    = { monthly: '9',  annual: '7'  };
-  const studioAmountsFallback = { monthly: '29', annual: '22' };
-  const proOrigsFallback      = { monthly: '',   annual: '$9/мес' };
-  const studioOrigsFallback   = { monthly: '',   annual: '$29/мес' };
+  const proAmountsFallback    = { monthly: '1000', annual: '833'  };   /* год: 10 000 ₽ → ~833 ₽/мес */
+  const studioAmountsFallback = { monthly: '2500', annual: '2083' };  /* год: 25 000 ₽ */
+  const proOrigsFallback      = { monthly: '',   annual: '1 000 ₽/мес' };
+  const studioOrigsFallback   = { monthly: '',   annual: '2 500 ₽/мес' };
 
   let billingMode = 'monthly';
 
@@ -775,12 +781,12 @@
     if (plans && plans[proPlanKey]) {
       proAmountEl.textContent = formatPrice(plans[proPlanKey].amount, plans[proPlanKey].currency);
     } else {
-      proAmountEl.textContent = proAmountsFallback[billingMode];
+      proAmountEl.textContent = formatPrice(proAmountsFallback[billingMode], 'RUB');
     }
     if (plans && plans[studioPlanKey]) {
       studioAmountEl.textContent = formatPrice(plans[studioPlanKey].amount, plans[studioPlanKey].currency);
     } else {
-      studioAmountEl.textContent = studioAmountsFallback[billingMode];
+      studioAmountEl.textContent = formatPrice(studioAmountsFallback[billingMode], 'RUB');
     }
 
     var proOrig = document.getElementById('proOrig');

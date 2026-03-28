@@ -9,6 +9,20 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.6.8] — 2026-03-28
+
+### P0 pre-launch: цены/лимиты, SEO, аналитика, конверсия
+- **frontend/landing.html**, **frontend/pricing.html**, **frontend/locales/ru.json**, **frontend/locales/en.json**: канон цен Pro/Studio (1000/2500 ₽, год 10k/25k), лимиты гостя/Pro/Studio, 8 пресетов, размеры файлов 100/300/800 МБ, FAQ без устаревших «3/день» и «в разработке»; блок новостей с лендинга убран (SEO).
+- **frontend/app.js**: дефолт `_tierInfo` 1/1, тексты лимитов без «3 в день»; после успешного мастера гостю — модалка с призывом к регистрации (раз на сессию, `sessionStorage`).
+- **frontend/index.html**: og:image, Clarity, актуальные формулировки в upgrade-модалке, ссылка «Зарегистрироваться».
+- **frontend/login.html**, **register.html**: meta description, canonical, `noindex`, Яндекс.Метрика, Clarity.
+- **frontend/404.html**, **429.html**, **500.html**: `robots noindex,nofollow`.
+- **backend/app/config.py**: `clarity_project_id` (`MAGIC_MASTER_CLARITY_PROJECT_ID`).
+- **backend/app/main.py**: `/og-image.png` (1200×630 PNG-заглушка), `/analytics/clarity.js` (подгрузка Clarity при заданном ID).
+- **.env.example**: комментарий к Clarity.
+
+---
+
 ## [0.6.7] — 2026-03-28
 
 ### Бот уведомлений — ответы при Topics в личке

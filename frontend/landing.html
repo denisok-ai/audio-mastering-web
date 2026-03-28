@@ -14,7 +14,10 @@
   <meta property="og:description" content="Бесплатный онлайн-мастеринг аудио по индустриальным стандартам. LUFS, EQ, компрессия, дизеринг. Идеально для AI-музыки (Suno, Udio) и стриминга.">
   <meta property="og:site_name" content="Magic Master">
   <meta property="og:locale" content="ru_RU">
+  <meta property="og:image" content="https://magicmaster.pro/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://magicmaster.pro/og-image.png">
+  <script async src="/analytics/clarity.js"></script>
   <meta name="twitter:title" content="Magic Master — Профессиональный мастеринг в один клик">
   <meta name="twitter:description" content="Бесплатный онлайн-мастеринг аудио. LUFS нормализация, Studio EQ, 4-band компрессия. Идеально для AI-музыки.">
   <link rel="alternate" hreflang="ru" href="https://magicmaster.pro/">
@@ -552,11 +555,6 @@
     @media (max-width: 480px) {
       footer { grid-template-columns: 1fr; }
     }
-    /* News section (P21) */
-    .news-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1.1rem 1.3rem; }
-    .news-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
-    .news-card p { font-size: .88rem; color: var(--soft); margin-bottom: .35rem; white-space: pre-wrap; }
-    .news-card time { font-size: .75rem; color: rgba(255,255,255,.3); }
   </style>
   <script type="application/ld+json">
   {
@@ -571,7 +569,7 @@
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "RUB",
-      "description": "Бесплатный тариф: 3 мастеринга в день без регистрации"
+      "description": "Бесплатный тариф: попробуйте мастеринг без регистрации; платные планы Pro и Studio с расширенными лимитами"
     },
     "aggregateRating": {
       "@type": "AggregateRating",
@@ -614,7 +612,6 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
     <a href="#how" class="nav-link">Как работает</a>
     <a href="#features" class="nav-link">Возможности</a>
     <a href="#pricing" class="nav-link">Тарифы</a>
-    <a href="#news" class="nav-link">Новости</a>
     <a href="#faq" class="nav-link">FAQ</a>
     <a href="/app" class="nav-cta">Мастерить бесплатно →</a>
   </div>
@@ -667,7 +664,7 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
     <div class="stat-key">Дизеринг</div>
   </div>
   <div class="stat-item">
-    <div class="stat-val">7</div>
+    <div class="stat-val">8</div>
     <div class="stat-key">Жанровых пресетов</div>
   </div>
   <div class="stat-item">
@@ -702,7 +699,7 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         </svg>
       </div>
       <div class="step-title">Выберите жанр</div>
-      <div class="step-text">Stream, EDM, Hip-Hop, Classical, Podcast, Lo-fi, House. Система сама настроит LUFS, EQ и компрессию под стиль.</div>
+      <div class="step-text">Stream, EDM, Hip-Hop, Classical, Podcast, Lo-fi, House, Dry Vocal. Система сама настроит LUFS, EQ и компрессию под стиль.</div>
     </div>
     <div class="step-card">
       <div class="step-num">03</div>
@@ -980,7 +977,7 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
     <span class="toggle-label">Помесячно</span>
     <div class="toggle-btn" id="billingToggle"><div class="toggle-knob"></div></div>
     <span class="toggle-label">Годовая подписка</span>
-    <span class="toggle-save">−40%</span>
+    <span class="toggle-save">~17%</span>
   </div>
   <div class="pricing-grid">
 
@@ -995,7 +992,7 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div class="price-old">&nbsp;</div>
       <div class="price-divider"></div>
       <div class="price-features">
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Мастеринг до 3 раз в день</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Попробуйте бесплатно</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Треки до 10 минут</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Пресет «Stream −14 LUFS»</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Экспорт WAV 16-bit</div>
@@ -1013,14 +1010,14 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div class="price-tier">Для профессионалов</div>
       <div class="price-tier-name">Pro</div>
       <div class="price-amount">
-        <span class="price-num" id="proPrice">590 ₽</span>
+        <span class="price-num" id="proPrice">1 000 ₽</span>
         <span class="price-per">/ месяц</span>
       </div>
       <div class="price-old" id="proOld">&nbsp;</div>
       <div class="price-divider"></div>
       <div class="price-features">
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>До 50 мастерингов в день</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Все 7 жанровых пресетов</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>До 10 мастерингов в день, 50 токенов/мес</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Все 8 жанровых пресетов</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Экспорт WAV / MP3 / FLAC</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Цепочка модулей, Exciter, Reverb</div>
         <div class="price-feat" style="color:var(--pro-ref);">⬡ Reference Track Mastering</div>
@@ -1038,13 +1035,13 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div class="price-tier">Для студий</div>
       <div class="price-tier-name">Studio</div>
       <div class="price-amount">
-        <span class="price-num" id="studioPrice">1 490 ₽</span>
+        <span class="price-num" id="studioPrice">2 500 ₽</span>
         <span class="price-per">/ месяц</span>
       </div>
       <div class="price-old" id="studioOld">&nbsp;</div>
       <div class="price-divider"></div>
       <div class="price-features">
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Без лимитов на мастеринг</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>До 30 мастерингов в день, 100 токенов/мес</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Треки до 60 минут</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Всё из Pro-тарифа</div>
         <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Пакетная обработка файлов</div>
@@ -1114,7 +1111,7 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div class="faq-q">Нужна ли регистрация для бесплатного мастеринга?
         <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a">Нет. Бесплатный тариф работает без регистрации — просто загрузите файл и получите результат. До 3 мастерингов в день с одного устройства.</div>
+      <div class="faq-a">Нет. Бесплатный тариф работает без регистрации — просто загрузите файл и получите результат. Точные лимиты показываются в приложении.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q">Какие форматы поддерживаются?
@@ -1146,15 +1143,6 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       </div>
       <div class="faq-a">Да. Полная документация API доступна по адресу /docs. REST API позволяет программно запускать мастеринг, анализировать файлы и получать метрики. Для коммерческого использования — тариф Studio.</div>
     </div>
-  </div>
-</section>
-
-<!-- ═══════ НОВОСТИ (P21) ═══════ -->
-<section id="news" style="padding:3.5rem 1.5rem;max-width:900px;margin:0 auto">
-  <div class="section-label" style="margin-bottom:.5rem">Новости</div>
-  <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:800;letter-spacing:-.025em;margin-bottom:1.5rem">Обновления и объявления</h2>
-  <div id="newsSection" style="display:grid;gap:.9rem">
-    <div style="color:var(--soft);font-size:.9rem">Загрузка…</div>
   </div>
 </section>
 
@@ -1307,14 +1295,14 @@ document.querySelectorAll('.faq-q').forEach(function(q) {
     yearly = !yearly;
     btn.classList.toggle('on', yearly);
     if (yearly) {
-      proEl.textContent = '354 ₽';
-      proOld.textContent = '590 ₽ / мес';
-      stuEl.textContent = '894 ₽';
-      stuOld.textContent = '1 490 ₽ / мес';
+      proEl.textContent = '833 ₽';
+      proOld.textContent = '1 000 ₽ / мес';
+      stuEl.textContent = '2 083 ₽';
+      stuOld.textContent = '2 500 ₽ / мес';
     } else {
-      proEl.textContent = '590 ₽';
+      proEl.textContent = '1 000 ₽';
       proOld.textContent = '\u00a0';
-      stuEl.textContent = '1 490 ₽';
+      stuEl.textContent = '2 500 ₽';
       stuOld.textContent = '\u00a0';
     }
   });
@@ -1329,23 +1317,6 @@ fetch('/api/version').then(function(r){ return r.ok ? r.json() : null; }).then(f
   var b = d.build_date || '';
   el.textContent = b ? (v ? v + ' · ' + b : b) : v;
 }).catch(function(){});
-
-// News section (P21)
-(async function() {
-  var wrap = document.getElementById('newsSection');
-  if (!wrap) return;
-  try {
-    var r = await fetch('/api/news?limit=5');
-    var d = await r.json();
-    var posts = d.posts || [];
-    if (!posts.length) { wrap.innerHTML = '<div style="color:var(--soft);font-size:.9rem">Новостей пока нет.</div>'; return; }
-    wrap.innerHTML = posts.map(function(p) {
-      var dt = p.published_at ? new Date(p.published_at * 1000).toLocaleDateString('ru-RU', {day:'2-digit',month:'long',year:'numeric'}) : '';
-      var bodyPrev = (p.body || '').slice(0, 280) + ((p.body || '').length > 280 ? '…' : '');
-      return '<div class="news-card"><h3>' + (p.title || '') + '</h3><p>' + bodyPrev + '</p><time>' + dt + '</time></div>';
-    }).join('');
-  } catch(e) { wrap.innerHTML = ''; }
-})();
 </script>
 </body>
 </html>

@@ -40,6 +40,26 @@ def _make_png_placeholder(size: int, r: int = 0x6c, g: int = 0x4b, b: int = 0xff
 _PNG_192 = _make_png_placeholder(192)
 _PNG_512 = _make_png_placeholder(512)
 
+
+def _make_png_rect(w: int, h: int, r: int = 0x6C, g: int = 0x4B, b: int = 0xFF) -> bytes:
+    """PNG w×h (RGBA) для og:image без зависимости от Pillow."""
+
+    def png_chunk(chunk_type: bytes, data: bytes) -> bytes:
+        chunk = chunk_type + data
+        crc = zlib.crc32(chunk) & 0xFFFFFFFF
+        return struct.pack(">I", len(data)) + chunk + struct.pack(">I", crc)
+
+    signature = b"\x89PNG\r\n\x1a\n"
+    ihdr = struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)
+    px = struct.pack(">BBBB", r, g, b, 255)
+    raw = b"".join(b"\x00" + px * w for _ in range(h))
+    idat_data = zlib.compress(raw, 9)
+    return signature + png_chunk(b"IHDR", ihdr) + png_chunk(b"IDAT", idat_data) + png_chunk(b"IEND", b"")
+
+
+# Open Graph preview (заглушка; можно заменить статикой в /frontend/og-image.png)
+_OG_PNG = _make_png_rect(1200, 630)
+
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -658,5 +678,34 @@ if _frontend.is_dir():
     @app.get("/icons/icon-512.png", response_class=Response)
     def _icon_512():
         return Response(content=_PNG_512, media_type="image/png")
+
+    @app.get("/og-image.png", response_class=Response, include_in_schema=False)
+    def og_image_png():
+        """OG/Twitter image (1200×630)."""
+        return Response(
+            content=_OG_PNG,
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
+    @app.get("/analytics/clarity.js", include_in_schema=False)
+    def analytics_clarity_js():
+        """Microsoft Clarity: ID из MAGIC_MASTER_CLARITY_PROJECT_ID; иначе пустой скрипт."""
+        raw = (getattr(settings, "clarity_project_id", None) or "").strip()
+        pid = "".join(c for c in raw if c.isalnum())
+        if not pid:
+            return Response(
+                content="// Clarity disabled: set MAGIC_MASTER_CLARITY_PROJECT_ID\n",
+                media_type="application/javascript; charset=utf-8",
+            )
+        body = (
+            "(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};"
+            "t=l.createElement(r);t.async=1;t.src=\"https://www.clarity.ms/tag/\"+i;"
+            "y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);"
+            '})(window, document, "clarity", "script", "'
+            + pid
+            + '");\n'
+        )
+        return Response(content=body, media_type="application/javascript; charset=utf-8")
 
     app.mount("/", StaticFiles(directory=str(_frontend), html=True), name="frontend")
