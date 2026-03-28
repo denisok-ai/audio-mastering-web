@@ -114,6 +114,15 @@ class Settings(BaseSettings):
     alert_queue_threshold: int = 0
     alert_throttle_minutes: int = 60
 
+    # Фоновый мониторинг аномалий (работает при alert_monitoring_enabled=1)
+    anomaly_check_interval: int = 60
+    anomaly_cpu_threshold: float = 85.0
+    anomaly_ram_threshold: float = 85.0
+    anomaly_disk_threshold: float = 85.0
+    anomaly_error_rate_threshold: float = 35.0
+    anomaly_rss_max_mb: int = 8192
+    anomaly_min_jobs_for_error_rate: int = 8
+
     # Задача 9.2 — изоляция вокала (Demucs). При False эндпоинт /api/v2/isolate-vocal возвращает 503.
     # MAGIC_MASTER_ENABLE_VOCAL_ISOLATION=1, MAGIC_MASTER_DEMUCS_MODEL=htdemucs
     enable_vocal_isolation: bool = Field(False, validation_alias="ENABLE_VOCAL_ISOLATION")

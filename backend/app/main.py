@@ -74,11 +74,16 @@ _is_debug = getattr(settings, "debug_mode", False) or (
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
+    from .bot.anomaly_monitor import anomaly_monitor_shutdown, anomaly_monitor_start
     from .bot.lifecycle import bot_shutdown, bot_startup
 
     await bot_startup()
-    yield
-    await bot_shutdown()
+    anomaly_monitor_start()
+    try:
+        yield
+    finally:
+        await anomaly_monitor_shutdown()
+        await bot_shutdown()
 
 
 app = FastAPI(

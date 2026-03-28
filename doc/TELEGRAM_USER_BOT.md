@@ -41,3 +41,17 @@ post_channel_weekly_stats()
 ## Лимиты Telegram
 
 Скачивание файлов в боте до **20 МБ**; большие треки — через сайт.
+
+## Админ-панель (русский интерфейс)
+
+Доступ только пользователям с флагом `is_admin` в БД и привязанным Telegram (`/link`).
+
+- **`/admin`** — меню с кнопками: Сервер, Здоровье, Статистика, Задачи, Пользователи, Выручка, Ошибки, Полный отчёт.
+- **`/server`** — кратко: CPU, RAM, диск, load average.
+- **`/stats`** — пользователи и мастеринги (агрегаты).
+- **`/jobs`** — сколько задач в работе / в очереди, семафоры.
+- **`/errors`** — последние ошибки мастеринга из кэша и SQLite.
+- **`/report`** — полный операционный отчёт (несколько сообщений, если длинный).
+- **`/broadcast`** — рассылка текстом всем с привязанным Telegram.
+
+Фоновый **мониторинг аномалий** (CPU, RAM, диск, RSS процесса, доля ошибок мастеринга за час, порог очереди задач) запускается при **`MAGIC_MASTER_ALERT_MONITORING_ENABLED=1`** и шлёт алерты в **`MAGIC_MASTER_TELEGRAM_ADMIN_CHAT_ID`** (тот же бот, что и прочие админ-уведомления). Интервал и пороги: `MAGIC_MASTER_ANOMALY_CHECK_INTERVAL`, `ANOMALY_CPU_THRESHOLD`, `ANOMALY_RAM_THRESHOLD`, `ANOMALY_DISK_THRESHOLD`, `ANOMALY_ERROR_RATE_THRESHOLD`, `ANOMALY_RSS_MAX_MB`, `ANOMALY_MIN_JOBS_FOR_ERROR_RATE` (см. `config.py`).

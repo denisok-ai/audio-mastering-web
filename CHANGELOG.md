@@ -9,6 +9,22 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.6.1] — 2026-03-28
+
+### Админ-панель в Telegram-боте (RU)
+- **backend/app/bot/server_metrics.py**: метрики сервера (psutil + fallback), отчёты на русском.
+- **backend/app/bot/admin_reports.py**: форматирование статистики, задач, здоровья, выручки, ошибок, полного отчёта.
+- **backend/app/bot/handlers/admin.py**: меню `/admin` (8 кнопок), команды `/server`, `/jobs`, `/errors`, `/report`; длинные отчёты режутся по лимиту Telegram.
+- **backend/app/bot/keyboards.py**: русские подписи кнопок админки.
+- **backend/app/bot/anomaly_monitor.py**: фоновые проверки при `alert_monitoring_enabled` — CPU, RAM, диск, RSS процесса, доля ошибок мастеринга за час, порог очереди.
+- **backend/app/notifier.py**: `notify_operational_anomaly` для алертов на русском.
+- **backend/app/jobs_store.py**: `list_recent_error_jobs()` для админки.
+- **backend/app/config.py**: пороги `anomaly_*`.
+- **backend/requirements.txt**: `psutil`.
+- **backend/tests/test_admin_bot_metrics.py**, **doc/TELEGRAM_USER_BOT.md**, **.env.example**: документация и примеры.
+
+---
+
 ## [0.6.0] — 2026-03-28
 
 ### AI Consultant Bot (DeepSeek)

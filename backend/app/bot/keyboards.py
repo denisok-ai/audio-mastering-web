@@ -39,9 +39,20 @@ def admin_menu_inline() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="📊 Stats", callback_data="adm:stats"),
-                InlineKeyboardButton(text="❤️ Health", callback_data="adm:health"),
+                InlineKeyboardButton(text="🖥 Сервер", callback_data="adm:server"),
+                InlineKeyboardButton(text="❤️ Здоровье", callback_data="adm:health"),
             ],
-            [InlineKeyboardButton(text="👥 Users", callback_data="adm:users")],
+            [
+                InlineKeyboardButton(text="📊 Статистика", callback_data="adm:stats"),
+                InlineKeyboardButton(text="⚙️ Задачи", callback_data="adm:jobs"),
+            ],
+            [
+                InlineKeyboardButton(text="👥 Пользователи", callback_data="adm:users"),
+                InlineKeyboardButton(text="💰 Выручка", callback_data="adm:revenue"),
+            ],
+            [
+                InlineKeyboardButton(text="🔴 Ошибки", callback_data="adm:errors"),
+                InlineKeyboardButton(text="📋 Полный отчёт", callback_data="adm:report"),
+            ],
         ]
     )

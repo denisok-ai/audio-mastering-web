@@ -214,3 +214,14 @@ def notify_alert_health_degraded(reason: str, details: Optional[str] = None) -> 
         f"🕐 {_ts()}"
     )
     notify(msg)
+
+
+def notify_operational_anomaly(anomaly_key: str, title_ru: str, details_ru: str) -> None:
+    """Аномалия эксплуатации: отдельный ключ троттлинга на каждый тип (anom_*)."""
+    if not _is_configured():
+        return
+    key = f"anom_{anomaly_key}"
+    if not _should_send_alert(key):
+        return
+    msg = f"🚨 <b>{title_ru}</b>\n{details_ru}\n🕐 {_ts()}"
+    notify(msg)

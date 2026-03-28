@@ -140,6 +140,53 @@ def all_jobs() -> dict[str, dict]:
     return _jobs
 
 
+def list_recent_error_jobs(limit: int = 15) -> list[dict]:
+    """Последние задачи со статусом error (текст ошибки из кэша или SQLite)."""
+    limit = max(1, min(50, int(limit)))
+    seen: set[str] = set()
+    rows: list[dict] = []
+    if _DB_JOBS_ENABLED:
+        try:
+            with _db_engine.connect() as conn:
+                db_rows = conn.execute(
+                    _sa.text(
+                        "SELECT job_id, error, created_at, done_at FROM mastering_jobs "
+                        "WHERE status = 'error' AND error IS NOT NULL AND TRIM(error) != '' "
+                        "ORDER BY COALESCE(done_at, created_at) DESC LIMIT :lim"
+                    ),
+                    {"lim": limit},
+                ).fetchall()
+            for r in db_rows:
+                jid = str(r[0])
+                seen.add(jid)
+                rows.append(
+                    {
+                        "job_id": jid,
+                        "error": (r[1] or "")[:400],
+                        "created_at": float(r[2] or 0),
+                        "done_at": float(r[3]) if r[3] is not None else None,
+                    }
+                )
+        except Exception as e:  # noqa: BLE001
+            logger.debug("list_recent_error_jobs db: %s", e)
+    for jid, j in _jobs.items():
+        if j.get("status") != "error":
+            continue
+        err = (j.get("error") or "").strip()
+        if not err or jid in seen:
+            continue
+        rows.append(
+            {
+                "job_id": jid,
+                "error": err[:400],
+                "created_at": float(j.get("created_at") or 0),
+                "done_at": j.get("done_at"),
+            }
+        )
+    rows.sort(key=lambda x: float(x.get("done_at") or x.get("created_at") or 0), reverse=True)
+    return rows[:limit]
+
+
 def restore_from_db() -> int:
     """При старте: восстановить незавершённые задачи из SQLite в память.
     Помечает все 'running' задачи как 'error' (сервис перезапустился)."""
