@@ -9,6 +9,13 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.6.3] — 2026-03-28
+
+### Telegram AI-консультант
+- **backend/app/bot/handlers/ai_chat.py**: вызов `chat_assistant` через `asyncio.to_thread` — не блокирует event loop во время запроса к DeepSeek/OpenAI; сессия БД закрывается до LLM; при ошибке — `logger.exception` и ответ пользователю `txt(lang, "error")`.
+
+---
+
 ## [0.6.2] — 2026-03-28
 
 ### Telegram user bot — меню команд и webhook

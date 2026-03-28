@@ -1,4 +1,7 @@
 """AI-ассистент: /ask и свободный текст."""
+import asyncio
+import logging
+
 from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.types import Message
@@ -7,10 +10,11 @@ from ... import ai as ai_module
 from ... import settings_store
 from ...config import settings
 from ...database import DB_AVAILABLE, SessionLocal, log_ai_usage
-from ..helpers import get_linked_user, public_url
+from ..helpers import get_linked_user
 from ..texts import lang_for_user, txt
 
 router = Router(name="ai_chat")
+logger = logging.getLogger(__name__)
 
 
 def _tier_for_bot(u) -> str:
@@ -78,6 +82,7 @@ async def _do_chat(message: Message, user_text: str) -> None:
         return
     if not DB_AVAILABLE or SessionLocal is None:
         return
+
     db = SessionLocal()
     try:
         u = get_linked_user(db, message.from_user.id)
@@ -89,12 +94,26 @@ async def _do_chat(message: Message, user_text: str) -> None:
             await message.answer(txt(lang, "ai_limit"))
             return
         ctx = {"product": "Magic Master", "lang": lang}
-        reply = ai_module.chat_assistant(
-            [{"role": "user", "content": user_text}],
-            context=ctx,
-        )
-        ai_module.record_ai_usage(ident)
-        log_ai_usage("chat", u.id if u else None, tier)
-        await message.answer((reply or "…")[:4090])
+        user_id_for_log = u.id if u else None
     finally:
         db.close()
+
+    try:
+        reply = await asyncio.to_thread(
+            ai_module.chat_assistant,
+            [{"role": "user", "content": user_text}],
+            ctx,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("AI chat error for %s", ident)
+        await message.answer(txt(lang, "error"))
+        return
+
+    ai_module.record_ai_usage(ident)
+    db2 = SessionLocal()
+    try:
+        log_ai_usage("chat", user_id_for_log, tier)
+    finally:
+        db2.close()
+
+    await message.answer((reply or "…")[:4090])
