@@ -55,6 +55,7 @@ echo "OK: .env настроен"
 
 echo "=== [4/10] msmtp ==="
 if ! command -v msmtp >/dev/null 2>&1; then
+    export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq && apt-get install -y -qq msmtp msmtp-mta
 fi
 if [ ! -f /etc/msmtprc ]; then
