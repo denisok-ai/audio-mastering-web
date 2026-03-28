@@ -34,6 +34,15 @@ else
   echo "  (нет .git — пропуск pull; скопируйте файлы вручную)"
 fi
 
+# После reset venv в корне не в .gitignore на старых клонах мог пропасть — пересоздать
+if [ ! -x "$INSTALL_DIR/venv/bin/python" ]; then
+  echo "[1b/7] Пересоздание venv (python3 -m venv)..."
+  python3 -m venv "$INSTALL_DIR/venv"
+  "$INSTALL_DIR/venv/bin/pip" install -q --upgrade pip
+  "$INSTALL_DIR/venv/bin/pip" install -q -r "$INSTALL_DIR/backend/requirements.txt"
+  chown -R magicmaster:magicmaster "$INSTALL_DIR/venv" 2>/dev/null || true
+fi
+
 echo "[2/7] Пакеты nginx, certbot..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
