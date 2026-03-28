@@ -227,7 +227,15 @@ def _normalize_bitrate(out_format: str, bitrate: Optional[int]) -> Optional[int]
     return None
 
 
-def _new_job(job_id: str, target_lufs: float, style_key: str, data: bytes, filename: str, out_format: str) -> dict:
+def _new_job(
+    job_id: str,
+    target_lufs: float,
+    style_key: str,
+    data: bytes,
+    filename: str,
+    out_format: str,
+    notify_user_id: Optional[int] = None,
+) -> dict:
     """Создаёт запись задачи в jobs_store и возвращает её."""
     job: dict = {
         "status": "running",
@@ -244,9 +252,39 @@ def _new_job(job_id: str, target_lufs: float, style_key: str, data: bytes, filen
         "original_bytes": data,
         "original_filename": filename,
         "out_format": out_format.lower(),
+        "notify_user_id": notify_user_id,
     }
     _jobs_store.all_jobs()[job_id] = job
     return job
+
+
+def _maybe_notify_telegram_mastering_done(job_id: str) -> None:
+    """Push в Telegram user bot при готовности мастеринга с сайта."""
+    job = _jobs_store.all_jobs().get(job_id)
+    if not job or job.get("status") != "done":
+        return
+    uid = job.get("notify_user_id")
+    if not uid or not DB_AVAILABLE:
+        return
+    try:
+        from ..bot.notify_user import send_user_bot_text_sync
+        from ..database import SessionLocal, User
+
+        db = SessionLocal()
+        try:
+            u = db.query(User).filter(User.id == int(uid)).first()
+            tid = getattr(u, "telegram_id", None) if u else None
+            if tid:
+                fname = (job.get("filename") or "track")[:200]
+                send_user_bot_text_sync(
+                    int(tid),
+                    f"✅ Мастеринг готов: <code>{fname}</code>\n"
+                    f"Скачайте результат в приложении: {getattr(settings, 'public_base_url', '') or 'https://magicmaster.pro'}/app",
+                )
+        finally:
+            db.close()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 # ─── Фоновые функции мастеринга ───────────────────────────────────────────────
@@ -296,6 +334,7 @@ def _run_mastering_job(
             log_mastering_job_end(job_id, "done")
         except Exception:  # noqa: BLE001
             pass
+        _maybe_notify_telegram_mastering_done(job_id)
     except Exception as e:
         job["status"] = "error"
         job["progress"] = 0
@@ -465,6 +504,7 @@ def _run_mastering_job_v2(
             log_mastering_job_end(job_id, "done")
         except Exception:  # noqa: BLE001
             pass
+        _maybe_notify_telegram_mastering_done(job_id)
     except Exception as e:
         job["status"] = "error"
         job["progress"] = 0
@@ -519,7 +559,15 @@ async def api_master(
     _prune()
     job_id = str(uuid.uuid4())
     style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
-    _new_job(job_id, target_lufs, style_key, data, file.filename or "audio.wav", out_format)
+    _new_job(
+        job_id,
+        target_lufs,
+        style_key,
+        data,
+        file.filename or "audio.wav",
+        out_format,
+        notify_user_id=_user_id_from_user(user),
+    )
     try:
         log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
     except Exception:  # noqa: BLE001
@@ -606,7 +654,15 @@ async def api_master_v2(
         _prune()
         job_id = str(uuid.uuid4())
         style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
-        _new_job(job_id, target_lufs, style_key, data, file.filename or "audio.wav", out_format)
+        _new_job(
+            job_id,
+            target_lufs,
+            style_key,
+            data,
+            file.filename or "audio.wav",
+            out_format,
+            notify_user_id=_user_id_from_user(user),
+        )
         try:
             log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
         except Exception:  # noqa: BLE001
@@ -810,6 +866,7 @@ async def api_v2_batch(
                 "after_lufs": None,
                 "target_lufs": target_lufs,
                 "style": style_key,
+                "notify_user_id": _user_id_from_user(user),
             }
             try:
                 log_mastering_job_start(job_id, _user_id_from_user(user), style_key)
@@ -928,6 +985,7 @@ async def api_v2_master_auto(
             "after_lufs": None,
             "target_lufs": target_lufs,
             "style": style_key,
+            "notify_user_id": _user_id_from_user(user),
         }
         try:
             log_mastering_job_start(job_id, _user_id_from_user(user), style_key)

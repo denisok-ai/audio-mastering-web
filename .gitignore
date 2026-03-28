@@ -27,6 +27,9 @@ test_output/
 *.tar.gz
 *.zip
 
+# Local SSL keys (never commit)
+ssl/
+
 # Env files
 .env
 .env.*

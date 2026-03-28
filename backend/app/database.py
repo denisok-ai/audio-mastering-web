@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 try:
-    from sqlalchemy import Boolean, Text, create_engine, Column, ForeignKey, Integer, String, Float
+    from sqlalchemy import BigInteger, Boolean, Text, create_engine, Column, ForeignKey, Integer, String, Float
     from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
     DB_AVAILABLE = True
 except ImportError:
@@ -55,6 +55,31 @@ if DB_AVAILABLE:
         is_verified: bool = Column(Boolean, nullable=False, default=True)
         # Токены мастеринга: 1 токен = 1 мастер; пополняются при оплате тарифа или докупке
         tokens_balance: int = Column(Integer, nullable=False, default=0)
+        # Telegram user bot: привязка аккаунта и язык интерфейса (ru|en)
+        telegram_id: Optional[int] = Column(BigInteger, unique=True, nullable=True, index=True)
+        telegram_lang: Optional[str] = Column(String(8), nullable=True)
+
+    class TelegramLinkCode(Base):  # type: ignore[misc]
+        """Одноразовый код привязки Telegram к email (отправляется по почте)."""
+        __tablename__ = "telegram_link_codes"
+
+        id: int = Column(Integer, primary_key=True, index=True)
+        email: str = Column(String(255), nullable=False, index=True)
+        telegram_id: int = Column(BigInteger, nullable=False, index=True)
+        code: str = Column(String(16), nullable=False)
+        expires_at: float = Column(Float, nullable=False)
+        created_at: float = Column(Float, nullable=False, default=time.time)
+
+    class TelegramEngagement(Base):  # type: ignore[misc]
+        """Напоминания welcome-серии и дайджесты для Telegram."""
+        __tablename__ = "telegram_engagement"
+
+        telegram_id: int = Column(BigInteger, primary_key=True)
+        first_start_at: float = Column(Float, nullable=False, default=time.time)
+        welcome_day_1_sent_at: Optional[float] = Column(Float, nullable=True)
+        welcome_day_3_sent_at: Optional[float] = Column(Float, nullable=True)
+        welcome_day_7_sent_at: Optional[float] = Column(Float, nullable=True)
+        last_weekly_digest_at: Optional[float] = Column(Float, nullable=True)
 
     class MasteringRecord(Base):  # type: ignore[misc]
         """История мастерингов для залогиненных пользователей."""
@@ -216,6 +241,8 @@ else:
     PromptTemplate = None  # type: ignore[assignment,misc]
     AiUsageLog = None  # type: ignore[assignment,misc]
     MasteringJobEvent = None  # type: ignore[assignment,misc]
+    TelegramLinkCode = None  # type: ignore[assignment,misc]
+    TelegramEngagement = None  # type: ignore[assignment,misc]
 
 
 def create_tables() -> None:
@@ -251,6 +278,8 @@ def _run_migrations() -> None:
             ("last_login_at",             "REAL"),
             ("is_verified",               "BOOLEAN NOT NULL DEFAULT 1"),
             ("tokens_balance",            "INTEGER NOT NULL DEFAULT 0"),
+            ("telegram_id",               "INTEGER"),
+            ("telegram_lang",             "VARCHAR(8)"),
         ],
         "mastering_records": [
             ("duration_sec", "REAL"),
@@ -982,3 +1011,95 @@ def get_user_by_api_key(db, raw_key: str) -> Optional[object]:
     k.last_used_at = time.time()
     db.commit()
     return db.query(User).filter(User.id == k.user_id).first()
+
+
+# ─── Telegram user bot ─────────────────────────────────────────────────────────
+
+def get_user_by_telegram_id(db, telegram_id: int):
+    if not DB_AVAILABLE or db is None or User is None or telegram_id is None:
+        return None
+    return db.query(User).filter(User.telegram_id == int(telegram_id)).first()
+
+
+def clear_telegram_id_for_others(db, telegram_id: int, keep_user_id: int) -> None:
+    """Снять telegram_id с других пользователей (один TG = один аккаунт)."""
+    if not DB_AVAILABLE or db is None or User is None:
+        return
+    for u in db.query(User).filter(User.telegram_id == int(telegram_id), User.id != keep_user_id).all():
+        u.telegram_id = None
+    db.commit()
+
+
+def bind_telegram_to_user(db, user, telegram_id: int, lang: Optional[str] = None) -> None:
+    if not DB_AVAILABLE or db is None or user is None:
+        return
+    clear_telegram_id_for_others(db, int(telegram_id), int(user.id))
+    user.telegram_id = int(telegram_id)
+    if lang:
+        user.telegram_lang = lang[:8]
+    db.commit()
+
+
+def create_telegram_link_code(db, email: str, telegram_id: int, code: str, ttl_seconds: int = 900) -> None:
+    if not DB_AVAILABLE or db is None or TelegramLinkCode is None:
+        return
+    now = time.time()
+    db.query(TelegramLinkCode).filter(TelegramLinkCode.telegram_id == int(telegram_id)).delete()
+    db.add(
+        TelegramLinkCode(
+            email=email.lower().strip(),
+            telegram_id=int(telegram_id),
+            code=code,
+            expires_at=now + ttl_seconds,
+            created_at=now,
+        )
+    )
+    db.commit()
+
+
+def verify_telegram_link_code(db, telegram_id: int, code: str):
+    """Возвращает User или None."""
+    if not DB_AVAILABLE or db is None or TelegramLinkCode is None or User is None:
+        return None
+    now = time.time()
+    row = (
+        db.query(TelegramLinkCode)
+        .filter(
+            TelegramLinkCode.telegram_id == int(telegram_id),
+            TelegramLinkCode.code == code.strip(),
+        )
+        .first()
+    )
+    if not row or row.expires_at < now:
+        return None
+    user = get_user_by_email(db, row.email)
+    if not user:
+        return None
+    db.delete(row)
+    db.flush()
+    bind_telegram_to_user(db, user, int(telegram_id))
+    db.refresh(user)
+    return user
+
+
+def upsert_telegram_engagement(db, telegram_id: int) -> None:
+    if not DB_AVAILABLE or db is None or TelegramEngagement is None:
+        return
+    tid = int(telegram_id)
+    row = db.query(TelegramEngagement).filter(TelegramEngagement.telegram_id == tid).first()
+    if row is None:
+        db.add(TelegramEngagement(telegram_id=tid, first_start_at=time.time()))
+        db.commit()
+
+
+def list_telegram_ids_for_broadcast(db) -> list[int]:
+    if not DB_AVAILABLE or db is None or User is None:
+        return []
+    rows = db.query(User.telegram_id).filter(User.telegram_id.isnot(None)).all()
+    return [int(r[0]) for r in rows if r[0] is not None]
+
+
+def count_users_with_telegram(db) -> int:
+    if not DB_AVAILABLE or db is None or User is None:
+        return 0
+    return db.query(User).filter(User.telegram_id.isnot(None)).count()

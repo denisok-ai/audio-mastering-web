@@ -437,6 +437,13 @@ def admin_create_news(
     author_id = int(admin.get("sub", 0)) or None
     post = create_news_post(db, title=body.title, body=body.body,
                             author_id=author_id, is_published=body.is_published)
+    if body.is_published:
+        try:
+            from .bot.channel import post_news_to_channel_sync
+
+            post_news_to_channel_sync(body.title, body.body[:3500])
+        except Exception:  # noqa: BLE001
+            pass
     return _news_to_dict(post)
 
 
@@ -454,6 +461,13 @@ def admin_update_news(
     post = update_news_post(db, post_id, **updates)
     if not post:
         raise HTTPException(404, "Пост не найден")
+    if updates.get("is_published") is True:
+        try:
+            from .bot.channel import post_news_to_channel_sync
+
+            post_news_to_channel_sync(post.title, (post.body or "")[:3500])
+        except Exception:  # noqa: BLE001
+            pass
     return _news_to_dict(post)
 
 

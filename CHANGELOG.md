@@ -7,6 +7,12 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
+### Telegram user bot
+- **backend/app/bot/**: клиентский бот (aiogram 3) — `/start`, мастеринг, анализ, AI `/ask`, привязка `/link` + `/code`, админ `/admin`, webhook `/bot/webhook`, push при готовности мастеринга с сайта.
+- **backend/app/database.py**: `telegram_id`, `telegram_lang`, таблицы `telegram_link_codes`, `telegram_engagement`.
+- **deploy/nginx/magic-master-proxy.inc**: `location /bot/`.
+- **doc/TELEGRAM_USER_BOT.md**: инструкция по настройке.
+
 ---
 
 ## [0.5.7] — 2026-03-28

@@ -40,6 +40,7 @@ def _make_png_placeholder(size: int, r: int = 0x6c, g: int = 0x4b, b: int = 0xff
 _PNG_192 = _make_png_placeholder(192)
 _PNG_512 = _make_png_placeholder(512)
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -70,6 +71,16 @@ _is_debug = getattr(settings, "debug_mode", False) or (
     os.environ.get("MAGIC_MASTER_DEBUG", "").strip().lower() in ("1", "true", "yes", "on")
 )
 
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    from .bot.lifecycle import bot_shutdown, bot_startup
+
+    await bot_startup()
+    yield
+    await bot_shutdown()
+
+
 app = FastAPI(
     title="Magic Master — автоматический мастеринг",
     description="Загрузите трек → нажмите Magic Master → скачайте результат с целевой громкостью LUFS.",
@@ -77,6 +88,7 @@ app = FastAPI(
     docs_url="/docs" if _is_debug else None,
     redoc_url="/redoc" if _is_debug else None,
     openapi_url="/openapi.json" if _is_debug else None,
+    lifespan=_lifespan,
 )
 
 # P56: CORS — настраиваемый список origins (MAGIC_MASTER_CORS_ORIGINS); пусто = ["*"]
@@ -111,7 +123,9 @@ async def global_rate_limit_middleware(request: Request, call_next):
         path = request.url.path
         # Пропускаем статику и SSE
         is_static = not path.startswith("/api/")
-        is_exempt = any(path.startswith(p) for p in _GLOBAL_RATE_EXEMPT_PREFIXES)
+        is_exempt = any(path.startswith(p) for p in _GLOBAL_RATE_EXEMPT_PREFIXES) or path.startswith(
+            "/bot/"
+        )
         if not is_static and not is_exempt:
             now = time.time()
             entry = _global_rate.get(ip)
@@ -136,7 +150,15 @@ async def global_rate_limit_middleware(request: Request, call_next):
 
 
 # ─── Режим обслуживания: 503 для не-админских маршрутов ───────────────────────
-_MAINTENANCE_EXEMPT_PREFIXES = ("/api/admin", "/admin", "/api/auth/login", "/docs", "/redoc", "/openapi.json")
+_MAINTENANCE_EXEMPT_PREFIXES = (
+    "/api/admin",
+    "/admin",
+    "/api/auth/login",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/bot/",
+)
 
 
 @app.middleware("http")
@@ -235,6 +257,10 @@ app.include_router(misc_router)
 app.include_router(ai_router_module)
 app.include_router(auth_router)
 app.include_router(mastering_router)
+
+from .bot.webhook_route import router as _bot_webhook_router
+
+app.include_router(_bot_webhook_router)
 
 
 # ─── P54: Кастомные страницы ошибок ──────────────────────────────────────────

@@ -36,6 +36,13 @@ location ~* \.(css|js|ico|png|jpg|jpeg|gif|svg|woff2?|ttf|eot|webp|webmanifest)$
     access_log off;
 }
 
+# Telegram user bot webhook (aiogram)
+location /bot/ {
+    proxy_pass http://magic_master;
+    proxy_read_timeout 120s;
+    proxy_send_timeout 120s;
+}
+
 # API — без кеша
 location /api/ {
     proxy_pass http://magic_master;
