@@ -3,6 +3,7 @@ Description=Magic Master — автоматический аудио-масте�
 Documentation=https://github.com/denisok-ai/audio-mastering-web
 After=network.target
 Wants=network.target
+OnFailure=magic-master-alert@%n.service
 
 [Service]
 Type=simple
@@ -22,7 +23,8 @@ StartLimitBurst=5
 # Лимиты ресурсов (под сервер 12 GB RAM, 6 vCPU)
 LimitNOFILE=65536
 LimitNPROC=4096
-# 10 GB — оставляем 2 GB системе
+# 9 GB soft limit (swap pressure), 10 GB hard kill
+MemoryHigh=9G
 MemoryMax=10G
 CPUAffinity=0-5
 

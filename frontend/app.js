@@ -1172,7 +1172,7 @@ function updateNoFileState() {
   const nlConfigInputInline = document.getElementById('nlConfigInputInline');
   const aiHelpersSection = document.getElementById('aiHelpersSection');
   if (btnAiRecommend) btnAiRecommend.disabled = !hasFile;
-  const limitExhausted = _tierInfo && _tierInfo.remaining === 0 && !_debugMode;
+  const limitExhausted = _tierInfo && _tierInfo.remaining === 0 && _tierInfo.tier !== 'pro' && _tierInfo.tier !== 'studio' && !_debugMode;
   if (btnAutoMaster) btnAutoMaster.disabled = !hasFile || limitExhausted;
   if (btnChatHelper) btnChatHelper.disabled = !hasFile;
   if (btnNlConfigInline) btnNlConfigInline.disabled = !hasFile;
@@ -2397,17 +2397,6 @@ function applyTierUI() {
     if (tierRow)      tierRow.style.display = 'none';
     if (authRow)      authRow.style.display = 'flex';
     if (authRowGuest) authRowGuest.style.display = 'none';
-    const badgePro = document.getElementById('authProBadge');
-    if (badgePro) badgePro.textContent = _tierInfo.tier === 'studio' ? '✦ Studio' : '✦ Pro';
-    const tokensEl = document.getElementById('authTokens');
-    if (tokensEl) {
-      if (typeof _tierInfo.tokens_balance === 'number') {
-        tokensEl.textContent = ' · ' + _tierInfo.tokens_balance + ' токенов';
-        tokensEl.style.display = 'inline';
-      } else {
-        tokensEl.style.display = 'none';
-      }
-    }
     const emailEl = document.getElementById('authEmail');
     if (emailEl) emailEl.textContent = getAuthEmail();
     const priorityHint = document.getElementById('authPriorityHint');
@@ -2449,9 +2438,9 @@ function applyTierUI() {
   // Кнопка «Авто-мастеринг»: при исчерпанном лимите Free — отключена и с подсказкой
   const btnAutoMasterEl = document.getElementById('btnAutoMaster');
   if (btnAutoMasterEl) {
-    if (_tierInfo.remaining === 0) {
+    if (!isPro && _tierInfo.remaining === 0) {
       btnAutoMasterEl.disabled = true;
-      btnAutoMasterEl.title = 'Лимит исчерпан. Free: 1 мастеринг в неделю. Pro/Studio: докупите токены на странице тарифов.';
+      btnAutoMasterEl.title = 'Лимит мастерингов на сегодня исчерпан. Перейдите на Pro для безлимита.';
     } else {
       btnAutoMasterEl.title = 'Анализ → настройки → мастеринг автоматически';
       btnAutoMasterEl.disabled = !currentFile;
@@ -2577,7 +2566,7 @@ styleGrid.addEventListener('click', function(e) {
 
 /* Обновляем лимиты после успешного мастеринга */
 function refreshTierAfterMaster() {
-  if (_debugMode || _tierInfo.remaining === -1 || _tierInfo.remaining === 999) return; // безлимит или режим отладки
+  if (_debugMode || _tierInfo.remaining === -1) return; // безлимит или режим отладки
   _tierInfo.used = (_tierInfo.used || 0) + 1;
   _tierInfo.remaining = Math.max(0, (_tierInfo.remaining || 0) - 1);
   applyTierUI();

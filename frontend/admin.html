@@ -1436,14 +1436,8 @@ async function loadSettings() {
         <div id="settingsPanelApp" class="settings-panel active">
           <form class="settings-form" id="settingsFormApp">
             <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
-              <div class="form-group"><label>Макс. загрузка общий (МБ)</label><input type="number" name="max_upload_mb" value="${d.app.max_upload_mb != null ? d.app.max_upload_mb : 100}" min="1" max="1000"></div>
+              <div class="form-group"><label>Макс. размер загрузки (МБ)</label><input type="number" name="max_upload_mb" value="${d.app.max_upload_mb != null ? d.app.max_upload_mb : 100}" min="1" max="500"></div>
               <div class="form-group"><label>Допустимые форматы (через запятую)</label><input type="text" name="allowed_extensions" value="${extList}" placeholder="wav, mp3, flac"></div>
-              <div class="form-group"><label>WAV (МБ), DJ-сеты</label><input type="number" name="max_upload_mb_wav" value="${d.app.max_upload_mb_wav != null ? d.app.max_upload_mb_wav : 800}" min="1" max="1000"></div>
-              <div class="form-group"><label>MP3 (МБ)</label><input type="number" name="max_upload_mb_mp3" value="${d.app.max_upload_mb_mp3 != null ? d.app.max_upload_mb_mp3 : 300}" min="1" max="500"></div>
-              <div class="form-group"><label>FLAC (МБ)</label><input type="number" name="max_upload_mb_flac" value="${d.app.max_upload_mb_flac != null ? d.app.max_upload_mb_flac : 500}" min="1" max="1000"></div>
-              <div class="form-group"><label>Free тариф (МБ)</label><input type="number" name="max_upload_mb_free" value="${d.app.max_upload_mb_free != null ? d.app.max_upload_mb_free : 100}" min="1" max="500"></div>
-              <div class="form-group"><label>Pro тариф (МБ)</label><input type="number" name="max_upload_mb_pro" value="${d.app.max_upload_mb_pro != null ? d.app.max_upload_mb_pro : 300}" min="1" max="1000"></div>
-              <div class="form-group"><label>Studio тариф (МБ), DJ-сеты</label><input type="number" name="max_upload_mb_studio" value="${d.app.max_upload_mb_studio != null ? d.app.max_upload_mb_studio : 800}" min="1" max="1000"></div>
               <div class="form-group"><label>Целевой LUFS по умолчанию</label><input type="number" step="0.5" name="default_target_lufs" value="${d.app.default_target_lufs != null ? d.app.default_target_lufs : -14}"></div>
               <div class="form-group"><label>TTL завершённых задач (с)</label><input type="number" name="jobs_done_ttl_seconds" value="${d.app.jobs_done_ttl_seconds != null ? d.app.jobs_done_ttl_seconds : 3600}" min="60"></div>
               <div class="form-group"><label>Rate limit (запросов/мин)</label><input type="number" name="global_rate_limit" value="${d.app.global_rate_limit != null ? d.app.global_rate_limit : 300}" min="10"></div>
@@ -1527,16 +1521,9 @@ async function loadSettings() {
     function buildAppPayload(form) {
       const fd = new FormData(form);
       const allowed = (fd.get('allowed_extensions') || '').toString().split(',').map(s => s.trim()).filter(Boolean);
-      const num = (name, defVal) => { const n = parseInt(fd.get(name), 10); return isNaN(n) ? defVal : n; };
       return {
         app: {
-          max_upload_mb: num('max_upload_mb', 100),
-          max_upload_mb_wav: num('max_upload_mb_wav', 800),
-          max_upload_mb_mp3: num('max_upload_mb_mp3', 300),
-          max_upload_mb_flac: num('max_upload_mb_flac', 500),
-          max_upload_mb_free: num('max_upload_mb_free', 100),
-          max_upload_mb_pro: num('max_upload_mb_pro', 300),
-          max_upload_mb_studio: num('max_upload_mb_studio', 800),
+          max_upload_mb: parseInt(fd.get('max_upload_mb'), 10) || 100,
           allowed_extensions: allowed.length ? allowed : ['wav', 'mp3', 'flac'],
           temp_dir: (fd.get('temp_dir') || '').toString().trim() || undefined,
           default_target_lufs: parseFloat(fd.get('default_target_lufs')) || -14,

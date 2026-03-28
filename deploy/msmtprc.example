@@ -1,0 +1,15 @@
+# /etc/msmtprc — конфигурация msmtp для отправки алертов
+# Установка: sudo cp deploy/msmtprc.example /etc/msmtprc && sudo chmod 600 /etc/msmtprc
+
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile        /var/log/msmtp.log
+
+account        default
+host           smtp.gmail.com
+port           587
+from           alert@magicmaster.pro
+user           YOUR_EMAIL@gmail.com
+password       YOUR_APP_PASSWORD

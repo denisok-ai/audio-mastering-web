@@ -27,13 +27,24 @@ location /api/master/progress/ {
     chunked_transfer_encoding off;
 }
 
-# API и приложение
+# Статика: кеш 7 дней
+location ~* \.(css|js|ico|png|jpg|jpeg|gif|svg|woff2?|ttf|eot|webp|webmanifest)$ {
+    proxy_pass http://magic_master;
+    proxy_cache_valid 200 7d;
+    expires 7d;
+    add_header Cache-Control "public, max-age=604800, immutable";
+    access_log off;
+}
+
+# API — без кеша
 location /api/ {
     proxy_pass http://magic_master;
 }
 
+# HTML-страницы: минимальный кеш для актуальности
 location / {
     proxy_pass http://magic_master;
+    add_header Cache-Control "no-cache, must-revalidate";
 }
 
 # Service Worker — без кэширования

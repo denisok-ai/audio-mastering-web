@@ -1,0 +1,27 @@
+# Logrotate для Magic Master — бэкап-логи и nginx-логи
+# Установка: sudo cp deploy/logrotate/magic-master /etc/logrotate.d/magic-master
+
+/opt/magic-master/backups/backup.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 magicmaster magicmaster
+}
+
+/var/log/nginx/access.log
+/var/log/nginx/error.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data adm
+    sharedscripts
+    postrotate
+        [ -f /var/run/nginx.pid ] && kill -USR1 $(cat /var/run/nginx.pid) || true
+    endscript
+}

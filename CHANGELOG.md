@@ -7,11 +7,27 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
-### Срез верхов и правки
-- **backend/app/pipeline.py:** срез верхних частот на 10% для всех пресетов (`apply_high_freq_trim`, кроссовер 5 kHz) — устраняет перегрузку верхов, в т.ч. с вокалом.
-- **backend/app/routers/mastering.py:** вызов `apply_high_freq_trim` после всех PRO-модулей.
-- **backend/tests:** тесты `test_high_freq_trim_cuts_highs`, `test_e2e_mastering_with_dynamic_eq`, `test_dynamic_eq_only_not_silent`.
-- **frontend/index.html:** исправление перевода — «гущина» → «плотность» в описании Parallel Compression.
+---
+
+## [0.5.7] — 2026-03-28
+
+### Безопасность и оптимизация
+- **backend/app/auth.py:** предупреждение CRITICAL при использовании JWT-секрета по умолчанию.
+- **backend/app/main.py:** скрытие `/docs`, `/redoc`, `/openapi.json` в production (debug=0); CORS: запрет `credentials=True` с wildcard origins; `/api` root не показывает ссылку на docs в production.
+- **backend/app/routers/mastering.py:** санитизация ошибок — внутренние детали исключений не возвращаются клиенту в HTTP 500.
+- **backend/run_production.py:** `limit_max_requests=10000`, `h11_max_incomplete_event_size=16384` для защиты от утечек памяти.
+- **deploy/systemd/magic-master.service:** `MemoryHigh=9G` (soft limit), `OnFailure=magic-master-alert@%n.service`.
+- **deploy/systemd/magic-master-alert@.service:** шаблон для email-алерта при падении сервиса.
+
+### Серверная инфраструктура
+- **deploy/backup_full.sh:** полный бэкап (SQLite + .env + nginx), gzip, ротация с гарантией 15% свободного места.
+- **deploy/disk_monitor.sh:** мониторинг диска, автоочистка tmp/журналов, email-алерт при дефиците.
+- **deploy/send_alert.sh:** отправка email-алертов через msmtp.
+- **deploy/logrotate/magic-master:** ротация логов nginx и бэкапов (14 дней, compress).
+- **deploy/journald.conf.d/magic-master.conf:** ограничение журнала systemd (500M, 14 дней).
+- **deploy/nginx/gzip.conf:** расширенная gzip-конфигурация (JS, JSON, SVG, шрифты и др.).
+- **deploy/nginx/magic-master-proxy.inc:** кеш статики 7 дней, `no-cache` для HTML.
+- **deploy/env.production:** оптимизированный .env для сервера 6 vCPU / 12 GB RAM.
 
 ---
 

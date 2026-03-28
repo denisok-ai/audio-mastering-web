@@ -4,9 +4,12 @@ Tokens are signed HS256 JWTs stored in the browser (localStorage).
 Secret key is read from env var MAGIC_MASTER_JWT_SECRET (default: dev key, change in production!).
 Хеширование паролей — через bcrypt напрямую (совместимость с bcrypt 4.1+, без passlib).
 """
+import logging
 import os
 import time
 from typing import Optional
+
+_logger = logging.getLogger(__name__)
 
 try:
     from jose import JWTError, jwt
@@ -26,12 +29,16 @@ except ImportError:
 AUTH_AVAILABLE = _JOSE_AVAILABLE and _BCRYPT_AVAILABLE
 
 # ─── Config ──────────────────────────────────────────────────────────────────
-JWT_SECRET: str = os.environ.get(
-    "MAGIC_MASTER_JWT_SECRET",
-    "change-me-in-production-use-a-long-random-string-32chars",
-)
+_JWT_DEFAULT_SECRET = "change-me-in-production-use-a-long-random-string-32chars"
+JWT_SECRET: str = os.environ.get("MAGIC_MASTER_JWT_SECRET", _JWT_DEFAULT_SECRET)
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_SECONDS = 60 * 60 * 24 * 30  # 30 дней
+
+if JWT_SECRET == _JWT_DEFAULT_SECRET:
+    _logger.critical(
+        "SECURITY: MAGIC_MASTER_JWT_SECRET использует значение по умолчанию! "
+        "Задайте уникальный секрет в .env для production."
+    )
 
 # bcrypt ограничивает пароль 72 байтами
 _BCRYPT_MAX_PASSWORD_BYTES = 72

@@ -1,0 +1,7 @@
+[Unit]
+Description=Magic Master — email-алерт при падении %i
+
+[Service]
+Type=oneshot
+ExecStart=/opt/magic-master/deploy/send_alert.sh "Сервис упал: %i" "Сервис %i завершился с ошибкой. Проверьте: journalctl -u %i --no-pager -n 50"
+User=root

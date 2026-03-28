@@ -18,4 +18,6 @@ if __name__ == "__main__":
         workers=1,
         timeout_keep_alive=75,
         timeout_graceful_shutdown=30,
+        limit_max_requests=10000,
+        h11_max_incomplete_event_size=16384,
     )

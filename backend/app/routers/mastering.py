@@ -661,7 +661,7 @@ async def api_master_v2(
         raise
     except Exception as e:
         logger.exception("api_master_v2: unhandled error")
-        raise HTTPException(500, detail=f"Ошибка сервера при запуске мастеринга: {e!s}") from e
+        raise HTTPException(500, detail="Ошибка сервера при запуске мастеринга") from e
 
 
 @router.post("/api/v2/batch")
@@ -834,7 +834,7 @@ async def api_v2_batch(
         raise
     except Exception as e:
         logger.exception("api_v2_batch: unhandled error")
-        raise HTTPException(500, detail=f"Ошибка сервера при пакетном мастеринге: {e!s}") from e
+        raise HTTPException(500, detail="Ошибка сервера при пакетном мастеринге") from e
 
 
 @router.post("/api/v2/master/auto")
@@ -961,7 +961,7 @@ async def api_v2_master_auto(
         raise
     except Exception as e:
         logger.exception("api_v2_master_auto: unhandled error")
-        raise HTTPException(500, detail=f"Ошибка сервера при авто-мастеринге: {e!s}") from e
+        raise HTTPException(500, detail="Ошибка сервера при авто-мастеринге") from e
 
 
 @router.get("/api/v2/chain/default")
@@ -1092,7 +1092,7 @@ async def api_v2_analyze(
         raise
     except Exception as e:
         logger.exception("api_v2_analyze: unhandled error")
-        raise HTTPException(500, detail=f"Ошибка сервера при анализе файла: {e!s}") from e
+        raise HTTPException(500, detail="Ошибка сервера при анализе файла") from e
 
 
 @router.post("/api/v2/reference-match")
@@ -1137,7 +1137,8 @@ async def api_v2_reference_match(
     try:
         result = apply_reference_match(audio_src, sr_src, audio_ref, sr_ref, strength=strength)
     except Exception as e:
-        raise HTTPException(500, f"Ошибка обработки: {e}")
+        logger.exception("reference_match: processing error")
+        raise HTTPException(500, "Ошибка обработки") from e
     channels = 1 if result.ndim == 1 else int(result.shape[1])
     try:
         bitrate_val = _normalize_bitrate(out_format, int(bitrate) if bitrate and str(bitrate).strip() else None)
@@ -1195,7 +1196,7 @@ async def api_v2_upscale(
         raise
     except Exception as e:
         logger.exception("api_v2_upscale: unhandled error")
-        raise HTTPException(500, detail=f"Ошибка при upscale: {e!s}") from e
+        raise HTTPException(500, detail="Ошибка при upscale") from e
 
 
 @router.post("/api/v2/isolate-vocal")
@@ -1230,7 +1231,7 @@ async def api_v2_isolate_vocal(
         )
     except RuntimeError as e:
         logger.warning("isolate_vocal failed: %s", e)
-        raise HTTPException(500, detail=str(e)) from e
+        raise HTTPException(500, detail="Ошибка при изоляции вокала") from e
     base = (fname or "audio").rsplit(".", 1)[0]
     out_name = f"{base}_vocals.wav"
     safe_name = _safe_content_disposition_filename(out_name, "vocals.wav")

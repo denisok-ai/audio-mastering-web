@@ -66,10 +66,17 @@ from .routers.mastering import router as mastering_router
 _jobs = _jobs_store.all_jobs()
 
 
+_is_debug = getattr(settings, "debug_mode", False) or (
+    os.environ.get("MAGIC_MASTER_DEBUG", "").strip().lower() in ("1", "true", "yes", "on")
+)
+
 app = FastAPI(
     title="Magic Master — автоматический мастеринг",
     description="Загрузите трек → нажмите Magic Master → скачайте результат с целевой громкостью LUFS.",
     version=__version__,
+    docs_url="/docs" if _is_debug else None,
+    redoc_url="/redoc" if _is_debug else None,
+    openapi_url="/openapi.json" if _is_debug else None,
 )
 
 # P56: CORS — настраиваемый список origins (MAGIC_MASTER_CORS_ORIGINS); пусто = ["*"]
@@ -79,10 +86,11 @@ _cors_origins = (
     if _cors_origins_str.strip()
     else ["*"]
 )
+_cors_credentials = _cors_origins != ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_credentials=True,
+    allow_credentials=_cors_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -289,7 +297,10 @@ async def handler_500(request: _SR, exc: Exception):
 
 @app.get("/api")
 def api_root():
-    return {"service": "Magic Master API", "docs": "/docs", "version": __version__}
+    result: dict = {"service": "Magic Master API", "version": __version__}
+    if _is_debug:
+        result["docs"] = "/docs"
+    return result
 
 
 @app.get("/api/version")
