@@ -1925,7 +1925,9 @@ if (btnNlConfigInline && nlConfigInputInline) {
     _chatHistory.push({ role: 'user', content: text });
 
     var uiLang = 'ru';
-    try { uiLang = (localStorage.getItem('magic_master_lang') || 'ru').toLowerCase(); } catch (_e) {}
+    try {
+      uiLang = (localStorage.getItem('magic_lang') || localStorage.getItem('magic_master_lang') || 'ru').toLowerCase();
+    } catch (_e) {}
     var context = (typeof lastAnalyzeReport !== 'undefined' && lastAnalyzeReport)
       ? Object.assign({}, lastAnalyzeReport, { lang: uiLang })
       : { lang: uiLang };
@@ -3302,58 +3304,7 @@ loadTierLimits();
   });
 })();
 
-/* ═══════ P59: i18n (локализация) ═══════ */
-(function i18nInit() {
-  var STORAGE_KEY = 'magic_master_lang';
-  window.__locale = window.__locale || {};
-  window.__t = function(key) { return (window.__locale && window.__locale[key]) || key; };
-
-  function getLocale() {
-    var match = /[?&]lang=(\w+)/.exec(window.location.search);
-    if (match) return match[1].toLowerCase() === 'en' ? 'en' : 'ru';
-    try { return (localStorage.getItem(STORAGE_KEY) || 'ru').toLowerCase() === 'en' ? 'en' : 'ru'; } catch (e) { return 'ru'; }
-  }
-  function setLocale(lang) {
-    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
-  }
-  function loadLocale(lang) {
-    return fetch('/locales/' + (lang === 'en' ? 'en' : 'ru') + '.json')
-      .then(function(r) { return r.ok ? r.json() : {}; })
-      .then(function(data) { window.__locale = data; return data; })
-      .catch(function() { window.__locale = {}; return {}; });
-  }
-  function applyI18n() {
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
-      if (el.id === 'refFileName' && window.__refFile) return;
-      var key = el.getAttribute('data-i18n');
-      if (key && window.__t(key) !== key) el.textContent = window.__t(key);
-    });
-  }
-  function setActiveLocaleBtn(lang) {
-    var wrap = document.getElementById('localeWrap');
-    if (!wrap) return;
-    wrap.querySelectorAll('.locale-btn').forEach(function(btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
-    });
-  }
-
-  var currentLang = getLocale();
-  loadLocale(currentLang).then(function() {
-    applyI18n();
-    setActiveLocaleBtn(currentLang);
-  });
-
-  var localeWrap = document.getElementById('localeWrap');
-  if (localeWrap) {
-    localeWrap.querySelectorAll('.locale-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var lang = this.getAttribute('data-lang');
-        setLocale(lang);
-        loadLocale(lang).then(function() {
-          applyI18n();
-          setActiveLocaleBtn(lang);
-        });
-      });
-    });
-  }
-})();
+/* ═══════ P59: i18n (MagicMasterI18n + site-*.json) ═══════ */
+if (typeof MagicMasterI18n !== 'undefined') {
+  MagicMasterI18n.init({ wireAppLocale: true });
+}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" id="htmlRoot">
 <head>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TQWW30KHQ"></script>
@@ -12,7 +12,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Magic Master — Профессиональный мастеринг в один клик</title>
-  <meta name="description" content="Бесплатный профессиональный онлайн-мастеринг аудио. LUFS нормализация по индустриальным стандартам. Без регистрации. WAV, MP3, FLAC. Идеально для AI-музыки и стриминга.">
+  <meta name="description" content="Бесплатный профессиональный онлайн-мастеринг аудио. LUFS нормализация по индустриальным стандартам. Без регистрации. WAV, MP3, FLAC. Идеально для AI-музыки и стриминга." data-i18n-content="landing.meta_desc">
   <meta name="keywords" content="мастеринг онлайн, AI музыка мастеринг, LUFS нормализация, бесплатный мастеринг, аудио мастеринг, Suno мастеринг, Udio мастеринг, online mastering, AI music mastering, free mastering">
   <link rel="canonical" href="https://magicmaster.pro/">
   <meta name="robots" content="index, follow">
@@ -134,6 +134,16 @@
       box-shadow: 0 0 20px var(--acc-glow);
     }
     .nav-cta:hover { opacity: .9; transform: translateY(-1px); }
+    .mm-lang-switch {
+      display: inline-flex; align-items: center; gap: .35rem; margin-right: .5rem;
+      font-size: .85rem; color: var(--soft);
+    }
+    .mm-lang-switch a {
+      color: var(--soft); text-decoration: none; font-weight: 600;
+      padding: .2rem .35rem; border-radius: 6px; cursor: pointer;
+    }
+    .mm-lang-switch a:hover { color: var(--text); }
+    .mm-lang-switch a.mm-lang-active { color: var(--text); text-decoration: underline; }
     @media (max-width: 600px) {
       .nav-link { display: none; }
       nav { padding: 0 1rem; }
@@ -617,31 +627,36 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
     <span class="nav-logo-badge">Pro</span>
   </a>
   <div class="nav-links">
-    <a href="#how" class="nav-link">Как работает</a>
-    <a href="#features" class="nav-link">Возможности</a>
-    <a href="#pricing" class="nav-link">Тарифы</a>
-    <a href="#faq" class="nav-link">FAQ</a>
-    <a href="/app" class="nav-cta">Мастерить бесплатно →</a>
+    <a href="#how" class="nav-link" data-i18n="landing.nav_how">Как работает</a>
+    <a href="#features" class="nav-link" data-i18n="landing.nav_features">Возможности</a>
+    <a href="#pricing" class="nav-link" data-i18n="landing.nav_pricing">Тарифы</a>
+    <a href="#faq" class="nav-link" data-i18n="landing.nav_faq">FAQ</a>
+    <span class="mm-lang-switch" aria-label="Language">
+      <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+      <span>|</span>
+      <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+    </span>
+    <a href="/app" class="nav-cta" data-i18n="landing.nav_cta">Мастерить бесплатно →</a>
   </div>
 </nav>
 
 <!-- ═══════ HERO ═══════ -->
 <section class="hero">
-  <div class="hero-badge">
+  <div class="hero-badge" data-i18n="landing.hero_badge">
     Без регистрации · Бесплатно прямо сейчас
   </div>
 
-  <h1 class="hero-title">Профессиональный<br>мастеринг в один клик</h1>
-  <p class="hero-sub">
+  <h1 class="hero-title" data-i18n-html="landing.hero_title_html">Профессиональный<br>мастеринг в один клик</h1>
+  <p class="hero-sub" data-i18n="landing.hero_sub">
     Загрузите трек — получите готовый мастер по индустриальным стандартам.
     LUFS нормализация, студийный EQ, 4-полосная компрессия и дизеринг. Идеально для AI-музыки.
   </p>
 
   <div class="hero-trust">
-    <div class="trust-chip"><span class="dot"></span>Без регистрации</div>
-    <div class="trust-chip"><span class="dot"></span>True Peak ≤ −1 dBTP</div>
-    <div class="trust-chip"><span class="dot"></span>Broadcast Standard</div>
-    <div class="trust-chip"><span class="dot"></span>WAV · MP3 · FLAC</div>
+    <div class="trust-chip"><span class="dot"></span><span data-i18n="landing.trust1">Без регистрации</span></div>
+    <div class="trust-chip"><span class="dot"></span><span data-i18n="landing.trust2">True Peak ≤ −1 dBTP</span></div>
+    <div class="trust-chip"><span class="dot"></span><span data-i18n="landing.trust3">Broadcast Standard</span></div>
+    <div class="trust-chip"><span class="dot"></span><span data-i18n="landing.trust4">WAV · MP3 · FLAC</span></div>
   </div>
 
   <!-- Waveform animation -->
@@ -649,7 +664,7 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 
   <!-- Кнопка входа в приложение (стиль как у бывшего блока загрузки) -->
   <div class="hero-drop" id="heroDrop">
-    <a href="/app" class="hero-drop-cta">Войти в приложение</a>
+    <a href="/app" class="hero-drop-cta" data-i18n="landing.hero_cta">Войти в приложение</a>
   </div>
 </section>
 
@@ -657,36 +672,36 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 <div class="stats-bar">
   <div class="stat-item">
     <div class="stat-val">−14</div>
-    <div class="stat-key">LUFS Spotify</div>
+    <div class="stat-key" data-i18n="landing.stat_lufs">LUFS Spotify</div>
   </div>
   <div class="stat-item">
     <div class="stat-val">−1 dBTP</div>
-    <div class="stat-key">True Peak лимит</div>
+    <div class="stat-key" data-i18n="landing.stat_tp">True Peak лимит</div>
   </div>
   <div class="stat-item">
     <div class="stat-val">4-band</div>
-    <div class="stat-key">Компрессия</div>
+    <div class="stat-key" data-i18n="landing.stat_comp">Компрессия</div>
   </div>
   <div class="stat-item">
     <div class="stat-val">TPDF</div>
-    <div class="stat-key">Дизеринг</div>
+    <div class="stat-key" data-i18n="landing.stat_dither">Дизеринг</div>
   </div>
   <div class="stat-item">
     <div class="stat-val">8</div>
-    <div class="stat-key">Жанровых пресетов</div>
+    <div class="stat-key" data-i18n="landing.stat_presets">Жанровых пресетов</div>
   </div>
   <div class="stat-item">
     <div class="stat-val">0</div>
-    <div class="stat-key">Требуется регистрация</div>
+    <div class="stat-key" data-i18n="landing.stat_reg">Требуется регистрация</div>
   </div>
 </div>
 
 <!-- ═══════ HOW IT WORKS ═══════ -->
 <section id="how">
   <div class="center">
-    <div class="section-label">Как работает</div>
-    <h2 class="section-title">Три шага до готового мастера</h2>
-    <p class="section-sub">Профессиональный результат без знания инструментов. Конвейер автоматически подберёт параметры под жанр и целевую платформу.</p>
+    <div class="section-label" data-i18n="landing.how_label">Как работает</div>
+    <h2 class="section-title" data-i18n="landing.how_title">Три шага до готового мастера</h2>
+    <p class="section-sub" data-i18n="landing.how_sub">Профессиональный результат без знания инструментов. Конвейер автоматически подберёт параметры под жанр и целевую платформу.</p>
   </div>
   <div class="steps-grid">
     <div class="step-card">
@@ -696,8 +711,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
       </div>
-      <div class="step-title">Загрузите трек</div>
-      <div class="step-text">Перетащите WAV, MP3 или FLAC прямо на страницу. Бесплатно, без регистрации, треки до 100 МБ.</div>
+      <div class="step-title" data-i18n="landing.step1_t">Загрузите трек</div>
+      <div class="step-text" data-i18n="landing.step1_x">Перетащите WAV, MP3 или FLAC прямо на страницу. Бесплатно, без регистрации, треки до 100 МБ.</div>
     </div>
     <div class="step-card">
       <div class="step-num">02</div>
@@ -706,8 +721,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
           <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
         </svg>
       </div>
-      <div class="step-title">Выберите жанр</div>
-      <div class="step-text">Stream, EDM, Hip-Hop, Classical, Podcast, Lo-fi, House, Dry Vocal. Система сама настроит LUFS, EQ и компрессию под стиль.</div>
+      <div class="step-title" data-i18n="landing.step2_t">Выберите жанр</div>
+      <div class="step-text" data-i18n="landing.step2_x">Stream, EDM, Hip-Hop, Classical, Podcast, Lo-fi, House, Dry Vocal. Система сама настроит LUFS, EQ и компрессию под стиль.</div>
     </div>
     <div class="step-card">
       <div class="step-num">03</div>
@@ -716,8 +731,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       </div>
-      <div class="step-title">Скачайте мастер</div>
-      <div class="step-text">Получите готовый WAV (или MP3/FLAC для подписчиков) с нормализованным уровнем, дизерингом и исправленными пиками.</div>
+      <div class="step-title" data-i18n="landing.step3_t">Скачайте мастер</div>
+      <div class="step-text" data-i18n="landing.step3_x">Получите готовый WAV (или MP3/FLAC для подписчиков) с нормализованным уровнем, дизерингом и исправленными пиками.</div>
     </div>
   </div>
 </section>
@@ -725,9 +740,9 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 <!-- ═══════ PRO FEATURES SPOTLIGHT ═══════ -->
 <section id="pro-features" style="padding: 4.5rem 1.5rem; background: rgba(255,255,255,0.012);">
   <div class="center">
-    <div class="section-label" style="background: linear-gradient(135deg,var(--acc2),var(--acc3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Уникальные PRO-модули</div>
-    <h2 class="section-title">Функции, которых нет<br>у конкурентов</h2>
-    <p class="section-sub">Другие сервисы предлагают либо эталонный мастеринг, либо стриминг-превью — никто не объединяет всё сразу. Magic Master объединяет.</p>
+    <div class="section-label" style="background: linear-gradient(135deg,var(--acc2),var(--acc3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;" data-i18n="landing.pro_label">Уникальные PRO-модули</div>
+    <h2 class="section-title" data-i18n-html="landing.pro_title">Функции, которых нет<br>у конкурентов</h2>
+    <p class="section-sub" data-i18n="landing.pro_sub">Другие сервисы предлагают либо эталонный мастеринг, либо стриминг-превью — никто не объединяет всё сразу. Magic Master объединяет.</p>
   </div>
   <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:1.1rem; max-width:1040px; margin:2.5rem auto 0;">
 
@@ -737,9 +752,9 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div style="width:38px;height:38px;border-radius:10px;background:rgba(219,39,119,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--pro-ref);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-ref);margin-bottom:.4rem;">Эталонный мастеринг</div>
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-ref);margin-bottom:.4rem;" data-i18n="landing.spot_ref_cat">Эталонный мастеринг</div>
       <div style="font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text);">Reference Track</div>
-      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;">Загрузите трек-эталон — система построит и применит корректирующую EQ-кривую через FFT-спектральный анализ. Ваш трек звучит как ваша любимая запись.</div>
+      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;" data-i18n="landing.spot_ref_body">Загрузите трек-эталон — система построит и применит корректирующую EQ-кривую через FFT-спектральный анализ. Ваш трек звучит как ваша любимая запись.</div>
     </div>
 
     <!-- Dynamic EQ -->
@@ -748,9 +763,9 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div style="width:38px;height:38px;border-radius:10px;background:rgba(139,92,246,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--pro-dynEQ);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16c2-2 4-8 6-8s4 6 6 8"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-dynEQ);margin-bottom:.4rem;">Адаптивная коррекция</div>
-      <div style="font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text);">Dynamic EQ — 8 полос</div>
-      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;">EQ срабатывает только когда нужно — реагирует на уровень сигнала в каждой полосе. В 3–5 раз прозрачнее многополосного компрессора. Устраняет резонансы и mud без потери характера.</div>
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-dynEQ);margin-bottom:.4rem;" data-i18n="landing.spot_dyneq_cat">Адаптивная коррекция</div>
+      <div style="font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text);" data-i18n="landing.spot_dyneq_title">Dynamic EQ — 8 полос</div>
+      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;" data-i18n="landing.spot_dyneq_body">EQ срабатывает только когда нужно — реагирует на уровень сигнала в каждой полосе. В 3–5 раз прозрачнее многополосного компрессора. Устраняет резонансы и mud без потери характера.</div>
     </div>
 
     <!-- Transient Designer -->
@@ -759,9 +774,9 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--pro-transient);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-transient);margin-bottom:.4rem;">Контроль динамики</div>
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-transient);margin-bottom:.4rem;" data-i18n="landing.spot_tr_cat">Контроль динамики</div>
       <div style="font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text);">Transient Designer</div>
-      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;">Независимый контроль атаки и сустейна через двойной envelope follower. Добавьте панч барабанам или смягчите атаку акустики. Нет ни в одном веб-сервисе мастеринга.</div>
+      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;" data-i18n="landing.spot_tr_body">Независимый контроль атаки и сустейна через двойной envelope follower. Добавьте панч барабанам или смягчите атаку акустики. Нет ни в одном веб-сервисе мастеринга.</div>
     </div>
 
     <!-- Spectral Denoiser -->
@@ -770,9 +785,9 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div style="width:38px;height:38px;border-radius:10px;background:rgba(6,182,212,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--pro-denoiser);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-denoiser);margin-bottom:.4rem;">Очистка записи</div>
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-denoiser);margin-bottom:.4rem;" data-i18n="landing.spot_den_cat">Очистка записи</div>
       <div style="font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text);">Spectral Denoiser</div>
-      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;">Wiener-фильтр в частотной области удаляет фоновый шум, гул и артефакты записи. Оценка шумового профиля по медиане спектра — стабильна к транзиентам, не режет высокие.</div>
+      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;" data-i18n="landing.spot_den_body">Wiener-фильтр в частотной области удаляет фоновый шум, гул и артефакты записи. Оценка шумового профиля по медиане спектра — стабильна к транзиентам, не режет высокие.</div>
     </div>
 
     <!-- Parallel Compression -->
@@ -781,9 +796,9 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div style="width:38px;height:38px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--pro-parallel);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-parallel);margin-bottom:.4rem;">NY-компрессия</div>
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-parallel);margin-bottom:.4rem;" data-i18n="landing.spot_par_cat">NY-компрессия</div>
       <div style="font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text);">Parallel Compression</div>
-      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;">Blend сильно сжатого сигнала с оригиналом. Сохраняет транзиенты и добавляет плотность — стандартная студийная техника для сочного, музыкального звука без "зажатости".</div>
+      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;" data-i18n="landing.spot_par_body">Blend сильно сжатого сигнала с оригиналом. Сохраняет транзиенты и добавляет плотность — стандартная студийная техника для сочного, музыкального звука без "зажатости".</div>
     </div>
 
     <!-- Streaming Preview -->
@@ -792,19 +807,19 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       <div style="width:38px;height:38px;border-radius:10px;background:rgba(16,185,129,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--pro-deesser);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
       </div>
-      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-deesser);margin-bottom:.4rem;">До публикации</div>
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pro-deesser);margin-bottom:.4rem;" data-i18n="landing.spot_prev_cat">До публикации</div>
       <div style="font-size:1.02rem;font-weight:700;margin-bottom:.5rem;color:var(--text);">Streaming Loudness Preview</div>
-      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;">Показывает как трек будет нормализован на Spotify, YouTube, Apple Music, Tidal и Broadcast. Цветовая индикация: зелёный — оптимально, жёлтый — понизят, красный — сильно приглушат.</div>
+      <div style="font-size:.85rem;color:var(--soft);line-height:1.6;" data-i18n="landing.spot_prev_body">Показывает как трек будет нормализован на Spotify, YouTube, Apple Music, Tidal и Broadcast. Цветовая индикация: зелёный — оптимально, жёлтый — понизят, красный — сильно приглушат.</div>
     </div>
 
   </div>
 
   <!-- Comparison strip -->
   <div style="max-width:780px;margin:2.5rem auto 0;padding:1.25rem 1.5rem;background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:var(--r-lg);display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
-    <div style="font-size:.82rem;color:var(--soft);flex:1;min-width:200px;">
+    <div style="font-size:.82rem;color:var(--soft);flex:1;min-width:200px;" data-i18n-html="landing.compare_strip_html">
       <strong style="color:var(--text);">Только Magic Master</strong> объединяет Reference Mastering + Dynamic EQ + Transient Designer + Streaming Preview в одном бесплатном веб-сервисе. Ни один другой онлайн-сервис мастеринга не предлагает все эти функции одновременно.
     </div>
-    <a href="/app" style="display:inline-flex;align-items:center;gap:.4rem;padding:.65rem 1.4rem;border-radius:var(--r);background:linear-gradient(135deg,var(--accent),var(--acc2));color:#fff;font-weight:700;font-size:.85rem;text-decoration:none;white-space:nowrap;box-shadow:0 0 24px var(--acc-glow);">
+    <a href="/app" style="display:inline-flex;align-items:center;gap:.4rem;padding:.65rem 1.4rem;border-radius:var(--r);background:linear-gradient(135deg,var(--accent),var(--acc2));color:#fff;font-weight:700;font-size:.85rem;text-decoration:none;white-space:nowrap;box-shadow:0 0 24px var(--acc-glow);" data-i18n="landing.compare_cta">
       Попробовать PRO →
     </a>
   </div>
@@ -813,9 +828,9 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 <!-- ═══════ FEATURES ═══════ -->
 <section id="features">
   <div class="center">
-    <div class="section-label">Возможности</div>
-    <h2 class="section-title">Профессиональный конвейер<br>без компромиссов</h2>
-    <p class="section-sub">Профессиональная цепочка модулей. Порядок и параметры настраиваются вручную.</p>
+    <div class="section-label" data-i18n="landing.features_label">Возможности</div>
+    <h2 class="section-title" data-i18n-html="landing.features_title">Профессиональный конвейер<br>без компромиссов</h2>
+    <p class="section-sub" data-i18n="landing.features_sub">Профессиональная цепочка модулей. Порядок и параметры настраиваются вручную.</p>
   </div>
   <div class="features-grid">
     <div class="feat-card">
@@ -823,8 +838,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       </div>
       <div>
-        <div class="feat-title">LUFS нормализация <span class="feat-badge badge-free">Free</span></div>
-        <div class="feat-text">Spotify −14, Apple −16, Club −9, Broadcast −24. True Peak ≤ −1 dBTP гарантированно.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_lufs_t">LUFS нормализация</span> <span class="feat-badge badge-free" data-i18n="landing.badge_free">Free</span></div>
+        <div class="feat-text" data-i18n="landing.feat_lufs_x">Spotify −14, Apple −16, Club −9, Broadcast −24. True Peak ≤ −1 dBTP гарантированно.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -832,8 +847,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       </div>
       <div>
-        <div class="feat-title">Студийный EQ <span class="feat-badge badge-free">Free</span></div>
-        <div class="feat-text">Индустриальная студийная кривая. HP 40 Hz, LP 18 kHz. Linear phase или minimum phase.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_eq_t">Студийный EQ</span> <span class="feat-badge badge-free" data-i18n="landing.badge_free">Free</span></div>
+        <div class="feat-text" data-i18n="landing.feat_eq_x">Индустриальная студийная кривая. HP 40 Hz, LP 18 kHz. Linear phase или minimum phase.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -841,8 +856,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M3 21l18-18"/><path d="M8 8.5a5 5 0 0 0 8 5.5"/><path d="M7.5 3.5A5 5 0 0 1 16 8"/></svg>
       </div>
       <div>
-        <div class="feat-title">4-band компрессия <span class="feat-badge badge-free">Free</span></div>
-        <div class="feat-text">Многополосная динамика с soft knee и upward compression. Crossovers настраиваются.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_comp_t">4-band компрессия</span> <span class="feat-badge badge-free" data-i18n="landing.badge_free">Free</span></div>
+        <div class="feat-text" data-i18n="landing.feat_comp_x">Многополосная динамика с soft knee и upward compression. Crossovers настраиваются.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -850,8 +865,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
       <div>
-        <div class="feat-title">Спектроанализатор <span class="feat-badge badge-free">Free</span></div>
-        <div class="feat-text">FFT анализ 4096 точек, 64 полосы в логарифмической шкале 20 Гц – 20 кГц.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_spec_t">Спектроанализатор</span> <span class="feat-badge badge-free" data-i18n="landing.badge_free">Free</span></div>
+        <div class="feat-text" data-i18n="landing.feat_spec_x">FFT анализ 4096 точек, 64 полосы в логарифмической шкале 20 Гц – 20 кГц.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -859,8 +874,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       </div>
       <div>
-        <div class="feat-title">Векторскоп <span class="feat-badge badge-free">Free</span></div>
-        <div class="feat-text">Диаграмма Лиссажу L vs R до 6000 точек. Визуализация ширины стерео и фазы.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_vec_t">Векторскоп</span> <span class="feat-badge badge-free" data-i18n="landing.badge_free">Free</span></div>
+        <div class="feat-text" data-i18n="landing.feat_vec_x">Диаграмма Лиссажу L vs R до 6000 точек. Визуализация ширины стерео и фазы.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -868,8 +883,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
       </div>
       <div>
-        <div class="feat-title">Гармонический эксайтер <span class="feat-badge badge-pro">Pro</span></div>
-        <div class="feat-text">Режимы tape/tube/warm/transistor/digital. Oversampling 1×/2×/4×. Насыщение без клиппинга.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_exc_t">Гармонический эксайтер</span> <span class="feat-badge badge-pro" data-i18n="landing.badge_pro">Pro</span></div>
+        <div class="feat-text" data-i18n="landing.feat_exc_x">Режимы tape/tube/warm/transistor/digital. Oversampling 1×/2×/4×. Насыщение без клиппинга.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -877,8 +892,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12a10 10 0 0 1 20 0"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83"/></svg>
       </div>
       <div>
-        <div class="feat-title">Стерео-расширение <span class="feat-badge badge-pro">Pro</span></div>
-        <div class="feat-text">4-band imager в Mid/Side. Stereoize delay. Корреляция L/R в реальном времени.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_img_t">Стерео-расширение</span> <span class="feat-badge badge-pro" data-i18n="landing.badge_pro">Pro</span></div>
+        <div class="feat-text" data-i18n="landing.feat_img_x">4-band imager в Mid/Side. Stereoize delay. Корреляция L/R в реальном времени.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -886,8 +901,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
       </div>
       <div>
-        <div class="feat-title">Reference Track <span class="feat-badge" style="background:rgba(219,39,119,.15);color:var(--pro-ref);border-color:rgba(219,39,119,.3);">NEW</span></div>
-        <div class="feat-text">FFT-спектральный анализ эталонного трека → корректирующая EQ-кривая. Звучит как любимая пластинка.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_reft_t">Reference Track</span> <span class="feat-badge" style="background:rgba(219,39,119,.15);color:var(--pro-ref);border-color:rgba(219,39,119,.3);" data-i18n="landing.badge_new">NEW</span></div>
+        <div class="feat-text" data-i18n="landing.feat_reft_x">FFT-спектральный анализ эталонного трека → корректирующая EQ-кривая. Звучит как любимая пластинка.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -895,8 +910,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16c2-2 4-8 6-8s4 6 6 8"/></svg>
       </div>
       <div>
-        <div class="feat-title">Dynamic EQ <span class="feat-badge" style="background:rgba(139,92,246,.15);color:var(--pro-dynEQ);border-color:rgba(139,92,246,.3);">NEW</span></div>
-        <div class="feat-text">8-полосный EQ реагирует на уровень. Прозрачнее multiband-компрессора. Устраняет mud и resonance без потери характера.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_dyneq_t">Dynamic EQ</span> <span class="feat-badge" style="background:rgba(139,92,246,.15);color:var(--pro-dynEQ);border-color:rgba(139,92,246,.3);" data-i18n="landing.badge_new">NEW</span></div>
+        <div class="feat-text" data-i18n="landing.feat_dyneq_x">8-полосный EQ реагирует на уровень. Прозрачнее multiband-компрессора. Устраняет mud и resonance без потери характера.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -904,8 +919,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       </div>
       <div>
-        <div class="feat-title">Transient Designer <span class="feat-badge" style="background:rgba(245,158,11,.15);color:var(--pro-transient);border-color:rgba(245,158,11,.3);">NEW</span></div>
-        <div class="feat-text">Независимый контроль атаки и сустейна. Добавьте punch или смягчите резкость — нет ни у одного конкурента.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_tr_t">Transient Designer</span> <span class="feat-badge" style="background:rgba(245,158,11,.15);color:var(--pro-transient);border-color:rgba(245,158,11,.3);" data-i18n="landing.badge_new">NEW</span></div>
+        <div class="feat-text" data-i18n="landing.feat_tr_x">Независимый контроль атаки и сустейна. Добавьте punch или смягчите резкость — нет ни у одного конкурента.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -913,8 +928,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
       </div>
       <div>
-        <div class="feat-title">Spectral Denoiser <span class="feat-badge" style="background:rgba(6,182,212,.15);color:var(--pro-denoiser);border-color:rgba(6,182,212,.3);">NEW</span></div>
-        <div class="feat-text">Wiener-фильтр в частотной области. Убирает фоновый шум и гул без потери деталей и высоких частот.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_den_t">Spectral Denoiser</span> <span class="feat-badge" style="background:rgba(6,182,212,.15);color:var(--pro-denoiser);border-color:rgba(6,182,212,.3);" data-i18n="landing.badge_new">NEW</span></div>
+        <div class="feat-text" data-i18n="landing.feat_den_x">Wiener-фильтр в частотной области. Убирает фоновый шум и гул без потери деталей и высоких частот.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -922,8 +937,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       </div>
       <div>
-        <div class="feat-title">Parallel Compression <span class="feat-badge" style="background:rgba(239,68,68,.15);color:var(--pro-parallel);border-color:rgba(239,68,68,.3);">NEW</span></div>
-        <div class="feat-text">NY-компрессия: blend сжатого с оригиналом. Плотность и характер без "зажатости" — студийный стандарт.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_par_t">Parallel Compression</span> <span class="feat-badge" style="background:rgba(239,68,68,.15);color:var(--pro-parallel);border-color:rgba(239,68,68,.3);" data-i18n="landing.badge_new">NEW</span></div>
+        <div class="feat-text" data-i18n="landing.feat_par_x">NY-компрессия: blend сжатого с оригиналом. Плотность и характер без "зажатости" — студийный стандарт.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -931,8 +946,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
       </div>
       <div>
-        <div class="feat-title">Реверберация <span class="feat-badge badge-pro">Pro</span></div>
-        <div class="feat-text">5 типов: plate, room, hall, theater, cathedral. M/S mix для Mid и Side раздельно.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_rev_t">Реверберация</span> <span class="feat-badge badge-pro" data-i18n="landing.badge_pro">Pro</span></div>
+        <div class="feat-text" data-i18n="landing.feat_rev_x">5 типов: plate, room, hall, theater, cathedral. M/S mix для Mid и Side раздельно.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -940,8 +955,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       </div>
       <div>
-        <div class="feat-title">TPDF + Noise Shaping <span class="feat-badge badge-free">Free</span></div>
-        <div class="feat-text">Дизеринг при даунсэмплинге до 16-bit: TPDF, ns_e (E-weighted), ns_itu (ITU). Auto-blank.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_dith_t">TPDF + Noise Shaping</span> <span class="feat-badge badge-free" data-i18n="landing.badge_free">Free</span></div>
+        <div class="feat-text" data-i18n="landing.feat_dith_x">Дизеринг при даунсэмплинге до 16-bit: TPDF, ns_e (E-weighted), ns_itu (ITU). Auto-blank.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -949,8 +964,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg>
       </div>
       <div>
-        <div class="feat-title">Цепочка модулей <span class="feat-badge badge-pro">Pro</span></div>
-        <div class="feat-text">Drag-and-drop порядок, Amount для каждого модуля, конфигурация по JSON API.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_chain_t">Цепочка модулей</span> <span class="feat-badge badge-pro" data-i18n="landing.badge_pro">Pro</span></div>
+        <div class="feat-text" data-i18n="landing.feat_chain_x">Drag-and-drop порядок, Amount для каждого модуля, конфигурация по JSON API.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -958,8 +973,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       </div>
       <div>
-        <div class="feat-title">График LUFS по времени <span class="feat-badge badge-free">Free</span></div>
-        <div class="feat-text">Динамика громкости по 400 мс блокам. Визуализирует проблемные места до мастеринга.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_lufsgraph_t">График LUFS по времени</span> <span class="feat-badge badge-free" data-i18n="landing.badge_free">Free</span></div>
+        <div class="feat-text" data-i18n="landing.feat_lufsgraph_x">Динамика громкости по 400 мс блокам. Визуализирует проблемные места до мастеринга.</div>
       </div>
     </div>
     <div class="feat-card">
@@ -967,8 +982,8 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
       </div>
       <div>
-        <div class="feat-title">REST API доступ <span class="feat-badge badge-pro">Pro</span></div>
-        <div class="feat-text">Полный REST API с документацией Swagger. Интеграция в ваш DAW, скрипты, CI/CD.</div>
+        <div class="feat-title"><span data-i18n="landing.feat_api_t">REST API доступ</span> <span class="feat-badge badge-pro" data-i18n="landing.badge_pro">Pro</span></div>
+        <div class="feat-text" data-i18n="landing.feat_api_x">Полный REST API с документацией Swagger. Интеграция в ваш DAW, скрипты, CI/CD.</div>
       </div>
     </div>
   </div>
@@ -977,88 +992,88 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 <!-- ═══════ PRICING ═══════ -->
 <section id="pricing">
   <div class="center">
-    <div class="section-label">Тарифы</div>
-    <h2 class="section-title">Прозрачные цены<br>без сюрпризов</h2>
-    <p class="section-sub">Начните бесплатно — без карты и без регистрации. Переходите на Premium когда нужны расширенные возможности.</p>
+    <div class="section-label" data-i18n="landing.pricing_label">Тарифы</div>
+    <h2 class="section-title" data-i18n-html="landing.pricing_title">Прозрачные цены<br>без сюрпризов</h2>
+    <p class="section-sub" data-i18n="landing.pricing_sub">Начните бесплатно — без карты и без регистрации. Переходите на Premium когда нужны расширенные возможности.</p>
   </div>
   <div class="pricing-toggle">
-    <span class="toggle-label">Помесячно</span>
+    <span class="toggle-label" data-i18n="landing.toggle_monthly">Помесячно</span>
     <div class="toggle-btn" id="billingToggle"><div class="toggle-knob"></div></div>
-    <span class="toggle-label">Годовая подписка</span>
-    <span class="toggle-save">~17%</span>
+    <span class="toggle-label" data-i18n="landing.toggle_yearly">Годовая подписка</span>
+    <span class="toggle-save" data-i18n="landing.toggle_save">~17%</span>
   </div>
   <div class="pricing-grid">
 
     <!-- FREE -->
     <div class="price-card">
-      <div class="price-tier">Бесплатно</div>
+      <div class="price-tier" data-i18n="landing.price_tier_free">Бесплатно</div>
       <div class="price-tier-name">Free</div>
       <div class="price-amount">
         <span class="price-num">0 ₽</span>
-        <span class="price-per">/ навсегда</span>
+        <span class="price-per" data-i18n="landing.price_per_forever">/ навсегда</span>
       </div>
       <div class="price-old">&nbsp;</div>
       <div class="price-divider"></div>
       <div class="price-features">
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Попробуйте бесплатно</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Треки до 10 минут</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Пресет «Stream −14 LUFS»</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Экспорт WAV 16-bit</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Анализ LUFS, спектр, векторскоп</div>
-        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Жанровые пресеты</div>
-        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Настройка цепочки</div>
-        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Экспорт MP3/FLAC</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_try_free">Попробуйте бесплатно</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_10min">Треки до 10 минут</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_stream_preset">Пресет «Stream −14 LUFS»</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_wav16">Экспорт WAV 16-bit</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_analysis">Анализ LUFS, спектр, векторскоп</span></div>
+        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span data-i18n="landing.price_feat_no_genre">Жанровые пресеты</span></div>
+        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span data-i18n="landing.price_feat_no_chain">Настройка цепочки</span></div>
+        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span data-i18n="landing.price_feat_no_mp3">Экспорт MP3/FLAC</span></div>
       </div>
-      <a href="/app" class="price-btn price-btn-outline">Попробовать бесплатно</a>
+      <a href="/app" class="price-btn price-btn-outline" data-i18n="landing.price_try_free">Попробовать бесплатно</a>
     </div>
 
     <!-- PRO -->
     <div class="price-card featured">
-      <div class="price-popular">Популярный</div>
-      <div class="price-tier">Для профессионалов</div>
+      <div class="price-popular" data-i18n="landing.price_popular">Популярный</div>
+      <div class="price-tier" data-i18n="landing.price_tier_pro">Для профессионалов</div>
       <div class="price-tier-name">Pro</div>
       <div class="price-amount">
         <span class="price-num" id="proPrice">1 000 ₽</span>
-        <span class="price-per">/ месяц</span>
+        <span class="price-per" data-i18n="landing.price_per_month">/ месяц</span>
       </div>
       <div class="price-old" id="proOld">&nbsp;</div>
       <div class="price-divider"></div>
       <div class="price-features">
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>До 10 мастерингов в день, 50 токенов/мес</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Все 8 жанровых пресетов</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Экспорт WAV / MP3 / FLAC</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Цепочка модулей, Exciter, Reverb</div>
-        <div class="price-feat" style="color:var(--pro-ref);">⬡ Reference Track Mastering</div>
-        <div class="price-feat" style="color:var(--pro-dynEQ);">⬡ Dynamic EQ — 8 полос</div>
-        <div class="price-feat" style="color:var(--pro-transient);">⬡ Transient Designer</div>
-        <div class="price-feat" style="color:var(--pro-denoiser);">⬡ Spectral Denoiser</div>
-        <div class="price-feat" style="color:var(--pro-parallel);">⬡ Parallel Compression</div>
-        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Пакетная обработка</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_pro_line1">До 10 мастерингов в день, 50 токенов/мес</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_pro_line2">Все 8 жанровых пресетов</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_pro_line3">Экспорт WAV / MP3 / FLAC</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_pro_line4">Цепочка модулей, Exciter, Reverb</span></div>
+        <div class="price-feat" style="color:var(--pro-ref);"><span data-i18n="landing.price_tag_ref">⬡ Reference Track Mastering</span></div>
+        <div class="price-feat" style="color:var(--pro-dynEQ);"><span data-i18n="landing.price_tag_dyneq">⬡ Dynamic EQ — 8 полос</span></div>
+        <div class="price-feat" style="color:var(--pro-transient);"><span data-i18n="landing.price_tag_tr">⬡ Transient Designer</span></div>
+        <div class="price-feat" style="color:var(--pro-denoiser);"><span data-i18n="landing.price_tag_den">⬡ Spectral Denoiser</span></div>
+        <div class="price-feat" style="color:var(--pro-parallel);"><span data-i18n="landing.price_tag_par">⬡ Parallel Compression</span></div>
+        <div class="price-feat dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="feat-no"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span data-i18n="landing.price_feat_no_batch">Пакетная обработка</span></div>
       </div>
-      <a href="/app" class="price-btn price-btn-primary">Начать Pro →</a>
+      <a href="/app" class="price-btn price-btn-primary" data-i18n="landing.price_start_pro">Начать Pro →</a>
     </div>
 
     <!-- STUDIO -->
     <div class="price-card">
-      <div class="price-tier">Для студий</div>
+      <div class="price-tier" data-i18n="landing.price_tier_studio">Для студий</div>
       <div class="price-tier-name">Studio</div>
       <div class="price-amount">
         <span class="price-num" id="studioPrice">2 500 ₽</span>
-        <span class="price-per">/ месяц</span>
+        <span class="price-per" data-i18n="landing.price_per_month">/ месяц</span>
       </div>
       <div class="price-old" id="studioOld">&nbsp;</div>
       <div class="price-divider"></div>
       <div class="price-features">
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>До 30 мастерингов в день, 100 токенов/мес</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Треки до 60 минут</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Всё из Pro-тарифа</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Пакетная обработка файлов</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Сохранение проектов / пресетов</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Приоритетная очередь</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>REST API доступ</div>
-        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg>Поддержка 24/7</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_line1">До 30 мастерингов в день, 100 токенов/мес</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_60min">Треки до 60 минут</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_allpro">Всё из Pro-тарифа</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_batch">Пакетная обработка файлов</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_save">Сохранение проектов / пресетов</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_queue">Приоритетная очередь</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_api">REST API доступ</span></div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="feat-yes"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="landing.price_feat_st_support">Поддержка 24/7</span></div>
       </div>
-      <a href="/app" class="price-btn price-btn-outline">Начать Studio →</a>
+      <a href="/app" class="price-btn price-btn-outline" data-i18n="landing.price_start_studio">Начать Studio →</a>
     </div>
 
   </div>
@@ -1067,41 +1082,41 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 <!-- ═══════ TESTIMONIALS ═══════ -->
 <section id="testimonials">
   <div class="center">
-    <div class="section-label">Отзывы</div>
-    <h2 class="section-title">Продюсеры уже оценили</h2>
-    <p class="section-sub">Сотни треков обработано — наши пользователи делятся результатами.</p>
+    <div class="section-label" data-i18n="landing.testi_label">Отзывы</div>
+    <h2 class="section-title" data-i18n="landing.testi_title">Продюсеры уже оценили</h2>
+    <p class="section-sub" data-i18n="landing.testi_sub">Сотни треков обработано — наши пользователи делятся результатами.</p>
   </div>
   <div class="testi-grid">
     <div class="testi-card">
       <div class="testi-stars">★★★★★</div>
-      <div class="testi-text">«Загрузил черновик EDM трека — получил готовый мастер под клубные стандарты за 30 секунд. Громкость, динамика и верха встали как надо.»</div>
+      <div class="testi-text" data-i18n="landing.testi1_text">«Загрузил черновик EDM трека — получил готовый мастер под клубные стандарты за 30 секунд. Громкость, динамика и верха встали как надо.»</div>
       <div class="testi-author">
         <div class="testi-avatar">АК</div>
         <div>
-          <div class="testi-name">Антон Коваль</div>
-          <div class="testi-role">EDM продюсер, Москва</div>
+          <div class="testi-name" data-i18n="landing.testi1_name">Антон Коваль</div>
+          <div class="testi-role" data-i18n="landing.testi1_role">EDM продюсер, Москва</div>
         </div>
       </div>
     </div>
     <div class="testi-card">
       <div class="testi-stars">★★★★★</div>
-      <div class="testi-text">«Для подкаста это идеально — −16 LUFS по Apple Podcasts, срезанные шумы в низах. Теперь обрабатываю все эпизоды только здесь.»</div>
+      <div class="testi-text" data-i18n="landing.testi2_text">«Для подкаста это идеально — −16 LUFS по Apple Podcasts, срезанные шумы в низах. Теперь обрабатываю все эпизоды только здесь.»</div>
       <div class="testi-author">
         <div class="testi-avatar">МС</div>
         <div>
-          <div class="testi-name">Мария Смирнова</div>
-          <div class="testi-role">Подкастер, 12k подписчиков</div>
+          <div class="testi-name" data-i18n="landing.testi2_name">Мария Смирнова</div>
+          <div class="testi-role" data-i18n="landing.testi2_role">Подкастер, 12k подписчиков</div>
         </div>
       </div>
     </div>
     <div class="testi-card">
       <div class="testi-stars">★★★★☆</div>
-      <div class="testi-text">«Понравилась настройка цепочки модулей — поменял порядок эксайтера и имаджера, подстроил Amount. Результат лучше чем у пары дорогих VST.»</div>
+      <div class="testi-text" data-i18n="landing.testi3_text">«Понравилась настройка цепочки модулей — поменял порядок эксайтера и имаджера, подстроил Amount. Результат лучше чем у пары дорогих VST.»</div>
       <div class="testi-author">
         <div class="testi-avatar">ДН</div>
         <div>
-          <div class="testi-name">Дмитрий Немцов</div>
-          <div class="testi-role">Sound designer, студия «Прибой»</div>
+          <div class="testi-name" data-i18n="landing.testi3_name">Дмитрий Немцов</div>
+          <div class="testi-role" data-i18n="landing.testi3_role">Sound designer, студия «Прибой»</div>
         </div>
       </div>
     </div>
@@ -1111,45 +1126,45 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 <!-- ═══════ FAQ ═══════ -->
 <section id="faq">
   <div class="center">
-    <div class="section-label">FAQ</div>
-    <h2 class="section-title">Часто задаваемые вопросы</h2>
+    <div class="section-label" data-i18n="landing.faq_label">FAQ</div>
+    <h2 class="section-title" data-i18n="landing.faq_title">Часто задаваемые вопросы</h2>
   </div>
   <div class="faq-list">
     <div class="faq-item">
-      <div class="faq-q">Нужна ли регистрация для бесплатного мастеринга?
+      <div class="faq-q"><span data-i18n="landing.faq_q_reg">Нужна ли регистрация для бесплатного мастеринга?</span>
         <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a">Нет. Бесплатный тариф работает без регистрации — просто загрузите файл и получите результат. Точные лимиты показываются в приложении.</div>
+      <div class="faq-a" data-i18n="landing.faq_a_reg">Нет. Бесплатный тариф работает без регистрации — просто загрузите файл и получите результат. Точные лимиты показываются в приложении.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q">Какие форматы поддерживаются?
+      <div class="faq-q"><span data-i18n="landing.faq_q_fmt">Какие форматы поддерживаются?</span>
         <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a">Загрузка: WAV, MP3, FLAC. Экспорт: WAV 16-bit (Free), а также MP3 320 kbps и FLAC 24-bit (Pro/Studio). Для MP3 требуется FFmpeg на сервере.</div>
+      <div class="faq-a" data-i18n="landing.faq_a_fmt">Загрузка: WAV, MP3, FLAC. Экспорт: WAV 16-bit (Free), а также MP3 320 kbps и FLAC 24-bit (Pro/Studio). Для MP3 требуется FFmpeg на сервере.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q">Что такое LUFS и зачем нормализация?
+      <div class="faq-q"><span data-i18n="landing.faq_q_lufs">Что такое LUFS и зачем нормализация?</span>
         <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a">LUFS (Loudness Units relative to Full Scale) — стандарт громкости для стриминговых платформ. Spotify нормализует к −14 LUFS, Apple Music к −16, клубный звук к −9. Magic Master автоматически приводит трек к нужному уровню.</div>
+      <div class="faq-a" data-i18n="landing.faq_a_lufs">LUFS (Loudness Units relative to Full Scale) — стандарт громкости для стриминговых платформ. Spotify нормализует к −14 LUFS, Apple Music к −16, клубный звук к −9. Magic Master автоматически приводит трек к нужному уровню.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q">Хранятся ли мои файлы на серверах?
+      <div class="faq-q"><span data-i18n="landing.faq_q_store">Хранятся ли мои файлы на серверах?</span>
         <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a">Нет. Файлы обрабатываются в памяти и удаляются сразу после отдачи результата. История мастерингов для Free-пользователей хранится только в браузере (localStorage).</div>
+      <div class="faq-a" data-i18n="landing.faq_a_store">Нет. Файлы обрабатываются в памяти и удаляются сразу после отдачи результата. История мастерингов для Free-пользователей хранится только в браузере (localStorage).</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q">Можно ли настроить цепочку обработки вручную?
+      <div class="faq-q"><span data-i18n="landing.faq_q_chain">Можно ли настроить цепочку обработки вручную?</span>
         <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a">Да, в тарифе Pro и Studio. Можно менять порядок модулей drag-and-drop, настраивать Amount для каждого, включать Linear Phase EQ, выбирать тип реверберации и M/S параметры.</div>
+      <div class="faq-a" data-i18n="landing.faq_a_chain">Да, в тарифе Pro и Studio. Можно менять порядок модулей drag-and-drop, настраивать Amount для каждого, включать Linear Phase EQ, выбирать тип реверберации и M/S параметры.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q">Есть ли API для интеграции в мой инструментарий?
+      <div class="faq-q"><span data-i18n="landing.faq_q_api">Есть ли API для интеграции в мой инструментарий?</span>
         <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a">Да. Полная документация API доступна по адресу /docs. REST API позволяет программно запускать мастеринг, анализировать файлы и получать метрики. Для коммерческого использования — тариф Studio.</div>
+      <div class="faq-a" data-i18n="landing.faq_a_api">Да. Полная документация API доступна по адресу /docs. REST API позволяет программно запускать мастеринг, анализировать файлы и получать метрики. Для коммерческого использования — тариф Studio.</div>
     </div>
   </div>
 </section>
@@ -1157,17 +1172,17 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
 <!-- ═══════ CTA BANNER ═══════ -->
 <div class="cta-banner" style="padding: 0 1.5rem;">
   <div style="max-width: 900px; margin: 0 auto; padding: 3.5rem 2.5rem; text-align: center;">
-    <div class="section-label" style="margin-bottom: .75rem;">Попробуйте прямо сейчас</div>
-    <h2 style="font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -.025em; margin-bottom: .75rem;">Готовы сделать первый мастер?</h2>
-    <p style="font-size: 1rem; color: var(--soft); margin-bottom: 1.75rem;">Без регистрации. Без карты. Результат за 30 секунд.</p>
+    <div class="section-label" style="margin-bottom: .75rem;" data-i18n="landing.cta_label">Попробуйте прямо сейчас</div>
+    <h2 style="font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -.025em; margin-bottom: .75rem;" data-i18n="landing.cta_h2">Готовы сделать первый мастер?</h2>
+    <p style="font-size: 1rem; color: var(--soft); margin-bottom: 1.75rem;" data-i18n="landing.cta_p">Без регистрации. Без карты. Результат за 30 секунд.</p>
     <div class="cta-btns">
       <a href="/app" class="btn-primary">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Мастерить бесплатно
+        <span data-i18n="landing.cta_btn1">Мастерить бесплатно</span>
       </a>
       <a href="#pricing" class="btn-ghost">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-        Смотреть тарифы
+        <span data-i18n="landing.cta_btn2">Смотреть тарифы</span>
       </a>
     </div>
   </div>
@@ -1184,38 +1199,42 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
       </div>
       <span class="foot-logo-name">Magic Master</span>
     </a>
-    <div class="foot-desc">Профессиональный мастеринг аудио прямо в браузере. Индустриальные стандарты без подписки на DAW.</div>
+    <div class="foot-desc" data-i18n="landing.foot_desc">Профессиональный мастеринг аудио прямо в браузере. Индустриальные стандарты без подписки на DAW.</div>
     <div class="foot-version" id="footVersion"></div>
   </div>
   <div class="foot-col">
-    <div class="foot-col-title">Продукт</div>
-    <a href="/app">Мастеринг</a>
-    <a href="#features">Возможности</a>
-    <a href="#pricing">Тарифы</a>
-    <a href="#how">Как работает</a>
+    <div class="foot-col-title" data-i18n="landing.foot_col_product">Продукт</div>
+    <a href="/app" data-i18n="landing.foot_mastering">Мастеринг</a>
+    <a href="#features" data-i18n="landing.nav_features">Возможности</a>
+    <a href="#pricing" data-i18n="landing.nav_pricing">Тарифы</a>
+    <a href="#how" data-i18n="landing.nav_how">Как работает</a>
   </div>
   <div class="foot-col">
-    <div class="foot-col-title">Разработка</div>
-    <a href="/docs">API Документация</a>
-    <a href="/progress.html">Статус плана</a>
-    <a href="/api/health">Статус сервиса</a>
-    <a href="/api/version">Версия API</a>
+    <div class="foot-col-title" data-i18n="landing.foot_col_dev">Разработка</div>
+    <a href="/docs" data-i18n="landing.foot_api_docs">API Документация</a>
+    <a href="/progress.html" data-i18n="landing.foot_plan_status">Статус плана</a>
+    <a href="/api/health" data-i18n="landing.foot_svc_status">Статус сервиса</a>
+    <a href="/api/version" data-i18n="landing.foot_api_ver">Версия API</a>
   </div>
   <div class="foot-col">
-    <div class="foot-col-title">Поддержка</div>
-    <a href="#faq">FAQ</a>
-    <a href="mailto:support@magicmaster.app">Написать нам</a>
-    <a href="#pricing">Тарифы и оплата</a>
+    <div class="foot-col-title" data-i18n="landing.foot_col_support">Поддержка</div>
+    <a href="#faq" data-i18n="landing.nav_faq">FAQ</a>
+    <a href="mailto:support@magicmaster.app" data-i18n="landing.foot_write_us">Написать нам</a>
+    <a href="#pricing" data-i18n="landing.foot_pricing_pay">Тарифы и оплата</a>
   </div>
 </footer>
 <div class="foot-bottom">
-  <span>© 2026 Magic Master. Профессиональный мастеринг аудио.</span>
-  <span>Сделано с ♥ для музыкантов и продюсеров</span>
+  <span data-i18n="landing.foot_bottom1">© 2026 Magic Master. Профессиональный мастеринг аудио.</span>
+  <span data-i18n="landing.foot_bottom2">Сделано с ♥ для музыкантов и продюсеров</span>
 </div>
-<div style="max-width:980px;margin:0 auto;padding:0.5rem 2rem 1rem;font-size:.68rem;color:var(--dim);text-align:center;position:relative;z-index:1;">
+<div style="max-width:980px;margin:0 auto;padding:0.5rem 2rem 1rem;font-size:.68rem;color:var(--dim);text-align:center;position:relative;z-index:1;" data-i18n="landing.foot_legal">
   Все упомянутые торговые марки и названия продуктов принадлежат их правообладателям. Magic Master не аффилирован с указанными компаниями.
 </div>
 
+<script src="/i18n.js"></script>
+<script>
+MagicMasterI18n.init({ pageTitleKey: 'landing.page_title' });
+</script>
 <script>
 /* ═══════ WAVEFORM ANIMATION ═══════ */
 (function() {
@@ -1253,12 +1272,14 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
     var allowed = ['audio/wav','audio/mpeg','audio/flac','audio/x-flac','audio/mp3'];
     var extOk = /\.(wav|mp3|flac)$/i.test(file.name);
     if (!extOk && !allowed.includes(file.type)) {
-      alert('Поддерживаются только WAV, MP3 и FLAC файлы.');
+      alert(typeof window.__t === 'function' ? window.__t('landing.alert_formats') : 'Поддерживаются только WAV, MP3 и FLAC файлы.');
       return;
     }
     // Показываем название файла
     drop.querySelector('.hero-drop-title').textContent = '✓ ' + file.name;
-    drop.querySelector('.hero-drop-hint').textContent = (file.size / 1024 / 1024).toFixed(1) + ' МБ · Переходим в приложение…';
+    var _mb = (file.size / 1024 / 1024).toFixed(1);
+    var _busy = (typeof window.__t === 'function' ? window.__t('landing.hero_drop_busy') : '{mb} МБ · Переходим в приложение…').replace('{mb}', _mb);
+    drop.querySelector('.hero-drop-hint').textContent = _busy;
     drop.style.borderColor = 'rgba(52,211,153,0.6)';
     drop.style.background = 'rgba(52,211,153,0.06)';
     // Передаём файл через sessionStorage (имя + type) — само содержимое через FileReader

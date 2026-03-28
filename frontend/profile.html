@@ -13,6 +13,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Magic Master</title>
+  <meta name="description" content="Профиль — Magic Master" data-i18n-content="profile.meta_desc">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -64,11 +65,14 @@
       text-decoration: none; transition: background .15s;
     }
     .btn-sm-nav:hover { background: rgba(108,75,255,.32); }
+    .mm-auth-lang { display: flex; gap: .35rem; font-size: .78rem; color: var(--text-dim); align-items: center; margin-right: .5rem; }
+    .mm-auth-lang a { color: var(--text-soft); text-decoration: none; font-weight: 600; }
+    .mm-auth-lang a.mm-lang-active { color: var(--accent2); text-decoration: underline; }
 
     /* ── Layout ── */
     .container { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; position: relative; z-index: 1; }
     .page-title { font-size: 1.7rem; font-weight: 700; margin-bottom: 2rem; }
-    .page-title span { color: var(--accent2); }
+    .page-title-accent { color: var(--accent2); }
 
     /* ── Cards ── */
     .card {
@@ -191,99 +195,104 @@
 <header class="topbar">
   <a href="/" class="topbar-logo">✨ Magic Master</a>
   <nav class="topbar-nav">
-    <a href="/app">Мастеринг</a>
-    <a href="/pricing">Тарифы</a>
-    <a href="/profile" class="active">Профиль</a>
-    <a href="#" id="logoutLink" class="btn-sm-nav" style="display:none">Выйти</a>
+    <div class="mm-auth-lang" aria-label="Language">
+      <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+      <span>|</span>
+      <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+    </div>
+    <a href="/app" data-i18n="profile.nav_mastering">Мастеринг</a>
+    <a href="/pricing" data-i18n="profile.nav_pricing">Тарифы</a>
+    <a href="/profile" class="active" data-i18n="profile.nav_profile">Профиль</a>
+    <a href="#" id="logoutLink" class="btn-sm-nav" style="display:none" data-i18n="profile.nav_logout">Выйти</a>
   </nav>
 </header>
 
 <div class="container">
-  <div class="page-title">Мой <span>профиль</span></div>
+  <div class="page-title"><span data-i18n="profile.h1_my">Мой</span> <span class="page-title-accent" data-i18n="profile.h1_span">профиль</span></div>
 
   <!-- Subscription expiry banners -->
   <div id="subWarning" style="display:none" class="sub-warning">
-    ⚠️ Ваша подписка истекает <strong id="subExpireDate"></strong>. <a href="/pricing" style="color:var(--amber)">Продлить →</a>
+    <span data-i18n="profile.sub_warn_pre">⚠️ Ваша подписка истекает </span><strong id="subExpireDate"></strong><span data-i18n-html="profile.sub_warn_post_html"></span>
   </div>
-  <div id="subExpiredBanner" style="display:none" class="sub-expired-banner">
+  <div id="subExpiredBanner" style="display:none" class="sub-expired-banner" data-i18n-html="profile.sub_expired_html">
     ❌ Ваша подписка истекла. Тариф понижен до <strong>Free</strong>. <a href="/pricing" style="color:var(--red)">Обновить →</a>
   </div>
 
   <!-- Account info -->
   <div class="card" id="cardAccount">
-    <div class="card-title">Аккаунт</div>
+    <div class="card-title" data-i18n="profile.card_account">Аккаунт</div>
     <div class="info-grid">
       <div class="info-item">
-        <label>Email</label>
+        <label data-i18n="profile.label_email">Email</label>
         <div class="val" id="profileEmail">—</div>
       </div>
       <div class="info-item">
-        <label>Тариф</label>
+        <label data-i18n="profile.label_tier">Тариф</label>
         <div class="val" id="profileTier">—</div>
       </div>
       <div class="info-item">
-        <label>Подписка</label>
+        <label data-i18n="profile.label_sub">Подписка</label>
         <div class="val" id="profileSubStatus">—</div>
       </div>
       <div class="info-item">
-        <label>Действует до</label>
+        <label data-i18n="profile.label_expires">Действует до</label>
         <div class="val" id="profileSubExpires">—</div>
       </div>
       <div class="info-item">
-        <label>Зарегистрирован</label>
+        <label data-i18n="profile.label_registered">Зарегистрирован</label>
         <div class="val" id="profileCreatedAt">—</div>
       </div>
       <div class="info-item">
-        <label>Последний вход</label>
+        <label data-i18n="profile.label_last_login">Последний вход</label>
         <div class="val" id="profileLastLogin">—</div>
       </div>
     </div>
     <div style="margin-top:1.2rem; display:flex; gap:.7rem; flex-wrap:wrap">
-      <a href="/pricing" class="btn-outline">⚡ Улучшить тариф</a>
-      <a href="/app" class="btn-outline">🎛 Запустить мастеринг</a>
+      <a href="/pricing" class="btn-outline" data-i18n="profile.btn_upgrade">⚡ Улучшить тариф</a>
+      <a href="/app" class="btn-outline" data-i18n="profile.btn_open_master">🎛 Запустить мастеринг</a>
     </div>
   </div>
 
   <!-- Statistics -->
   <div class="card">
-    <div class="card-title">Статистика</div>
+    <div class="card-title" data-i18n="profile.card_stats">Статистика</div>
     <div class="stats-row" id="statsRow">
-      <div class="stat-box"><div class="n" id="statTotal">—</div><div class="l">Мастерингов</div></div>
-      <div class="stat-box"><div class="n" id="statAvgLufs">—</div><div class="l">Средний LUFS</div></div>
-      <div class="stat-box"><div class="n" id="statAvgDelta">—</div><div class="l">Ср. изменение LUFS</div></div>
-      <div class="stat-box"><div class="n" id="statHours">—</div><div class="l">Часов аудио</div></div>
+      <div class="stat-box"><div class="n" id="statTotal">—</div><div class="l" data-i18n="profile.stat_total_l">Мастерингов</div></div>
+      <div class="stat-box"><div class="n" id="statAvgLufs">—</div><div class="l" data-i18n="profile.stat_avg_lufs_l">Средний LUFS</div></div>
+      <div class="stat-box"><div class="n" id="statAvgDelta">—</div><div class="l" data-i18n="profile.stat_avg_delta_l">Ср. изменение LUFS</div></div>
+      <div class="stat-box"><div class="n" id="statHours">—</div><div class="l" data-i18n="profile.stat_hours_l">Часов аудио</div></div>
     </div>
   </div>
 
   <!-- History -->
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
-      <div class="card-title" style="margin-bottom:0">История мастерингов</div>
-      <button class="btn-outline" id="btnExportHistory" style="padding:.3rem .8rem;font-size:.78rem">⬇ CSV</button>
+      <div class="card-title" style="margin-bottom:0" data-i18n="profile.sec_history">История мастерингов</div>
+      <button class="btn-outline" id="btnExportHistory" style="padding:.3rem .8rem;font-size:.78rem" data-i18n="profile.btn_csv">⬇ CSV</button>
     </div>
     <div id="historyWrap">
-      <p class="empty-msg">Загрузка…</p>
+      <p class="empty-msg" data-i18n="profile.loading">Загрузка…</p>
     </div>
   </div>
 
   <!-- Change password -->
   <div class="card">
-    <div class="card-title">Сменить пароль</div>
+    <div class="card-title" data-i18n="profile.pass_title">Сменить пароль</div>
     <div class="form-col" id="passForm">
       <div>
-        <label>Текущий пароль</label>
-        <input type="password" id="oldPass" placeholder="••••••••" autocomplete="current-password">
+        <label data-i18n="profile.pass_old_label">Текущий пароль</label>
+        <input type="password" id="oldPass" placeholder="••••••••" autocomplete="current-password" data-i18n-placeholder="profile.ph_dots">
       </div>
       <div>
-        <label>Новый пароль</label>
-        <input type="password" id="newPass" placeholder="минимум 6 символов" autocomplete="new-password">
+        <label data-i18n="profile.pass_new_label">Новый пароль</label>
+        <input type="password" id="newPass" placeholder="минимум 6 символов" autocomplete="new-password" data-i18n-placeholder="profile.ph_min6">
       </div>
       <div>
-        <label>Повторите новый пароль</label>
-        <input type="password" id="newPass2" placeholder="••••••••" autocomplete="new-password">
+        <label data-i18n="profile.pass_repeat_label">Повторите новый пароль</label>
+        <input type="password" id="newPass2" placeholder="••••••••" autocomplete="new-password" data-i18n-placeholder="profile.ph_dots">
       </div>
       <div>
-        <button class="btn-primary" id="btnChangePass">Сменить пароль</button>
+        <button class="btn-primary" id="btnChangePass" data-i18n="profile.btn_change_pass">Сменить пароль</button>
       </div>
       <div id="passMsg" style="font-size:.82rem; min-height:1.1em"></div>
     </div>
@@ -292,31 +301,31 @@
   <!-- API Keys (P52) — отображается только для Pro/Studio -->
   <div class="card" id="apiKeysCard" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
-      <div class="card-title" style="margin-bottom:0">API-ключи</div>
-      <button class="btn-outline" id="btnCreateKey" style="padding:.3rem .8rem;font-size:.78rem">+ Создать ключ</button>
+      <div class="card-title" style="margin-bottom:0" data-i18n="profile.api_title">API-ключи</div>
+      <button class="btn-outline" id="btnCreateKey" style="padding:.3rem .8rem;font-size:.78rem" data-i18n="profile.api_create">+ Создать ключ</button>
     </div>
-    <p style="font-size:.8rem;color:var(--text-soft);margin-bottom:1rem">
+    <p style="font-size:.8rem;color:var(--text-soft);margin-bottom:1rem" data-i18n-html="profile.api_hint_html">
       Используйте API-ключ для программного доступа к мастерингу.<br>
       Передавайте заголовок <code style="background:rgba(108,75,255,.15);padding:.1rem .4rem;border-radius:4px;font-size:.75rem">X-API-Key: &lt;ключ&gt;</code> вместо Bearer JWT.
     </p>
     <div id="apiKeysList" style="margin-bottom:1rem">
-      <p style="color:var(--text-soft);font-size:.85rem">Загрузка…</p>
+      <p style="color:var(--text-soft);font-size:.85rem" data-i18n="profile.loading">Загрузка…</p>
     </div>
     <!-- Форма создания -->
     <div id="createKeyForm" style="display:none;background:rgba(108,75,255,.07);border:1px solid rgba(108,75,255,.2);border-radius:8px;padding:1rem;margin-top:.5rem">
-      <label style="font-size:.8rem;color:var(--text-soft);display:block;margin-bottom:.4rem">Название ключа</label>
-      <input id="newKeyName" type="text" placeholder="Например: DAW Integration" maxlength="100"
+      <label style="font-size:.8rem;color:var(--text-soft);display:block;margin-bottom:.4rem" data-i18n="profile.api_key_name">Название ключа</label>
+      <input id="newKeyName" type="text" placeholder="Например: DAW Integration" maxlength="100" data-i18n-placeholder="profile.api_ph_name"
         style="width:100%;background:rgba(22,22,38,.9);border:1px solid var(--border);border-radius:8px;padding:.55rem .8rem;color:var(--text);font-size:.88rem;outline:none;margin-bottom:.7rem;font-family:inherit">
       <div style="display:flex;gap:.6rem">
-        <button class="btn-primary" id="btnSaveKey" style="padding:.45rem 1rem;font-size:.85rem">Создать</button>
-        <button class="btn-outline" id="btnCancelKey" style="padding:.4rem .9rem;font-size:.82rem">Отмена</button>
+        <button class="btn-primary" id="btnSaveKey" style="padding:.45rem 1rem;font-size:.85rem" data-i18n="profile.api_btn_create">Создать</button>
+        <button class="btn-outline" id="btnCancelKey" style="padding:.4rem .9rem;font-size:.82rem" data-i18n="profile.api_btn_cancel">Отмена</button>
       </div>
     </div>
     <!-- Результат (новый ключ) -->
     <div id="newKeyResult" style="display:none;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);border-radius:8px;padding:1rem;margin-top:.7rem">
-      <div style="font-size:.78rem;color:#34d399;font-weight:700;margin-bottom:.5rem">⚠ Сохраните ключ — он показывается только один раз!</div>
+      <div style="font-size:.78rem;color:#34d399;font-weight:700;margin-bottom:.5rem" data-i18n="profile.api_warn_once">⚠ Сохраните ключ — он показывается только один раз!</div>
       <code id="newKeyValue" style="display:block;word-break:break-all;font-size:.8rem;background:rgba(0,0,0,.3);padding:.6rem .8rem;border-radius:6px;color:#e8e8f0;user-select:all;margin-bottom:.6rem"></code>
-      <button class="btn-outline" id="btnCopyKey" style="padding:.3rem .8rem;font-size:.75rem">📋 Скопировать</button>
+      <button class="btn-outline" id="btnCopyKey" style="padding:.3rem .8rem;font-size:.75rem" data-i18n="profile.api_copy">📋 Скопировать</button>
     </div>
   </div>
 
@@ -325,13 +334,17 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<script src="/i18n.js"></script>
 <script>
 const API = '';
 const token = localStorage.getItem('mm_token');
 
 if (!token) {
-  window.location.href = '/login.html?redirect=/profile';
-}
+  window.location.href = '/login?redirect=/profile';
+} else {
+MagicMasterI18n.init({ pageTitleKey: 'profile.page_title' }).then(function () {
+function t(k) { return (typeof window.__t === 'function' ? window.__t(k) : k); }
+function locTag() { return (typeof MagicMasterI18n !== 'undefined' && MagicMasterI18n.getLang() === 'en') ? 'en-US' : 'ru-RU'; }
 
 function toast(msg, type = 'inf', ms = 3000) {
   const el = document.getElementById('toast');
@@ -342,12 +355,14 @@ function toast(msg, type = 'inf', ms = 3000) {
 
 function fmtDate(ts) {
   if (!ts) return '—';
-  return new Date(ts * 1000).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const loc = locTag();
+  return new Date(ts * 1000).toLocaleString(loc, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function fmtDateOnly(ts) {
   if (!ts) return '—';
-  return new Date(ts * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const loc = locTag();
+  return new Date(ts * 1000).toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function fmtDuration(sec) {
@@ -357,16 +372,20 @@ function fmtDuration(sec) {
 }
 
 function tierBadge(tier) {
-  const map = { free: ['Free', 'tier-free'], pro: ['Pro', 'tier-pro'], studio: ['Studio', 'tier-studio'] };
+  const map = {
+    free: [t('profile.tier_free'), 'tier-free'],
+    pro: [t('profile.tier_pro'), 'tier-pro'],
+    studio: [t('profile.tier_studio'), 'tier-studio'],
+  };
   const [label, cls] = map[tier] || [tier, 'tier-free'];
   return `<span class="tier-badge ${cls}">${label}</span>`;
 }
 
 function subStatusHtml(status) {
-  if (status === 'active')   return '<span class="sub-active">● Активна</span>';
-  if (status === 'expired')  return '<span class="sub-expired">✕ Истекла</span>';
-  if (status === 'cancelled')return '<span class="sub-expired">✕ Отменена</span>';
-  return '<span class="sub-none">—</span>';
+  if (status === 'active')   return '<span class="sub-active">' + t('profile.sub_active') + '</span>';
+  if (status === 'expired')  return '<span class="sub-expired">' + t('profile.sub_expired') + '</span>';
+  if (status === 'cancelled')return '<span class="sub-expired">' + t('profile.sub_cancelled') + '</span>';
+  return '<span class="sub-none">' + t('profile.sub_none') + '</span>';
 }
 
 async function loadProfile() {
@@ -374,7 +393,7 @@ async function loadProfile() {
     const r = await fetch(API + '/api/auth/profile', {
       headers: { Authorization: 'Bearer ' + token }
     });
-    if (r.status === 401) { window.location.href = '/login.html?redirect=/profile'; return; }
+    if (r.status === 401) { window.location.href = '/login?redirect=/profile'; return; }
     const d = await r.json();
 
     document.getElementById('profileEmail').textContent = d.email || '—';
@@ -405,8 +424,8 @@ async function loadProfile() {
       : '—';
     const totalSec = s.total_duration_sec || 0;
     document.getElementById('statHours').textContent = totalSec > 3600
-      ? (totalSec / 3600).toFixed(1) + ' ч'
-      : Math.round(totalSec / 60) + ' мин';
+      ? (totalSec / 3600).toFixed(1) + t('profile.hours_suffix')
+      : Math.round(totalSec / 60) + t('profile.min_suffix');
 
     // Logout link
     document.getElementById('logoutLink').style.display = 'inline-flex';
@@ -424,7 +443,7 @@ async function loadProfile() {
     }
 
   } catch (e) {
-    toast('Ошибка загрузки профиля: ' + e.message, 'err');
+    toast(t('profile.err_load') + ': ' + e.message, 'err');
   }
 }
 
@@ -437,18 +456,18 @@ async function loadHistory() {
     const d = await r.json();
     const records = d.records || [];
     if (!records.length) {
-      wrap.innerHTML = '<p class="empty-msg">Мастерингов пока нет. <a href="/app" style="color:var(--accent2)">Запустить первый →</a></p>';
+      wrap.innerHTML = '<p class="empty-msg">' + t('profile.empty_history_html') + '</p>';
       return;
     }
     wrap.innerHTML = `<table class="history-table">
       <thead>
         <tr>
-          <th>Файл</th>
-          <th>Стиль</th>
-          <th>Формат</th>
-          <th>До → После LUFS</th>
-          <th>Длина</th>
-          <th>Дата</th>
+          <th>${t('profile.th_file')}</th>
+          <th>${t('profile.th_style')}</th>
+          <th>${t('profile.th_format')}</th>
+          <th>${t('profile.th_lufs')}</th>
+          <th>${t('profile.th_dur')}</th>
+          <th>${t('profile.th_date')}</th>
           <th></th>
         </tr>
       </thead>
@@ -467,21 +486,21 @@ async function loadHistory() {
       </tbody>
     </table>`;
   } catch (e) {
-    wrap.innerHTML = '<p class="empty-msg" style="color:var(--red)">Ошибка загрузки истории</p>';
+    wrap.innerHTML = '<p class="empty-msg" style="color:var(--red)">' + t('profile.err_hist') + '</p>';
   }
 }
 
 async function deleteRecord(id, btn) {
-  if (!confirm('Удалить запись из истории?')) return;
+  if (!confirm(t('profile.confirm_del_row'))) return;
   btn.disabled = true;
   try {
     const r = await fetch(API + '/api/auth/history/' + id, {
       method: 'DELETE',
       headers: { Authorization: 'Bearer ' + token }
     });
-    if (r.ok) { toast('Запись удалена', 'ok'); loadHistory(); }
-    else { const e = await r.json(); toast(e.detail || 'Ошибка', 'err'); btn.disabled = false; }
-  } catch (e) { toast('Ошибка: ' + e.message, 'err'); btn.disabled = false; }
+    if (r.ok) { toast(t('profile.toast_deleted'), 'ok'); loadHistory(); }
+    else { const e = await r.json(); toast(e.detail || t('profile.err_generic'), 'err'); btn.disabled = false; }
+  } catch (e) { toast(t('profile.err_generic') + ': ' + e.message, 'err'); btn.disabled = false; }
 }
 
 document.getElementById('btnChangePass').addEventListener('click', async () => {
@@ -490,9 +509,9 @@ document.getElementById('btnChangePass').addEventListener('click', async () => {
   const newP2 = document.getElementById('newPass2').value;
   const msg = document.getElementById('passMsg');
   msg.style.color = 'var(--red)';
-  if (!oldP || !newP || !newP2) { msg.textContent = 'Заполните все поля'; return; }
-  if (newP !== newP2) { msg.textContent = 'Новые пароли не совпадают'; return; }
-  if (newP.length < 6) { msg.textContent = 'Новый пароль минимум 6 символов'; return; }
+  if (!oldP || !newP || !newP2) { msg.textContent = t('profile.pass_fill'); return; }
+  if (newP !== newP2) { msg.textContent = t('profile.pass_mismatch_new'); return; }
+  if (newP.length < 6) { msg.textContent = t('reset.err_short'); return; }
   const btn = document.getElementById('btnChangePass');
   btn.disabled = true;
   try {
@@ -504,16 +523,16 @@ document.getElementById('btnChangePass').addEventListener('click', async () => {
     const d = await r.json();
     if (r.ok) {
       msg.style.color = 'var(--green)';
-      msg.textContent = '✓ Пароль успешно изменён';
+      msg.textContent = t('profile.pass_ok_msg');
       document.getElementById('oldPass').value = '';
       document.getElementById('newPass').value = '';
       document.getElementById('newPass2').value = '';
-      toast('Пароль изменён', 'ok');
+      toast(t('profile.toast_pass_changed'), 'ok');
     } else {
-      msg.textContent = d.detail || 'Ошибка';
+      msg.textContent = d.detail || t('profile.err_generic');
     }
   } catch (e) {
-    msg.textContent = 'Ошибка запроса';
+    msg.textContent = t('profile.err_request');
   }
   btn.disabled = false;
 });
@@ -522,7 +541,7 @@ document.getElementById('btnChangePass').addEventListener('click', async () => {
 document.getElementById('btnExportHistory').addEventListener('click', () => {
   fetch(API + '/api/auth/history/export.csv', { headers: { Authorization: 'Bearer ' + token } })
     .then(r => {
-      if (!r.ok) throw new Error('Ошибка ' + r.status);
+      if (!r.ok) throw new Error(t('profile.err_export') + ' ' + r.status);
       return r.blob();
     })
     .then(blob => {
@@ -530,9 +549,9 @@ document.getElementById('btnExportHistory').addEventListener('click', () => {
       const a = document.createElement('a');
       a.href = url; a.download = 'mastering_history.csv'; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
-      toast('CSV скачан', 'ok');
+      toast(t('profile.toast_csv_ok'), 'ok');
     })
-    .catch(e => toast('Ошибка: ' + e.message, 'err'));
+    .catch(e => toast(t('profile.err_generic') + ': ' + e.message, 'err'));
 });
 
 // ─── P52: API Keys ────────────────────────────────────────────────────────────
@@ -545,34 +564,35 @@ async function loadApiKeys() {
     const data = await d.json();
     const keys = data.keys || [];
     if (!keys.length) {
-      wrap.innerHTML = '<p style="color:var(--text-soft);font-size:.83rem">Нет активных ключей.</p>';
+      wrap.innerHTML = '<p style="color:var(--text-soft);font-size:.83rem">' + t('profile.api_no_keys') + '</p>';
       return;
     }
+    const loc = locTag();
     wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.8rem">
       <thead><tr>
-        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Название</th>
-        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Префикс</th>
-        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Последнее использование</th>
-        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">Статус</th>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">${t('profile.th_key_name')}</th>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">${t('profile.th_prefix')}</th>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">${t('profile.th_last_use')}</th>
+        <th style="text-align:left;padding:.3rem .5rem;color:var(--text-soft);font-weight:500">${t('profile.th_status')}</th>
         <th></th>
       </tr></thead>
       <tbody>
       ${keys.map(k => `<tr style="border-top:1px solid rgba(255,255,255,.05)">
         <td style="padding:.4rem .5rem">${k.name}</td>
         <td style="padding:.4rem .5rem"><code style="font-size:.75rem;opacity:.7">${k.prefix}</code></td>
-        <td style="padding:.4rem .5rem;color:var(--text-soft)">${k.last_used_at ? new Date(k.last_used_at * 1000).toLocaleDateString('ru') : '—'}</td>
-        <td style="padding:.4rem .5rem">${k.is_active ? '<span style="color:#34d399">●</span> Активен' : '<span style="color:#f87171">●</span> Отозван'}</td>
-        <td style="padding:.4rem .5rem"><button class="btn-outline" style="padding:.2rem .5rem;font-size:.72rem" onclick="revokeKey(${k.id})">Отозвать</button></td>
+        <td style="padding:.4rem .5rem;color:var(--text-soft)">${k.last_used_at ? new Date(k.last_used_at * 1000).toLocaleDateString(loc) : '—'}</td>
+        <td style="padding:.4rem .5rem">${k.is_active ? '<span style="color:#34d399">●</span> ' + t('profile.key_active') : '<span style="color:#f87171">●</span> ' + t('profile.key_revoked')}</td>
+        <td style="padding:.4rem .5rem"><button class="btn-outline" style="padding:.2rem .5rem;font-size:.72rem" onclick="revokeKey(${k.id})">${t('profile.btn_revoke')}</button></td>
       </tr>`).join('')}
       </tbody>
     </table>`;
-  } catch (e) { wrap.innerHTML = '<p style="color:#f87171;font-size:.83rem">Ошибка загрузки</p>'; }
+  } catch (e) { wrap.innerHTML = '<p style="color:#f87171;font-size:.83rem">' + t('profile.err_api_load') + '</p>'; }
 }
 
 async function revokeKey(id) {
-  if (!confirm('Отозвать ключ?')) return;
+  if (!confirm(t('profile.confirm_revoke'))) return;
   const r = await fetch(API + '/api/auth/api-keys/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
-  if (r.ok) { toast('Ключ отозван', 'ok'); loadApiKeys(); } else { toast('Ошибка', 'err'); }
+  if (r.ok) { toast(t('profile.toast_revoked'), 'ok'); loadApiKeys(); } else { toast(t('profile.err_generic'), 'err'); }
 }
 
 document.getElementById('btnCreateKey')?.addEventListener('click', () => {
@@ -584,14 +604,14 @@ document.getElementById('btnCancelKey')?.addEventListener('click', () => {
   document.getElementById('createKeyForm').style.display = 'none';
 });
 document.getElementById('btnSaveKey')?.addEventListener('click', async () => {
-  const name = document.getElementById('newKeyName').value.trim() || 'My API Key';
+  const name = document.getElementById('newKeyName').value.trim() || t('profile.default_key_name');
   const r = await fetch(API + '/api/auth/api-keys', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   });
   const data = await r.json();
-  if (!r.ok) { toast(data.detail || 'Ошибка', 'err'); return; }
+  if (!r.ok) { toast(data.detail || t('profile.err_generic'), 'err'); return; }
   document.getElementById('createKeyForm').style.display = 'none';
   document.getElementById('newKeyValue').textContent = data.key;
   document.getElementById('newKeyResult').style.display = 'block';
@@ -599,12 +619,17 @@ document.getElementById('btnSaveKey')?.addEventListener('click', async () => {
 });
 document.getElementById('btnCopyKey')?.addEventListener('click', () => {
   const val = document.getElementById('newKeyValue').textContent;
-  navigator.clipboard.writeText(val).then(() => toast('Скопировано!', 'ok')).catch(() => {});
+  navigator.clipboard.writeText(val).then(() => toast(t('profile.toast_copied'), 'ok')).catch(() => {});
 });
+
+window.deleteRecord = deleteRecord;
+window.revokeKey = revokeKey;
 
 // Init
 loadProfile();
 loadHistory();
+}); // MagicMasterI18n.init
+}
 </script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">

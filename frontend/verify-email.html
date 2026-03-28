@@ -13,6 +13,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Подтверждение email — Magic Master</title>
+  <meta name="description" content="Подтверждение email — Magic Master" data-i18n-content="verify.meta_desc">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -78,43 +79,51 @@
     .resend-form input:focus { border-color: rgba(108,75,255,.5); }
     .msg { font-size: .82rem; min-height: 1.2em; margin-top: .5rem; }
     .msg.ok { color: var(--green); } .msg.err { color: var(--red); }
+    .mm-auth-lang { position: fixed; top: 1rem; right: 1rem; z-index: 2; display: flex; gap: .35rem; font-size: .85rem; color: var(--text-dim); }
+    .mm-auth-lang a { color: var(--text-soft); text-decoration: none; font-weight: 600; }
+    .mm-auth-lang a.mm-lang-active { color: var(--text); text-decoration: underline; }
   </style>
 </head>
 <body>
 <div class="bg"></div>
+<div class="mm-auth-lang" aria-label="Language">
+  <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+  <span>|</span>
+  <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+</div>
 <div class="card">
   <a href="/" class="logo">✨ Magic Master</a>
 
   <!-- Ожидание (пока JS проверяет токен) -->
   <div id="stateWait">
     <div class="icon">📧</div>
-    <h1>Проверяем ссылку…</h1>
-    <p class="sub">Подождите секунду.</p>
+    <h1 data-i18n="verify.wait_h1">Проверяем ссылку…</h1>
+    <p class="sub" data-i18n="verify.wait_sub">Подождите секунду.</p>
   </div>
 
   <!-- Успех -->
   <div id="stateOk" style="display:none">
     <div class="icon">✅</div>
-    <h1 class="status-ok">Email подтверждён!</h1>
-    <p class="sub">Ваш аккаунт активирован. Теперь вы можете войти и начать мастерить.</p>
+    <h1 class="status-ok" data-i18n="verify.ok_h1">Email подтверждён!</h1>
+    <p class="sub" data-i18n="verify.ok_sub">Ваш аккаунт активирован. Теперь вы можете войти и начать мастерить.</p>
     <div class="actions">
-      <a href="/login.html" class="btn">Войти →</a>
-      <a href="/app" class="btn-outline">К мастерингу</a>
+      <a href="/login" class="btn" data-i18n="verify.btn_login_arrow">Войти →</a>
+      <a href="/app" class="btn-outline" data-i18n="verify.btn_mastering">К мастерингу</a>
     </div>
   </div>
 
   <!-- Ошибка / нет токена -->
   <div id="stateErr" style="display:none">
     <div class="icon">❌</div>
-    <h1 class="status-err">Ссылка недействительна</h1>
-    <p class="sub" id="errText">Ссылка устарела или уже была использована. Запросите новую.</p>
+    <h1 class="status-err" data-i18n="verify.err_h1">Ссылка недействительна</h1>
+    <p class="sub" id="errText" data-i18n="verify.err_default">Ссылка устарела или уже была использована. Запросите новую.</p>
     <div class="actions">
-      <button class="btn-outline" id="btnShowResend">Отправить повторно</button>
-      <a href="/login.html" class="btn-outline">Войти</a>
+      <button class="btn-outline" id="btnShowResend" data-i18n="verify.btn_resend">Отправить повторно</button>
+      <a href="/login" class="btn-outline" data-i18n="verify.btn_login">Войти</a>
     </div>
     <div class="resend-form" id="resendForm">
-      <input type="email" id="resendEmail" placeholder="your@email.com" autocomplete="email">
-      <button class="btn" id="resendBtn" style="width:100%">Отправить письмо</button>
+      <input type="email" id="resendEmail" placeholder="your@email.com" autocomplete="email" data-i18n-placeholder="verify.ph_email">
+      <button class="btn" id="resendBtn" style="width:100%" data-i18n="verify.btn_send">Отправить письмо</button>
       <div class="msg" id="resendMsg"></div>
     </div>
   </div>
@@ -122,21 +131,23 @@
   <!-- Ожидает верификации (нет токена в URL) -->
   <div id="stateNoToken" style="display:none">
     <div class="icon">📬</div>
-    <h1>Проверьте почту</h1>
-    <p class="sub">Письмо с ссылкой для подтверждения отправлено на ваш email.<br>
+    <h1 data-i18n="verify.notoken_h1">Проверьте почту</h1>
+    <p class="sub" data-i18n-html="verify.notoken_sub_html">Письмо с ссылкой для подтверждения отправлено на ваш email.<br>
     Ссылка действует <strong>24 часа</strong>. Проверьте папку «Спам».</p>
     <div class="actions">
-      <button class="btn-outline" id="btnShowResend2">Не пришло письмо?</button>
-      <a href="/login.html" class="btn-outline">Войти</a>
+      <button class="btn-outline" id="btnShowResend2" data-i18n="verify.btn_no_mail">Не пришло письмо?</button>
+      <a href="/login" class="btn-outline" data-i18n="verify.btn_login">Войти</a>
     </div>
     <div class="resend-form" id="resendForm2">
-      <input type="email" id="resendEmail2" placeholder="your@email.com" autocomplete="email">
-      <button class="btn" id="resendBtn2" style="width:100%">Отправить повторно</button>
+      <input type="email" id="resendEmail2" placeholder="your@email.com" autocomplete="email" data-i18n-placeholder="verify.ph_email">
+      <button class="btn" id="resendBtn2" style="width:100%" data-i18n="verify.btn_resend_submit">Отправить повторно</button>
       <div class="msg" id="resendMsg2"></div>
     </div>
   </div>
 </div>
+<script src="/i18n.js"></script>
 <script>
+MagicMasterI18n.init({ pageTitleKey: 'verify.page_title' }).then(function () {
 const params = new URLSearchParams(window.location.search);
 const token = params.get('token');
 
@@ -145,6 +156,8 @@ function show(id) {
     document.getElementById(s).style.display = s === id ? 'block' : 'none';
   });
 }
+
+var t = typeof window.__t === 'function' ? window.__t : function (k) { return k; };
 
 async function verify() {
   if (!token) {
@@ -157,11 +170,11 @@ async function verify() {
     if (r.ok) {
       show('stateOk');
     } else {
-      document.getElementById('errText').textContent = d.detail || 'Ссылка недействительна.';
+      document.getElementById('errText').textContent = d.detail || t('verify.err_detail_fallback');
       show('stateErr');
     }
   } catch (e) {
-    document.getElementById('errText').textContent = 'Ошибка соединения. Попробуйте позже.';
+    document.getElementById('errText').textContent = t('verify.err_network');
     show('stateErr');
   }
 }
@@ -170,7 +183,7 @@ async function resend(emailId, msgId, btnId) {
   const email = document.getElementById(emailId).value.trim();
   const msg = document.getElementById(msgId);
   const btn = document.getElementById(btnId);
-  if (!email) { msg.textContent = 'Введите email'; msg.className = 'msg err'; return; }
+  if (!email) { msg.textContent = t('verify.msg_enter_email'); msg.className = 'msg err'; return; }
   btn.disabled = true;
   try {
     await fetch('/api/auth/resend-verification', {
@@ -178,10 +191,10 @@ async function resend(emailId, msgId, btnId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
-    msg.textContent = 'Письмо отправлено (если аккаунт ожидает верификации)';
+    msg.textContent = t('verify.msg_sent');
     msg.className = 'msg ok';
   } catch (e) {
-    msg.textContent = 'Ошибка. Попробуйте позже.';
+    msg.textContent = t('verify.msg_fail');
     msg.className = 'msg err';
     btn.disabled = false;
   }
@@ -197,6 +210,7 @@ document.getElementById('resendBtn').addEventListener('click', () => resend('res
 document.getElementById('resendBtn2').addEventListener('click', () => resend('resendEmail2','resendMsg2','resendBtn2'));
 
 verify();
+}); // MagicMasterI18n.init
 </script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">

@@ -13,6 +13,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Статус сервиса — Magic Master</title>
+  <meta name="description" content="Статус сервиса Magic Master" data-i18n-content="status.meta_desc">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,6 +86,9 @@
 
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     .loading { animation: pulse 1.2s ease infinite; }
+    .mm-auth-lang { display: flex; gap: .35rem; font-size: .8rem; color: var(--text-dim); align-items: center; }
+    .mm-auth-lang a { color: var(--text-soft); text-decoration: none; font-weight: 600; }
+    .mm-auth-lang a.mm-lang-active { color: var(--accent2); text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -92,9 +96,14 @@
 <div class="container">
   <div class="header">
     <a href="/" class="logo">✨ Magic Master</a>
-    <div style="display:flex;align-items:center;gap:.8rem">
-      <span class="last-check" id="lastCheck">Загрузка…</span>
-      <button class="refresh-btn" onclick="loadStatus()">↻ Обновить</button>
+    <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;justify-content:flex-end">
+      <div class="mm-auth-lang" aria-label="Language">
+        <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+        <span>|</span>
+        <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+      </div>
+      <span class="last-check" id="lastCheck" data-i18n="status.loading">Загрузка…</span>
+      <button class="refresh-btn" type="button" onclick="loadStatus()" data-i18n="status.refresh">↻ Обновить</button>
     </div>
   </div>
 
@@ -102,30 +111,38 @@
   <div class="banner banner-ok loading" id="banner">
     <div class="banner-icon" id="bannerIcon">⏳</div>
     <div>
-      <div class="banner-title" id="bannerTitle">Проверка состояния…</div>
-      <div class="banner-sub" id="bannerSub">Получаем данные с сервера</div>
+      <div class="banner-title" id="bannerTitle" data-i18n="status.banner_check">Проверка состояния…</div>
+      <div class="banner-sub" id="bannerSub" data-i18n="status.banner_fetch">Получаем данные с сервера</div>
     </div>
   </div>
 
   <!-- Компоненты -->
-  <div class="section-title">Компоненты</div>
+  <div class="section-title" data-i18n="status.section_components">Компоненты</div>
   <div class="comp-list" id="compList">
     <div class="comp-row"><div class="comp-dot dot-ok loading"></div><div class="comp-name">…</div></div>
   </div>
 
   <!-- Статистика -->
-  <div class="section-title">Статистика</div>
+  <div class="section-title" data-i18n="status.section_stats">Статистика</div>
   <div class="stats-grid" id="statsGrid">
     <div class="stat-card loading"><div class="stat-val">—</div><div class="stat-lbl">…</div></div>
   </div>
 
   <div class="footer">
-    Страница обновляется каждые 30 секунд · <a href="/">Вернуться в приложение</a>
+    <span data-i18n="status.footer_auto">Страница обновляется каждые 30 секунд ·</span> <a href="/" data-i18n="status.footer_back">Вернуться в приложение</a>
   </div>
 </div>
 
+<script src="/i18n.js"></script>
 <script>
+MagicMasterI18n.init({ pageTitleKey: 'status.page_title' }).then(function () {
 const API = '';
+
+function t(k) { return (typeof window.__t === 'function' ? window.__t(k) : k); }
+function tpl(s, o) {
+  if (!s) return '';
+  return s.replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? String(o[k]) : ''; });
+}
 
 function statusColor(s) {
   if (s === 'ok')  return 'ok';
@@ -135,12 +152,12 @@ function statusColor(s) {
 function dotClass(s)   { return 'dot-'   + statusColor(s); }
 function badgeClass(s) { return 'badge-' + statusColor(s); }
 function badgeLabel(s) {
-  if (s === 'ok')          return '✓ OK';
-  if (s === 'low')         return '⚠ Мало места';
-  if (s === 'degraded')    return '⚠ Деградация';
-  if (s === 'missing')     return '✗ Отсутствует';
-  if (s === 'unavailable') return '— Недоступно';
-  if (s === 'error')       return '✗ Ошибка';
+  if (s === 'ok')          return t('status.badge_ok');
+  if (s === 'low')         return t('status.badge_low');
+  if (s === 'degraded')    return t('status.badge_deg');
+  if (s === 'missing')     return t('status.badge_miss');
+  if (s === 'unavailable') return t('status.badge_unav');
+  if (s === 'error')       return t('status.badge_err');
   return s;
 }
 
@@ -150,11 +167,13 @@ function fmtUptime(isoStr) {
   const diffMs = Date.now() - started.getTime();
   const h = Math.floor(diffMs / 3600000);
   const m = Math.floor((diffMs % 3600000) / 60000);
-  if (h >= 24) return `${Math.floor(h/24)}д ${h%24}ч ${m}м`;
-  return `${h}ч ${m}м`;
+  const ud = t('status.uptime_d'), uh = t('status.uptime_h'), um = t('status.uptime_m');
+  if (h >= 24) return Math.floor(h/24) + ud + ' ' + (h%24) + uh + ' ' + m + um;
+  return h + uh + ' ' + m + um;
 }
 
 async function loadStatus() {
+  const loc = (typeof MagicMasterI18n !== 'undefined' && MagicMasterI18n.getLang() === 'en') ? 'en-US' : 'ru-RU';
   try {
     const r = await fetch(API + '/api/health');
     const d = await r.json();
@@ -168,36 +187,38 @@ async function loadStatus() {
     const title  = document.getElementById('bannerTitle');
     const sub    = document.getElementById('bannerSub');
     banner.className = 'banner';
+    const buildPart = d.build_date ? ' · ' + d.build_date : '';
+    const ver = d.version || '—';
     if (d.status === 'ok') {
       banner.classList.add('banner-ok');
       icon.textContent  = '✅';
-      title.textContent = 'Все системы работают нормально';
-      sub.textContent   = `Версия ${d.version || '—'}${d.build_date ? ' · ' + d.build_date : ''} · Сервер работает ${fmtUptime(d.uptime_since)}`;
+      title.textContent = t('status.banner_all_ok');
+      sub.textContent   = tpl(t('status.banner_sub_ok'), { version: ver, build: buildPart, uptime: fmtUptime(d.uptime_since) });
     } else if (d.status === 'degraded') {
       banner.classList.add('banner-deg');
       icon.textContent  = '⚠️';
-      title.textContent = 'Частичные проблемы';
-      sub.textContent   = `Версия ${d.version || '—'}${d.build_date ? ' · ' + d.build_date : ''} · Некоторые компоненты требуют внимания`;
+      title.textContent = t('status.banner_deg_title');
+      sub.textContent   = tpl(t('status.banner_sub_deg'), { version: ver, build: buildPart });
     } else {
       banner.classList.add('banner-err');
       icon.textContent  = '❌';
-      title.textContent = 'Обнаружены проблемы';
-      sub.textContent   = `Версия ${d.version || '—'}${d.build_date ? ' · ' + d.build_date : ''}`;
+      title.textContent = t('status.banner_err_title');
+      sub.textContent   = tpl(t('status.banner_sub_err'), { version: ver, build: buildPart });
     }
 
     // Компоненты
     const comps = d.components || {};
     const compDefs = [
-      { key: 'database', label: 'База данных (SQLite)' },
-      { key: 'disk',     label: 'Дисковое пространство' },
-      { key: 'ffmpeg',   label: 'FFmpeg (MP3/OPUS экспорт)' },
+      { key: 'database', label: t('status.comp_db') },
+      { key: 'disk',     label: t('status.comp_disk') },
+      { key: 'ffmpeg',   label: t('status.comp_ffmpeg') },
     ];
     const compHtml = compDefs.map(def => {
       const comp = comps[def.key] || { status: 'unknown' };
       const s = comp.status || 'unknown';
       let detail = '';
       if (def.key === 'disk' && comp.free_mb != null) {
-        detail = `Свободно: ${comp.free_mb.toLocaleString('ru')} МБ`;
+        detail = tpl(t('status.disk_free_tpl'), { mb: comp.free_mb.toLocaleString(loc) });
       }
       if (comp.detail) detail = comp.detail;
       return `<div class="comp-row">
@@ -216,12 +237,12 @@ async function loadStatus() {
     // Статистика
     const jobs = d.jobs || {};
     const statsHtml = [
-      { val: [d.version, d.build_date].filter(Boolean).join(' · ') || '—', lbl: 'Версия' },
+      { val: [d.version, d.build_date].filter(Boolean).join(' · ') || '—', lbl: t('status.stat_ver') },
       { val: fmtUptime(d.uptime_since),   lbl: 'Uptime' },
       { val: d.python   || '—',           lbl: 'Python' },
-      { val: jobs.running ?? '—',         lbl: 'Задач выполняется' },
-      { val: jobs.total_cached ?? '—',    lbl: 'Задач в кэше' },
-      { val: comps.disk?.free_mb != null ? comps.disk.free_mb.toLocaleString('ru') + ' МБ' : '—', lbl: 'Свободно на диске' },
+      { val: jobs.running ?? '—',         lbl: t('status.stat_jobs_run') },
+      { val: jobs.total_cached ?? '—',    lbl: t('status.stat_jobs_cache') },
+      { val: comps.disk?.free_mb != null ? comps.disk.free_mb.toLocaleString(loc) + ' ' + t('status.mb') : '—', lbl: t('status.stat_disk_free') },
     ].map(s => `<div class="stat-card">
       <div class="stat-val">${s.val}</div>
       <div class="stat-lbl">${s.lbl}</div>
@@ -230,20 +251,21 @@ async function loadStatus() {
 
     // Время проверки
     document.getElementById('lastCheck').textContent =
-      'Обновлено: ' + new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      t('status.updated') + ' ' + new Date().toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   } catch (e) {
     document.getElementById('banner').className = 'banner banner-err';
     document.getElementById('bannerIcon').textContent = '❌';
-    document.getElementById('bannerTitle').textContent = 'Сервис недоступен';
+    document.getElementById('bannerTitle').textContent = t('status.banner_unavail');
     document.getElementById('bannerSub').textContent = e.message;
-    document.getElementById('lastCheck').textContent = 'Ошибка подключения';
+    document.getElementById('lastCheck').textContent = t('status.conn_err');
   }
 }
 
 loadStatus();
 // Автообновление каждые 30 секунд
 setInterval(loadStatus, 30000);
+}); // MagicMasterI18n.init
 </script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">

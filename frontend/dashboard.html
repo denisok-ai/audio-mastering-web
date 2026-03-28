@@ -92,6 +92,9 @@
       border-radius: 8px; transition: all .15s;
     }
     .btn-app:hover { background: rgba(108,75,255,.18); }
+    .mm-auth-lang { display: flex; gap: .3rem; font-size: .72rem; color: var(--text-dim); align-items: center; margin-right: .35rem; }
+    .mm-auth-lang a { color: var(--text-dim); text-decoration: none; font-weight: 600; }
+    .mm-auth-lang a.mm-lang-active { color: var(--accent2); text-decoration: underline; }
 
     /* ── Main layout ── */
     main {
@@ -338,20 +341,25 @@
     </a>
     <div class="nav-crumb">
       <span>›</span>
-      <span>Дашборд</span>
+      <span data-i18n="dash.crumb_dash">Дашборд</span>
     </div>
   </div>
   <div class="nav-right">
+    <div class="mm-auth-lang" aria-label="Language">
+      <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+      <span>|</span>
+      <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+    </div>
     <span class="nav-email" id="navEmail"></span>
-    <a href="/app" class="btn-app">← Мастеринг</a>
-    <button class="btn-logout-nav" id="btnLogoutNav">Выйти</button>
+    <a href="/app" class="btn-app" data-i18n="dash.nav_mastering">← Мастеринг</a>
+    <button class="btn-logout-nav" id="btnLogoutNav" data-i18n="dash.btn_logout">Выйти</button>
   </div>
 </nav>
 
 <main>
   <!-- Page header -->
   <div class="page-hd">
-    <h1>Мой аккаунт</h1>
+    <h1 data-i18n="dash.h1_account">Мой аккаунт</h1>
     <span class="pro-pill" id="tierPill">✦ Pro</span>
   </div>
 
@@ -360,33 +368,33 @@
     <div class="account-row">
       <div class="account-avatar" id="avatarEmoji">🎵</div>
       <div class="account-info">
-        <div class="account-email" id="accountEmail">Загрузка…</div>
+        <div class="account-email" id="accountEmail" data-i18n="dash.loading">Загрузка…</div>
         <div class="account-meta" id="accountMeta">Pro тариф · бета-период</div>
       </div>
       <div class="account-actions">
-        <button class="btn-sm" id="btnChangePass">Сменить пароль</button>
-        <button class="btn-sm danger" id="btnLogoutCard">Выйти</button>
+        <button class="btn-sm" id="btnChangePass" data-i18n="dash.btn_change_pass">Сменить пароль</button>
+        <button class="btn-sm danger" id="btnLogoutCard" data-i18n="dash.btn_logout_card">Выйти</button>
       </div>
     </div>
     <!-- Change password panel -->
     <div class="change-pass-panel" id="changePassPanel">
       <div class="pass-fields">
         <div class="pass-field">
-          <label>Текущий пароль</label>
-          <input type="password" id="oldPass" placeholder="Текущий пароль">
+          <label data-i18n="dash.label_old_pass">Текущий пароль</label>
+          <input type="password" id="oldPass" placeholder="Текущий пароль" data-i18n-placeholder="dash.ph_old_pass">
         </div>
         <div class="pass-field">
-          <label>Новый пароль</label>
-          <input type="password" id="newPass" placeholder="Минимум 6 символов">
+          <label data-i18n="dash.label_new_pass">Новый пароль</label>
+          <input type="password" id="newPass" placeholder="Минимум 6 символов" data-i18n-placeholder="dash.ph_new_pass">
         </div>
         <div class="pass-field">
-          <label>Повтор нового</label>
-          <input type="password" id="newPass2" placeholder="Повторите">
+          <label data-i18n="dash.label_new_pass2">Повтор нового</label>
+          <input type="password" id="newPass2" placeholder="Повторите" data-i18n-placeholder="dash.ph_new_pass2">
         </div>
       </div>
       <div class="pass-actions">
-        <button class="btn-save-pass" id="btnSavePass">Сохранить</button>
-        <button class="btn-cancel-pass" id="btnCancelPass">Отмена</button>
+        <button class="btn-save-pass" id="btnSavePass" data-i18n="dash.btn_save_pass">Сохранить</button>
+        <button class="btn-cancel-pass" id="btnCancelPass" data-i18n="dash.btn_cancel_pass">Отмена</button>
       </div>
       <div class="pass-msg" id="passMsg"></div>
     </div>
@@ -394,7 +402,7 @@
 
   <!-- Stats -->
   <div class="section-hd" style="margin-bottom:.85rem">
-    <span class="section-title">Статистика</span>
+    <span class="section-title" data-i18n="dash.sec_stats">Статистика</span>
   </div>
   <div class="stats-grid" id="statsGrid">
     <div class="stat-card skeleton skel-stat"></div>
@@ -405,8 +413,8 @@
 
   <!-- History -->
   <div class="section-hd">
-    <span class="section-title">История мастерингов</span>
-    <button class="section-action" id="btnClearHistory">Очистить всё</button>
+    <span class="section-title" data-i18n="dash.sec_history">История мастерингов</span>
+    <button class="section-action" id="btnClearHistory" data-i18n="dash.btn_clear_history">Очистить всё</button>
   </div>
   <div class="history-wrap" id="historyWrap">
     <div style="padding:1.5rem">
@@ -417,6 +425,7 @@
   </div>
 </main>
 
+<script src="/i18n.js"></script>
 <script>
   // ── Auth guard ──────────────────────────────────────────────────────────────
   const token = localStorage.getItem('mm_token');
@@ -424,14 +433,19 @@
     window.location.replace('/login?next=/dashboard');
   }
 
+  function t(k) { return (typeof window.__t === 'function' ? window.__t(k) : k); }
+  function locTag() { return (typeof MagicMasterI18n !== 'undefined' && MagicMasterI18n.getLang() === 'en') ? 'en-US' : 'ru-RU'; }
+
+  MagicMasterI18n.init({ pageTitleKey: 'dash.page_title' }).then(function () {
+
   const email = localStorage.getItem('mm_user_email') || '';
   const tier  = localStorage.getItem('mm_user_tier')  || 'free';
 
   document.getElementById('navEmail').textContent  = email;
   document.getElementById('accountEmail').textContent = email;
   document.getElementById('accountMeta').textContent =
-    (tier === 'pro' ? '✦ Pro тариф' : tier === 'studio' ? '✦ Studio тариф' : 'Free тариф') + ' · бета-период';
-  document.getElementById('tierPill').textContent = tier === 'studio' ? '✦ Studio' : tier === 'pro' ? '✦ Pro' : 'Free';
+    tier === 'pro' ? t('dash.meta_pro_beta') : tier === 'studio' ? t('dash.meta_studio_beta') : t('dash.meta_free_beta');
+  document.getElementById('tierPill').textContent = tier === 'studio' ? t('dash.pro_pill_studio') : tier === 'pro' ? t('dash.pro_pill_pro') : t('dash.pro_pill_free');
 
   // Avatar emoji based on email
   const avatarEmojis = ['🎵','🎸','🎹','🎺','🎻','🥁','🎷','🎼'];
@@ -466,9 +480,10 @@
   }
 
   function fmtDate(ts) {
+    const loc = locTag();
     const d = new Date(ts * 1000);
-    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' }) +
-           ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: '2-digit' }) +
+           ' ' + d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
   }
 
   function fmtLufs(v) {
@@ -482,13 +497,13 @@
         headers: { 'Authorization': 'Bearer ' + token }
       });
       if (r.status === 401) { logout(); return; }
-      if (!r.ok) throw new Error('Ошибка загрузки');
+      if (!r.ok) throw new Error(t('dash.err_load_short'));
       const data = await r.json();
       renderStats(data.stats);
       renderHistory(data.records);
     } catch(e) {
-      document.getElementById('statsGrid').innerHTML = '<p style="color:var(--red);font-size:.82rem;padding:.5rem">Ошибка загрузки данных</p>';
-      document.getElementById('historyWrap').innerHTML = '<p style="color:var(--red);font-size:.82rem;padding:1rem">Ошибка загрузки истории</p>';
+      document.getElementById('statsGrid').innerHTML = '<p style="color:var(--red);font-size:.82rem;padding:.5rem">' + t('dash.err_load') + '</p>';
+      document.getElementById('historyWrap').innerHTML = '<p style="color:var(--red);font-size:.82rem;padding:1rem">' + t('dash.err_load_hist') + '</p>';
     }
   }
 
@@ -499,24 +514,24 @@
 
     document.getElementById('statsGrid').innerHTML = `
       <div class="stat-card" style="--sc-glow:rgba(108,75,255,.08)">
-        <div class="stat-label">Мастерингов</div>
+        <div class="stat-label">${t('dash.stat_masterings')}</div>
         <div class="stat-value">${total}</div>
-        <div class="stat-sub">за всё время</div>
+        <div class="stat-sub">${t('dash.stat_masterings_sub')}</div>
       </div>
       <div class="stat-card" style="--sc-glow:rgba(52,211,153,.06)">
-        <div class="stat-label">Среднее изм. LUFS</div>
+        <div class="stat-label">${t('dash.stat_lufs')}</div>
         <div class="stat-value" style="font-size:1.55rem;color:var(--green)">${avgChange}</div>
-        <div class="stat-sub">dB в среднем</div>
+        <div class="stat-sub">${t('dash.stat_lufs_sub')}</div>
       </div>
       <div class="stat-card" style="--sc-glow:rgba(251,191,36,.06)">
-        <div class="stat-label">Любимый жанр</div>
+        <div class="stat-label">${t('dash.stat_genre')}</div>
         <div class="stat-value" style="font-size:1.25rem">${topStyle}</div>
-        <div class="stat-sub">чаще всего</div>
+        <div class="stat-sub">${t('dash.stat_genre_sub')}</div>
       </div>
       <div class="stat-card" style="--sc-glow:rgba(168,85,247,.06)">
-        <div class="stat-label">Тариф</div>
-        <div class="stat-value" style="font-size:1.25rem;color:var(--accent2)">${tier === 'pro' ? 'Pro' : tier === 'studio' ? 'Studio' : 'Free'}</div>
-        <div class="stat-sub">текущий план</div>
+        <div class="stat-label">${t('dash.stat_tier')}</div>
+        <div class="stat-value" style="font-size:1.25rem;color:var(--accent2)">${tier === 'pro' ? t('profile.tier_pro') : tier === 'studio' ? t('profile.tier_studio') : t('profile.tier_free')}</div>
+        <div class="stat-sub">${t('dash.stat_tier_sub')}</div>
       </div>
     `;
   }
@@ -526,9 +541,9 @@
       document.getElementById('historyWrap').innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">🎛️</div>
-          <div class="empty-title">Нет записей</div>
-          <div class="empty-desc">Мастерингов пока не было. Попробуйте прямо сейчас!</div>
-          <a href="/app" class="btn-go-app">Открыть мастеринг →</a>
+          <div class="empty-title">${t('dash.empty_title')}</div>
+          <div class="empty-desc">${t('dash.empty_desc')}</div>
+          <a href="/app" class="btn-go-app">${t('dash.empty_cta')}</a>
         </div>`;
       return;
     }
@@ -545,7 +560,7 @@
         <td><span class="fmt-pill">${(r.out_format || 'wav').toUpperCase()}</span></td>
         <td style="color:var(--text-dim);font-size:.75rem">${fmtDate(r.created_at)}</td>
         <td>
-          <button class="btn-del" data-id="${r.id}" title="Удалить запись">✕</button>
+          <button class="btn-del" data-id="${r.id}" title="${t('dash.del_row_title')}">✕</button>
         </td>
       </tr>`).join('');
 
@@ -553,11 +568,11 @@
       <table class="history-table">
         <thead>
           <tr>
-            <th>Файл</th>
-            <th>LUFS (до → после)</th>
-            <th>Жанр</th>
-            <th>Формат</th>
-            <th>Дата</th>
+            <th>${t('dash.th_file')}</th>
+            <th>${t('dash.th_lufs')}</th>
+            <th>${t('dash.th_genre')}</th>
+            <th>${t('dash.th_format')}</th>
+            <th>${t('dash.th_date')}</th>
             <th></th>
           </tr>
         </thead>
@@ -568,7 +583,7 @@
     document.querySelectorAll('.btn-del').forEach(btn => {
       btn.addEventListener('click', async function() {
         const id = this.dataset.id;
-        if (!confirm('Удалить эту запись из истории?')) return;
+        if (!confirm(t('dash.confirm_del_one'))) return;
         try {
           const r = await fetch('/api/auth/history/' + id, {
             method: 'DELETE',
@@ -579,14 +594,14 @@
             // Если строк не осталось — перезагружаем
             if (!document.querySelector('#historyBody tr')) loadDashboard();
           }
-        } catch(e) { alert('Ошибка удаления'); }
+        } catch(e) { alert(t('dash.err_del')); }
       });
     });
   }
 
   // Clear all history
   document.getElementById('btnClearHistory').addEventListener('click', async function() {
-    if (!confirm('Удалить всю историю мастерингов? Это действие необратимо.')) return;
+    if (!confirm(t('dash.confirm_del_all'))) return;
     try {
       // Load all IDs and delete one by one
       const r = await fetch('/api/auth/history', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -598,7 +613,7 @@
         })
       ));
       loadDashboard();
-    } catch(e) { alert('Ошибка очистки'); }
+    } catch(e) { alert(t('dash.err_clear')); }
   });
 
   // ── Change password ────────────────────────────────────────────────────────
@@ -618,9 +633,9 @@
     const newP  = document.getElementById('newPass').value;
     const newP2 = document.getElementById('newPass2').value;
     const msg   = document.getElementById('passMsg');
-    if (!oldP || !newP) { msg.className='pass-msg err'; msg.textContent='Заполните все поля'; return; }
-    if (newP.length < 6) { msg.className='pass-msg err'; msg.textContent='Новый пароль минимум 6 символов'; return; }
-    if (newP !== newP2) { msg.className='pass-msg err'; msg.textContent='Пароли не совпадают'; return; }
+    if (!oldP || !newP) { msg.className='pass-msg err'; msg.textContent=t('dash.pass_fill'); return; }
+    if (newP.length < 6) { msg.className='pass-msg err'; msg.textContent=t('dash.pass_short'); return; }
+    if (newP !== newP2) { msg.className='pass-msg err'; msg.textContent=t('dash.pass_mismatch'); return; }
     try {
       const r = await fetch('/api/auth/change-password', {
         method: 'POST',
@@ -628,13 +643,14 @@
         body: JSON.stringify({ old_password: oldP, new_password: newP })
       });
       const d = await r.json();
-      if (!r.ok) { msg.className='pass-msg err'; msg.textContent = d.detail || 'Ошибка'; }
-      else { msg.className='pass-msg ok'; msg.textContent = '✓ Пароль изменён'; setTimeout(()=>changePassPanel.classList.remove('open'), 1500); }
-    } catch(e) { msg.className='pass-msg err'; msg.textContent='Ошибка сети'; }
+      if (!r.ok) { msg.className='pass-msg err'; msg.textContent = d.detail || t('profile.err_generic'); }
+      else { msg.className='pass-msg ok'; msg.textContent = t('dash.pass_ok'); setTimeout(()=>changePassPanel.classList.remove('open'), 1500); }
+    } catch(e) { msg.className='pass-msg err'; msg.textContent=t('dash.pass_err_net'); }
   });
 
   // ── Init ───────────────────────────────────────────────────────────────────
   loadDashboard();
+  }); // MagicMasterI18n.init
 </script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">

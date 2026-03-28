@@ -12,7 +12,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Войти — Magic Master</title>
-  <meta name="description" content="Вход в аккаунт Magic Master — онлайн-мастеринг аудио, тарифы Pro и Studio.">
+  <meta name="description" content="Вход в аккаунт Magic Master — онлайн-мастеринг аудио, тарифы Pro и Studio." data-i18n-content="login.meta_desc">
   <link rel="canonical" href="https://magicmaster.pro/login">
   <meta name="robots" content="noindex">
   <script async src="/analytics/clarity.js"></script>
@@ -165,15 +165,26 @@
       margin-bottom: 1.25rem; line-height: 1.5;
     }
     .pro-note strong { color: var(--accent2); }
+    .mm-auth-lang {
+      position: fixed; top: 1rem; right: 1rem; z-index: 2;
+      display: flex; align-items: center; gap: .35rem; font-size: .85rem; color: var(--text-dim);
+    }
+    .mm-auth-lang a { color: var(--text-soft); text-decoration: none; font-weight: 600; }
+    .mm-auth-lang a.mm-lang-active { color: var(--text); text-decoration: underline; }
   </style>
 </head>
 <body>
 <div class="bg"></div>
+<div class="mm-auth-lang" aria-label="Language">
+  <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+  <span>|</span>
+  <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+</div>
 
 <div class="card">
   <a href="/" class="back-link">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    На главную
+    <span data-i18n="login.back_home">На главную</span>
   </a>
 
   <a href="/" class="logo">
@@ -185,10 +196,10 @@
     <span class="logo-name">Magic Master</span>
   </a>
 
-  <h1>Войти в аккаунт</h1>
-  <p class="sub">Зарегистрированные пользователи получают <strong style="color:var(--accent2)">Pro</strong> доступ в бета-период</p>
+  <h1 data-i18n="login.h1">Войти в аккаунт</h1>
+  <p class="sub" data-i18n-html="login.sub_html">Зарегистрированные пользователи получают <strong style="color:var(--accent2)">Pro</strong> доступ в бета-период</p>
 
-  <div class="pro-note">
+  <div class="pro-note" data-i18n="login.pro_note">
     <strong>✦ Бета-период:</strong> все зарегистрированные пользователи получают Pro тариф бесплатно — безлимитные мастеринги, все жанры, MP3/FLAC экспорт.
   </div>
 
@@ -196,27 +207,29 @@
 
   <form id="loginForm" autocomplete="on">
     <div class="field">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+      <label for="email" data-i18n="login.label_email">Email</label>
+      <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required data-i18n-placeholder="login.placeholder_email">
       <div class="error-msg" id="emailErr"></div>
     </div>
     <div class="field">
-      <label for="password">Пароль</label>
-      <input type="password" id="password" name="password" placeholder="Минимум 6 символов" autocomplete="current-password" required>
+      <label for="password" data-i18n="login.label_password">Пароль</label>
+      <input type="password" id="password" name="password" placeholder="Минимум 6 символов" autocomplete="current-password" required data-i18n-placeholder="login.placeholder_pass">
       <div class="error-msg" id="passErr"></div>
     </div>
-    <button type="submit" class="btn-submit" id="submitBtn">Войти</button>
+    <button type="submit" class="btn-submit" id="submitBtn" data-i18n="login.submit">Войти</button>
   </form>
 
   <div style="text-align:right; margin-top:-.4rem; margin-bottom:.6rem">
-    <a href="/forgot-password" style="font-size:.8rem; color:var(--text-soft); text-decoration:none">Забыли пароль?</a>
+    <a href="/forgot-password" style="font-size:.8rem; color:var(--text-soft); text-decoration:none" data-i18n="login.forgot">Забыли пароль?</a>
   </div>
 
-  <div class="divider">или</div>
+  <div class="divider" data-i18n="login.divider_or">или</div>
 
-  <p class="alt-link" id="registerLinkWrap">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+  <p class="alt-link" id="registerLinkWrap"><span data-i18n="login.no_account">Нет аккаунта?</span> <a href="/register" data-i18n="login.register_link">Зарегистрироваться</a></p>
 </div>
 
+<script src="/i18n.js"></script>
+<script>MagicMasterI18n.init({ pageTitleKey: 'login.page_title' });</script>
 <script>
   // Скрыть ссылку на регистрацию, если она отключена в настройках
   (function() {
@@ -254,15 +267,15 @@
     e.preventDefault();
     clearAlert();
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="loading"></span>Входим…';
+    submitBtn.innerHTML = '<span class="loading"></span>' + (typeof window.__t === 'function' ? window.__t('login.submit_loading') : 'Входим…');
 
     const email    = emailInput.value.trim();
     const password = passInput.value;
 
     if (!email || !password) {
-      showAlert('Заполните все поля', 'error');
+      showAlert(typeof window.__t === 'function' ? window.__t('login.err_fill') : 'Заполните все поля', 'error');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Войти';
+      submitBtn.textContent = typeof window.__t === 'function' ? window.__t('login.submit') : 'Войти';
       return;
     }
 
@@ -275,9 +288,9 @@
       const data = await resp.json();
 
       if (!resp.ok) {
-        showAlert(data.detail || 'Ошибка входа', 'error');
+        showAlert(data.detail || (typeof window.__t === 'function' ? window.__t('login.err_generic') : 'Ошибка входа'), 'error');
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Войти';
+        submitBtn.textContent = typeof window.__t === 'function' ? window.__t('login.submit') : 'Войти';
         return;
       }
 
@@ -286,16 +299,16 @@
       localStorage.setItem('mm_user_email', data.email);
       localStorage.setItem('mm_user_tier', data.tier);
 
-      showAlert('✓ Вход выполнен! Переходим…', 'success');
+      showAlert(typeof window.__t === 'function' ? window.__t('login.success') : '✓ Вход выполнен! Переходим…', 'success');
       setTimeout(function() {
         const next = new URLSearchParams(window.location.search).get('next') || '/app';
         window.location.replace(next);
       }, 800);
 
     } catch(err) {
-      showAlert('Ошибка сети. Проверьте соединение.', 'error');
+      showAlert(typeof window.__t === 'function' ? window.__t('login.err_network') : 'Ошибка сети. Проверьте соединение.', 'error');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Войти';
+      submitBtn.textContent = typeof window.__t === 'function' ? window.__t('login.submit') : 'Войти';
     }
   });
 </script>

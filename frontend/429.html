@@ -55,41 +55,53 @@
     .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-soft); }
     .btn-ghost:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); opacity: 1; }
     .logo { font-size: .9rem; font-weight: 700; color: var(--accent2); text-decoration: none; display: inline-block; margin-bottom: 2rem; }
+    .mm-auth-lang { position: fixed; top: 1rem; right: 1rem; z-index: 2; display: flex; gap: .35rem; font-size: .85rem; color: var(--text-soft); }
+    .mm-auth-lang a { color: var(--text-soft); text-decoration: none; font-weight: 600; }
+    .mm-auth-lang a.mm-lang-active { color: var(--text); text-decoration: underline; }
   </style>
 </head>
 <body>
 <div class="bg"></div>
+<div class="mm-auth-lang" aria-label="Language">
+  <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+  <span>|</span>
+  <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+</div>
 <div class="wrap">
   <a href="/" class="logo">✨ Magic Master</a>
   <div style="font-size:2.5rem;margin-bottom:.5rem">🚦</div>
-  <div class="code">429</div>
-  <div class="title">Слишком много запросов</div>
-  <div class="sub">Вы отправляете запросы слишком часто. Подождите немного и попробуйте снова.</div>
+  <div class="code" data-i18n="err429.h1">429</div>
+  <div class="title" data-i18n="err429.heading">Слишком много запросов</div>
+  <div class="sub" data-i18n="err429.sub_html">Вы отправляете запросы слишком часто. Подождите немного и попробуйте снова.</div>
   <div class="timer" id="countdown">—</div>
   <div class="actions">
-    <button class="btn" id="retryBtn" onclick="location.reload()" disabled>↻ Повторить</button>
-    <a href="/pricing" class="btn btn-ghost">Увеличить лимит →</a>
+    <button class="btn" id="retryBtn" onclick="location.reload()" disabled data-i18n="err429.retry_btn">↻ Повторить</button>
+    <a href="/pricing" class="btn btn-ghost" data-i18n="err429.upgrade_btn">Увеличить лимит →</a>
   </div>
 </div>
+<script src="/i18n.js"></script>
 <script>
+MagicMasterI18n.init({ pageTitleKey: 'err429.title' }).then(function() {
   const params = new URLSearchParams(location.search);
   const retryAfter = parseInt(params.get('retry')) || 60;
   let remaining = retryAfter;
   const countEl = document.getElementById('countdown');
   const retryBtn = document.getElementById('retryBtn');
+  const t = typeof window.__t === 'function' ? window.__t : function(k) { return k; };
 
   function tick() {
     if (remaining <= 0) {
-      countEl.textContent = 'Готово!';
+      countEl.textContent = t('err429.countdown_ready');
       retryBtn.disabled = false;
       return;
     }
     const m = Math.floor(remaining / 60), s = remaining % 60;
-    countEl.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s} с`;
+    countEl.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s}${t('err429.sec')}`;
     remaining--;
     setTimeout(tick, 1000);
   }
   tick();
+});
 </script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">

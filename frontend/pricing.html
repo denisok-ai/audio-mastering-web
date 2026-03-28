@@ -342,10 +342,10 @@
     <a href="/" data-i18n="pricing.footer_home">Главная</a>
     <a href="/app" data-i18n="pricing.nav_app">Приложение</a>
     <a href="/progress.html" data-i18n="pricing.nav_progress">Прогресс</a>
-    <span class="locale-pricing" style="display:inline-flex;align-items:center;gap:.35rem;">
-      <a href="?lang=ru" class="locale-link" data-lang="ru">RU</a>
+    <span class="locale-pricing mm-lang-switch" style="display:inline-flex;align-items:center;gap:.35rem;">
+      <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
       <span style="color:var(--text-dim);">|</span>
-      <a href="?lang=en" class="locale-link" data-lang="en">EN</a>
+      <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
     </span>
     <a href="/app" class="nav-cta" data-i18n="pricing.nav_cta">Мастерить бесплатно →</a>
   </div>
@@ -406,12 +406,12 @@
         <li><span class="ico ico-pro">✦</span> <span data-i18n="pricing.pro_f3">Экспорт WAV, MP3, FLAC</span></li>
         <li><span class="ico ico-pro">✦</span> <span data-i18n="pricing.pro_f4">Редактор цепочки модулей</span></li>
         <li><span class="ico ico-pro">✦</span> <span data-i18n="pricing.pro_f5">M/S EQ, 4-band Imager, Reverb</span></li>
-        <li style="color:var(--pro-ref);font-size:.78rem;padding:.28rem 0;">◆ Reference Track Mastering</li>
-        <li style="color:var(--pro-dynEQ);font-size:.78rem;padding:.28rem 0;">◆ Dynamic EQ — 8 полос</li>
-        <li style="color:var(--pro-transient);font-size:.78rem;padding:.28rem 0;">◆ Transient Designer</li>
-        <li style="color:var(--pro-denoiser);font-size:.78rem;padding:.28rem 0;">◆ Spectral Denoiser</li>
-        <li style="color:var(--pro-parallel);font-size:.78rem;padding:.28rem 0;">◆ Parallel Compression + De-esser</li>
-        <li><span class="ico ico-pro">✦</span> Streaming Loudness Preview</li>
+        <li style="color:var(--pro-ref);font-size:.78rem;padding:.28rem 0;"><span data-i18n="pricing.pro_line_ref">◆ Reference Track Mastering</span></li>
+        <li style="color:var(--pro-dynEQ);font-size:.78rem;padding:.28rem 0;"><span data-i18n="pricing.pro_line_dyneq">◆ Dynamic EQ — 8 полос</span></li>
+        <li style="color:var(--pro-transient);font-size:.78rem;padding:.28rem 0;"><span data-i18n="pricing.pro_line_tr">◆ Transient Designer</span></li>
+        <li style="color:var(--pro-denoiser);font-size:.78rem;padding:.28rem 0;"><span data-i18n="pricing.pro_line_den">◆ Spectral Denoiser</span></li>
+        <li style="color:var(--pro-parallel);font-size:.78rem;padding:.28rem 0;"><span data-i18n="pricing.pro_line_par">◆ Parallel Compression + De-esser</span></li>
+        <li><span class="ico ico-pro">✦</span> <span data-i18n="pricing.pro_line_stream">Streaming Loudness Preview</span></li>
         <li><span class="ico ico-no">—</span> <span data-i18n="pricing.pro_f6">Batch-обработка (до 50 файлов)</span></li>
         <li><span class="ico ico-no">—</span> <span data-i18n="pricing.pro_f7">API-ключ</span></li>
       </ul>
@@ -445,42 +445,42 @@
   <div style="margin-bottom:3rem;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(168,85,247,.05));border:1px solid rgba(124,58,237,.2);border-radius:var(--r-lg);padding:2rem 1.75rem;">
     <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.25rem;">
       <span style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" data-i18n="pricing.pro_only_label">Только в Pro и Studio</span>
-      <span style="font-size:.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:2px 8px;border-radius:4px;">6 уникальных модулей</span>
+      <span style="font-size:.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:2px 8px;border-radius:4px;" data-i18n="pricing.modules_count">6 уникальных модулей</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.65rem;">
       <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.2);border-radius:8px;">
         <span style="color:var(--pro-ref);font-size:1rem;">◆</span>
         <div>
           <div style="font-size:.76rem;font-weight:700;color:var(--text);">Reference Track</div>
-          <div style="font-size:.65rem;color:var(--text-dim);">FFT спектральный матчинг</div>
+          <div style="font-size:.65rem;color:var(--text-dim);" data-i18n="pricing.pro_mod_fft">FFT спектральный матчинг</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:8px;">
         <span style="color:var(--pro-dynEQ);font-size:1rem;">◆</span>
         <div>
           <div style="font-size:.76rem;font-weight:700;color:var(--text);">Dynamic EQ</div>
-          <div style="font-size:.65rem;color:var(--text-dim);">8 полос, envelope follower</div>
+          <div style="font-size:.65rem;color:var(--text-dim);" data-i18n="pricing.pro_mod_dyn">8 полос, envelope follower</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;">
         <span style="color:var(--pro-transient);font-size:1rem;">◆</span>
         <div>
           <div style="font-size:.76rem;font-weight:700;color:var(--text);">Transient Designer</div>
-          <div style="font-size:.65rem;color:var(--text-dim);">Атака + сустейн независимо</div>
+          <div style="font-size:.65rem;color:var(--text-dim);" data-i18n="pricing.pro_mod_tr">Атака + сустейн независимо</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:8px;">
         <span style="color:var(--pro-denoiser);font-size:1rem;">◆</span>
         <div>
           <div style="font-size:.76rem;font-weight:700;color:var(--text);">Spectral Denoiser</div>
-          <div style="font-size:.65rem;color:var(--text-dim);">Wiener-фильтр, без артефактов</div>
+          <div style="font-size:.65rem;color:var(--text-dim);" data-i18n="pricing.pro_mod_den">Wiener-фильтр, без артефактов</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.55rem;padding:.5rem .7rem;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;">
         <span style="color:var(--pro-parallel);font-size:1rem;">◆</span>
         <div>
           <div style="font-size:.76rem;font-weight:700;color:var(--text);">Parallel Compression</div>
-          <div style="font-size:.65rem;color:var(--text-dim);">NY-техника, mix параметр</div>
+          <div style="font-size:.65rem;color:var(--text-dim);" data-i18n="pricing.pro_mod_par">NY-техника, mix параметр</div>
         </div>
       </div>
     </div>
@@ -495,144 +495,144 @@
     <table class="compare-table">
       <thead>
         <tr>
-          <th>Функция</th>
-          <th>Free</th>
-          <th>Pro</th>
-          <th>Studio</th>
+          <th data-i18n="pricing.compare_th_feature">Функция</th>
+          <th data-i18n="pricing.compare_th_free">Free</th>
+          <th data-i18n="pricing.compare_th_pro">Pro</th>
+          <th data-i18n="pricing.compare_th_studio">Studio</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Мастерингов в день</td>
-          <td>По лимиту Free</td>
+          <td data-i18n="pricing.compare_row_masterings">Мастерингов в день</td>
+          <td data-i18n="pricing.compare_free_limit">По лимиту Free</td>
           <td class="val-pro">10</td>
           <td class="val-pro">30</td>
         </tr>
         <tr>
-          <td>Токены / мес</td>
+          <td data-i18n="pricing.compare_row_tokens">Токены / мес</td>
           <td>—</td>
           <td class="val-pro">50</td>
           <td class="val-pro">100</td>
         </tr>
         <tr>
-          <td>Макс. размер файла</td>
+          <td data-i18n="pricing.compare_row_file">Макс. размер файла</td>
           <td>100 МБ</td>
           <td class="val-pro">300 МБ</td>
           <td class="val-pro">800 МБ</td>
         </tr>
         <tr>
-          <td>Жанровые пресеты</td>
+          <td data-i18n="pricing.compare_row_presets">Жанровые пресеты</td>
           <td>Stream</td>
           <td class="val-pro">8 пресетов</td>
           <td class="val-pro">8 пресетов</td>
         </tr>
         <tr>
-          <td>Форматы экспорта</td>
+          <td data-i18n="pricing.compare_row_export">Форматы экспорта</td>
           <td>WAV</td>
           <td class="val-pro">WAV, MP3, FLAC</td>
           <td class="val-pro">WAV, MP3, FLAC</td>
         </tr>
         <tr>
-          <td>Редактор цепочки</td>
+          <td data-i18n="pricing.compare_row_chain">Редактор цепочки</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>M/S EQ per-band</td>
+          <td data-i18n="pricing.compare_row_ms">M/S EQ per-band</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>Reverb M/S (5 типов)</td>
+          <td data-i18n="pricing.compare_row_reverb">Reverb M/S (5 типов)</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>Oversampling Exciter</td>
+          <td data-i18n="pricing.compare_row_exciter">Oversampling Exciter</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>LUFS-пресеты (Spotify, YT…)</td>
+          <td data-i18n="pricing.compare_row_lufs_presets">LUFS-пресеты (Spotify, YT…)</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr style="background:rgba(219,39,119,.04);">
-          <td style="color:var(--pro-ref);font-weight:600;">◆ Reference Track Mastering</td>
+          <td data-i18n="pricing.pro_line_ref" style="color:var(--pro-ref);font-weight:600;">◆ Reference Track Mastering</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr style="background:rgba(139,92,246,.04);">
-          <td style="color:var(--pro-dynEQ);font-weight:600;">◆ Dynamic EQ — 8 полос</td>
+          <td data-i18n="pricing.pro_line_dyneq" style="color:var(--pro-dynEQ);font-weight:600;">◆ Dynamic EQ — 8 полос</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr style="background:rgba(245,158,11,.04);">
-          <td style="color:var(--pro-transient);font-weight:600;">◆ Transient Designer</td>
+          <td data-i18n="pricing.pro_line_tr" style="color:var(--pro-transient);font-weight:600;">◆ Transient Designer</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr style="background:rgba(6,182,212,.04);">
-          <td style="color:var(--pro-denoiser);font-weight:600;">◆ Spectral Denoiser</td>
+          <td data-i18n="pricing.pro_line_den" style="color:var(--pro-denoiser);font-weight:600;">◆ Spectral Denoiser</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr style="background:rgba(239,68,68,.04);">
-          <td style="color:var(--pro-parallel);font-weight:600;">◆ Parallel Compression</td>
+          <td data-i18n="pricing.compare_row_parallel" style="color:var(--pro-parallel);font-weight:600;">◆ Parallel Compression</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr style="background:rgba(16,185,129,.04);">
-          <td style="color:var(--pro-deesser);font-weight:600;">◆ De-esser (5–9 кГц)</td>
+          <td data-i18n="pricing.compare_row_deesser" style="color:var(--pro-deesser);font-weight:600;">◆ De-esser (5–9 кГц)</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>Streaming Loudness Preview</td>
+          <td data-i18n="pricing.compare_row_stream_preview">Streaming Loudness Preview</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>M/S Spectrum (MID/SIDE)</td>
+          <td data-i18n="pricing.compare_row_ms_spectrum">M/S Spectrum (MID/SIDE)</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>Batch-обработка</td>
+          <td data-i18n="pricing.compare_row_batch">Batch-обработка</td>
           <td class="val-no">—</td>
           <td class="val-no">—</td>
-          <td class="val-yes">До 50 файлов</td>
+          <td class="val-yes" data-i18n="pricing.compare_batch_50">До 50 файлов</td>
         </tr>
         <tr>
-          <td>API-ключ</td>
+          <td data-i18n="pricing.compare_row_api">API-ключ</td>
           <td class="val-no">—</td>
           <td class="val-no">—</td>
           <td class="val-yes">✓</td>
         </tr>
         <tr>
-          <td>История проектов</td>
-          <td>Только браузер</td>
-          <td>Только браузер</td>
-          <td class="val-pro">30 дней на сервере</td>
+          <td data-i18n="pricing.compare_row_history">История проектов</td>
+          <td data-i18n="pricing.compare_browser_only">Только браузер</td>
+          <td data-i18n="pricing.compare_browser_only">Только браузер</td>
+          <td class="val-pro" data-i18n="pricing.compare_studio_hist">30 дней на сервере</td>
         </tr>
         <tr>
-          <td>Поддержка</td>
+          <td data-i18n="pricing.compare_row_support">Поддержка</td>
           <td>—</td>
-          <td>Стандартная</td>
-          <td class="val-pro">Приоритетная</td>
+          <td data-i18n="pricing.compare_std">Стандартная</td>
+          <td class="val-pro" data-i18n="pricing.compare_priority_sup">Приоритетная</td>
         </tr>
       </tbody>
     </table>
@@ -643,66 +643,66 @@
     <h2 class="faq-title" data-i18n="pricing.faq_title">Вопросы и ответы</h2>
 
     <div class="faq-item">
-      <div class="faq-q">Нужна ли регистрация для Free тарифа?
+      <div class="faq-q"><span data-i18n="pricing.faq_q1">Нужна ли регистрация для Free тарифа?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Нет! Просто перетащите файл на страницу и нажмите «Запустить мастеринг». Никакого email, пароля или карточки. Free-тариф работает без регистрации.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a1">Нет! Просто перетащите файл на страницу и нажмите «Запустить мастеринг». Никакого email, пароля или карточки. Free-тариф работает без регистрации.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Какие лимиты у бесплатного тарифа?
+      <div class="faq-q"><span data-i18n="pricing.faq_q2">Какие лимиты у бесплатного тарифа?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Без регистрации можно попробовать мастеринг бесплатно; точные лимиты (по IP и времени) показываются в приложении и могут меняться. Зарегистрированные пользователи видят оставшиеся мастеринги в интерфейсе.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a2">Без регистрации можно попробовать мастеринг бесплатно; точные лимиты (по IP и времени) показываются в приложении и могут меняться. Зарегистрированные пользователи видят оставшиеся мастеринги в интерфейсе.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Как оплатить Pro или Studio?
+      <div class="faq-q"><span data-i18n="pricing.faq_q3">Как оплатить Pro или Studio?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Оплата подключена через ЮKassa: выберите тариф на этой странице, войдите в аккаунт и завершите оплату. После успешной оплаты тариф активируется автоматически.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a3">Оплата подключена через ЮKassa: выберите тариф на этой странице, войдите в аккаунт и завершите оплату. После успешной оплаты тариф активируется автоматически.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Какое качество у Free-мастеринга?
+      <div class="faq-q"><span data-i18n="pricing.faq_q4">Какое качество у Free-мастеринга?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Абсолютно то же самое DSP-ядро. Free ограничен только жанром (Stream, −14 LUFS) и форматом (WAV). Алгоритм Studio EQ, M/S Dynamics, Maximizer, Dithering — полные, без деградации.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a4">Абсолютно то же самое DSP-ядро. Free ограничен только жанром (Stream, −14 LUFS) и форматом (WAV). Алгоритм Studio EQ, M/S Dynamics, Maximizer, Dithering — полные, без деградации.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Мои файлы хранятся на сервере?
+      <div class="faq-q"><span data-i18n="pricing.faq_q5">Мои файлы хранятся на сервере?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Нет. Загруженные файлы обрабатываются в памяти и автоматически удаляются после скачивания результата (обычно < 5 минут). Мы не храним ваши треки на диске.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a5">Нет. Загруженные файлы обрабатываются в памяти и автоматически удаляются после скачивания результата (обычно < 5 минут). Мы не храним ваши треки на диске.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Есть ли API для автоматизации?
+      <div class="faq-q"><span data-i18n="pricing.faq_q6">Есть ли API для автоматизации?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Да! REST API описан в <a href="/docs" style="color:var(--accent)" target="_blank">/docs</a>. Для коммерческой автоматизации и ключа API предусмотрен тариф Studio; условия использования уточняйте в документации и в приложении.</div>
+      <div class="faq-a" data-i18n-html="pricing.faq_a6">Да! REST API описан в <a href="/docs" style="color:var(--accent)" target="_blank">/docs</a>. Для коммерческой автоматизации и ключа API предусмотрен тариф Studio; условия использования уточняйте в документации и в приложении.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Что такое уникальные PRO-модули?
+      <div class="faq-q"><span data-i18n="pricing.faq_q7">Что такое уникальные PRO-модули?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Magic Master включает 6 уникальных функций: Reference Track Mastering, Dynamic EQ (8 полос), Transient Designer, Spectral Denoiser, Parallel Compression и De-esser. Доступность по тарифам — в таблице сравнения выше и в приложении.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a7">Magic Master включает 6 уникальных функций: Reference Track Mastering, Dynamic EQ (8 полос), Transient Designer, Spectral Denoiser, Parallel Compression и De-esser. Доступность по тарифам — в таблице сравнения выше и в приложении.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Что даёт Reference Track Mastering?
+      <div class="faq-q"><span data-i18n="pricing.faq_q8">Что даёт Reference Track Mastering?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">Вы загружаете любой трек-эталон (например, ваш любимый релиз). Система анализирует его спектральный баланс через FFT и строит корректирующую EQ-кривую для вашего трека. Результат: ваш мастер звучит с таким же спектральным характером как эталон, сохраняя при этом уникальность оригинала.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a8">Вы загружаете любой трек-эталон (например, ваш любимый релиз). Система анализирует его спектральный баланс через FFT и строит корректирующую EQ-кривую для вашего трека. Результат: ваш мастер звучит с таким же спектральным характером как эталон, сохраняя при этом уникальность оригинала.</div>
     </div>
 
     <div class="faq-item">
-      <div class="faq-q">Что такое Streaming Loudness Preview?
+      <div class="faq-q"><span data-i18n="pricing.faq_q9">Что такое Streaming Loudness Preview?</span>
         <span class="faq-arrow">▼</span>
       </div>
-      <div class="faq-a">После анализа трека система показывает как каждая стриминговая платформа (Spotify, YouTube, Apple Music, Tidal, Amazon, Broadcast) нормализует ваш трек. Зелёный — уровень оптимален, жёлтый — платформа немного понизит громкость, красный — значительно приглушит. Это позволяет выбрать правильный целевой LUFS ещё до мастеринга.</div>
+      <div class="faq-a" data-i18n="pricing.faq_a9">После анализа трека система показывает как каждая стриминговая платформа (Spotify, YouTube, Apple Music, Tidal, Amazon, Broadcast) нормализует ваш трек. Зелёный — уровень оптимален, жёлтый — платформа немного понизит громкость, красный — значительно приглушит. Это позволяет выбрать правильный целевой LUFS ещё до мастеринга.</div>
     </div>
   </div>
 
@@ -724,39 +724,14 @@
   </p>
 </footer>
 
+<script src="/i18n.js"></script>
 <script>
-  // i18n: load locale and apply to [data-i18n]
-  (function() {
-    var match = /[?&]lang=(\w+)/.exec(window.location.search);
-    var lang = (match && match[1] === 'en') ? 'en' : 'ru';
-    try {
-      var stored = localStorage.getItem('magic_locale');
-      if (match) {
-        if (lang === 'en') localStorage.setItem('magic_locale', 'en');
-        else localStorage.setItem('magic_locale', 'ru');
-      } else if (stored === 'en') lang = 'en';
-    } catch (e) {}
-    window.__pricingLang = lang;
-    window.__t = function(key) { return (window.__locale && window.__locale[key]) || key; };
-    function applyI18n() {
-      document.querySelectorAll('[data-i18n]').forEach(function(el) {
-        var key = el.getAttribute('data-i18n');
-        if (key && window.__t(key) !== key) el.textContent = window.__t(key);
-      });
-      var titleEl = document.getElementById('docTitle');
-      if (titleEl) titleEl.textContent = window.__t('pricing.title');
-      var htmlEl = document.getElementById('htmlLang');
-      if (htmlEl) htmlEl.setAttribute('lang', lang === 'en' ? 'en' : 'ru');
+  MagicMasterI18n.init({ pageTitleKey: 'pricing.title' }).then(function() {
+    var docTitle = document.getElementById('docTitle');
+    if (docTitle && typeof window.__t === 'function' && window.__t('pricing.title') !== 'pricing.title') {
+      docTitle.textContent = window.__t('pricing.title');
     }
-    fetch('/locales/' + lang + '.json').then(function(r) { return r.ok ? r.json() : {}; }).then(function(data) {
-      window.__locale = data;
-      applyI18n();
-      var links = document.querySelectorAll('.locale-pricing .locale-link');
-      links.forEach(function(a) {
-        if (a.getAttribute('data-lang') === lang) a.style.fontWeight = '700';
-      });
-    }).catch(function() { applyI18n(); });
-  })();
+  });
 
   // Планы и цены: с бэка (GET /api/payments/plans) или fallback
   window.__paymentPlans = null;
@@ -771,7 +746,11 @@
     if (amountStr == null || amountStr === '') return '';
     var n = parseFloat(String(amountStr));
     if (isNaN(n)) return amountStr;
-    if (currency === 'RUB') return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+    var loc = 'ru-RU';
+    try {
+      if (localStorage.getItem('magic_lang') === 'en') loc = 'en-US';
+    } catch (e) {}
+    if (currency === 'RUB') return Math.round(n).toLocaleString(loc) + ' ₽';
     return n.toFixed(0) + (currency ? ' ' + currency : '');
   }
 

@@ -61,21 +61,31 @@
     .btn-ghost:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); opacity: 1; }
     .logo { font-size: .9rem; font-weight: 700; color: var(--accent2); text-decoration: none; display: inline-block; margin-bottom: 2rem; }
     .wave { font-size: 2.5rem; margin-bottom: .5rem; }
+    .mm-auth-lang { position: fixed; top: 1rem; right: 1rem; z-index: 2; display: flex; gap: .35rem; font-size: .85rem; color: var(--text-dim); }
+    .mm-auth-lang a { color: var(--text-soft); text-decoration: none; font-weight: 600; }
+    .mm-auth-lang a.mm-lang-active { color: var(--text); text-decoration: underline; }
   </style>
 </head>
 <body>
 <div class="bg"></div>
+<div class="mm-auth-lang" aria-label="Language">
+  <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+  <span>|</span>
+  <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+</div>
 <div class="wrap">
   <a href="/" class="logo">✨ Magic Master</a>
   <div class="wave">🔍</div>
-  <div class="code">404</div>
-  <div class="title">Страница не найдена</div>
-  <div class="sub">Возможно, ссылка устарела или вы ошиблись в адресе.<br>Попробуйте вернуться на главную.</div>
+  <div class="code" data-i18n="err404.h1">404</div>
+  <div class="title" data-i18n="err404.heading">Страница не найдена</div>
+  <div class="sub" data-i18n-html="err404.sub_html">Возможно, ссылка устарела или вы ошиблись в адресе.<br>Попробуйте вернуться на главную.</div>
   <div class="actions">
-    <a href="/" class="btn">На главную</a>
-    <a href="/app" class="btn btn-ghost">Открыть приложение</a>
+    <a href="/" class="btn" data-i18n="err404.btn_home">На главную</a>
+    <a href="/app" class="btn btn-ghost" data-i18n="err404.btn_app">Открыть приложение</a>
   </div>
 </div>
+<script src="/i18n.js"></script>
+<script>MagicMasterI18n.init({ pageTitleKey: 'err404.title' });</script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
 (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
