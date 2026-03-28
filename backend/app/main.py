@@ -77,6 +77,9 @@ async def _lifespan(_app: FastAPI):
     from .bot.anomaly_monitor import anomaly_monitor_shutdown, anomaly_monitor_start
     from .bot.lifecycle import bot_shutdown, bot_startup
 
+    # Логи app.bot (webhook, меню команд) в journald / stdout на уровне INFO
+    logging.getLogger("app.bot").setLevel(logging.INFO)
+
     await bot_startup()
     anomaly_monitor_start()
     try:
