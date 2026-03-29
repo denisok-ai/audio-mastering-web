@@ -9,6 +9,22 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.7.0] — 2026-03-29
+
+### Фаза 1: SEO-лендинги, блог, LUFS-инструмент, рефералы, брендинг экспорта
+- **frontend/suno-mastering.html**, **udio-mastering.html**, **podcast-mastering.html**, **telegram-bot.html**, **lufs-analyzer.html**, **referral.html**: публичные SEO-страницы (GA, Метрика, Clarity), демо-плеер Suno (`/demos/*.wav`), ссылки в **frontend/landing.html** (навигация, таблица сравнения с LANDR/eMastered), **frontend/pricing.html**, **frontend/sitemap.xml**.
+- **doc/SEO_PAGE_SNIPPET.md**: эталон для новых страниц.
+- **content/blog/**: статьи `mastering-suno-ai.md`, `chto-takoe-lufs.md`, `mastering-podcasta.md`.
+- **backend/app/routers/blog.py**: `/blog`, `/blog/{slug}` — Markdown + YAML frontmatter из `content/blog/` (fallback без `markdown`/`pyyaml`).
+- **backend/app/routers/tools.py**: `POST /api/tools/lufs-analyze` (до 50 МБ, лимит по IP/час из `MAGIC_MASTER_LUFS_TOOL_RATE_PER_HOUR`).
+- **backend/app/routers/referral.py**: `GET /api/referral/my-link`, `/api/referral/stats`; модель **Referral**, поля **users.referral_code**, **referred_by_user_id**; хук регистрации (**routers/auth.py**, `?ref=`) и награда пригласившему после первого успешного мастеринга (**mastering.py**); настройки **MAGIC_MASTER_REFERRAL_REWARD_INVITER / INVITEE**.
+- **backend/app/metadata.py**: теги MASTERED_BY / ENCODER в MP3 и FLAC после экспорта (**mastering.py**).
+- **backend/app/services/share_card.py**, **GET /api/master/share/{job_id}**: PNG 1200×630 (Pillow); **frontend/app.js** — автоскачивание карточки до выдачи результата.
+- **backend/requirements.txt**: markdown, PyYAML, mutagen, Pillow.
+- **backend/app/main.py**: маршруты новых страниц; подключены роутеры blog, tools, referral.
+
+---
+
 ## [0.6.8] — 2026-03-28
 
 ### P0 pre-launch: цены/лимиты, SEO, аналитика, конверсия

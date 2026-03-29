@@ -2028,6 +2028,20 @@ btnMaster.addEventListener('click', async()=>{
     if(data.status==='error') throw new Error(data.error||'Ошибка мастеринга');
     if(data.status!=='done') throw new Error('Неизвестный статус');
 
+    try {
+      const shareRes = await fetch(API + '/api/master/share/' + job_id, { headers: authHeaders() });
+      if (shareRes.ok) {
+        const sblob = await shareRes.blob();
+        const su = URL.createObjectURL(sblob);
+        const sa = document.createElement('a');
+        sa.href = su;
+        sa.download = 'magic-master-share.png';
+        sa.click();
+        URL.revokeObjectURL(su);
+        try { ym(108281088, 'reachGoal', 'share_card_download'); } catch (e2) {}
+      }
+    } catch (eShare) { /* ignore */ }
+
     // Download
     const r=await fetch(API+'/api/master/result/'+job_id);
     if(!r.ok) throw new Error('Не удалось скачать результат');
@@ -2263,6 +2277,19 @@ if (btnAutoMaster) {
       });
       if (st.status === 'error') throw new Error(st.error || 'Ошибка мастеринга');
       if (st.status !== 'done') throw new Error('Неизвестный статус');
+      try {
+        const shareRes = await fetch(API + '/api/master/share/' + job_id, { headers: authHeaders() });
+        if (shareRes.ok) {
+          const sblob = await shareRes.blob();
+          const su = URL.createObjectURL(sblob);
+          const sa = document.createElement('a');
+          sa.href = su;
+          sa.download = 'magic-master-share.png';
+          sa.click();
+          URL.revokeObjectURL(su);
+          try { ym(108281088, 'reachGoal', 'share_card_download'); } catch (e2) {}
+        }
+      } catch (eShare) { /* ignore */ }
       const blobRes = await fetch(API + '/api/master/result/' + job_id);
       if (!blobRes.ok) throw new Error('Не удалось скачать результат');
       const blob = await blobRes.blob();

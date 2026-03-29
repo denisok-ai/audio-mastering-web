@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TQWW30KHQ"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4TQWW30KHQ');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUFS-анализатор онлайн бесплатно | Magic Master</title>
+  <meta name="description" content="Проверьте громкость трека: интегральный LUFS, True Peak, подсказки для Spotify и Apple Music. До 50 МБ.">
+  <link rel="canonical" href="https://magicmaster.pro/tools/lufs-analyzer">
+  <meta property="og:image" content="https://magicmaster.pro/og-image.png">
+  <script async src="/analytics/clarity.js"></script>
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#070712;--t:#eef0ff;--s:#9898b8;--a:#7c3aed;--b:rgba(255,255,255,.08);--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;}
+    nav{display:flex;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--b);flex-wrap:wrap;gap:.5rem;}
+    nav a{color:var(--s);text-decoration:none;}
+    main{max-width:720px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+    h1{font-size:1.85rem;margin-bottom:.5rem;}
+    .drop{border:2px dashed var(--b);border-radius:var(--r);padding:2.5rem 1rem;text-align:center;color:var(--s);cursor:pointer;margin:1.5rem 0;background:rgba(255,255,255,.02);}
+    .drop.over{border-color:var(--a);color:var(--t);}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1.5rem 0;}
+    @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+    .metric{background:rgba(255,255,255,.04);border:1px solid var(--b);border-radius:var(--r);padding:1rem;text-align:center;}
+    .metric .v{font-family:'JetBrains Mono',monospace;font-size:1.35rem;font-weight:600;color:var(--a);}
+    .recs{margin-top:1.5rem;padding:1rem;border-radius:var(--r);border:1px solid var(--b);color:var(--s);font-size:.9rem;}
+    .recs li{margin:.4rem 0;}
+    .cta{display:inline-block;margin-top:1rem;padding:.65rem 1.2rem;background:linear-gradient(135deg,var(--a),#a855f7);color:#fff!important;border-radius:var(--r);font-weight:600;text-decoration:none;}
+    .err{color:#f87171;margin-top:1rem;}
+    table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:1.5rem;}
+    th,td{border:1px solid var(--b);padding:.5rem;text-align:left;}
+  </style>
+</head>
+<body>
+<script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=108281088','ym');ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",accurateTrackBounce:true,trackLinks:true});</script>
+<nav><a href="/">← Главная</a><a href="/app">Мастеринг</a><a href="/blog/chto-takoe-lufs">Что такое LUFS</a></nav>
+<main>
+  <h1>LUFS-анализатор</h1>
+  <p style="color:var(--s);">Бесплатно, без регистрации. WAV, MP3, FLAC до 50 МБ. Лимит: 20 анализов в час с одного IP.</p>
+  <input type="file" id="f" accept=".wav,.mp3,.flac,audio/*" style="display:none">
+  <div class="drop" id="z" role="button" tabindex="0" aria-label="Зона загрузки">Перетащите файл сюда или нажмите для выбора</div>
+  <p id="e" class="err" style="display:none;"></p>
+  <div id="out" style="display:none;">
+    <div class="grid">
+      <div class="metric"><div>LUFS (инт.)</div><div class="v" id="lufs">—</div></div>
+      <div class="metric"><div>True Peak</div><div class="v" id="tp">—</div></div>
+      <div class="metric"><div>Loudness range</div><div class="v" id="lra">—</div></div>
+    </div>
+    <p style="font-size:.9rem;color:var(--s);">Spotify: <span id="sp">—</span> · Apple: <span id="ap">—</span></p>
+    <ul class="recs" id="recs"></ul>
+    <a href="/app" class="cta" id="ctaM" onclick="try{ym(108281088,'reachGoal','lufs_cta_mastering');}catch(e){}">Исправить в мастеринге →</a>
+  </div>
+  <h2 style="margin-top:2.5rem;font-size:1.1rem;">Ориентиры громкости</h2>
+  <table>
+    <thead><tr><th>Платформа</th><th>LUFS (ориентир)</th><th>True Peak</th></tr></thead>
+    <tbody>
+      <tr><td>Spotify (музыка)</td><td>≈ −14</td><td>≤ −1 dBTP</td></tr>
+      <tr><td>Apple Music</td><td>≈ −16</td><td>≤ −1 dBTP</td></tr>
+      <tr><td>YouTube</td><td>≈ −14</td><td>≤ −1 dBTP</td></tr>
+      <tr><td>Apple Podcasts</td><td>≈ −16</td><td>≤ −1 dBTP</td></tr>
+    </tbody>
+  </table>
+  <p id="fv" style="margin-top:2rem;font-size:.75rem;color:#555;"></p>
+</main>
+<script>
+(function(){
+  var z=document.getElementById('z'), inp=document.getElementById('f'), e=document.getElementById('e'), out=document.getElementById('out');
+  function showErr(m){e.style.display='block';e.textContent=m;}
+  function clearErr(){e.style.display='none';}
+  async function run(file){
+    clearErr();
+    try{ym(108281088,'reachGoal','lufs_analyze_start');}catch(x){}
+    var fd=new FormData();fd.append('file',file);
+    var r=await fetch('/api/tools/lufs-analyze',{method:'POST',body:fd});
+    var d=await r.json().catch(function(){return{};});
+    if(!r.ok){showErr(d.detail||('Ошибка '+r.status));return;}
+    try{ym(108281088,'reachGoal','lufs_analyze_complete',{lufs:d.integrated_lufs});}catch(x){}
+    document.getElementById('lufs').textContent=(d.integrated_lufs!=null?d.integrated_lufs+' LUFS':'—');
+    document.getElementById('tp').textContent=(d.true_peak_dbfs!=null?d.true_peak_dbfs+' dBFS':'—');
+    document.getElementById('lra').textContent=(d.loudness_range_lu!=null?d.loudness_range_lu+' LU':'—');
+    document.getElementById('sp').textContent=d.spotify_ready?'в диапазоне':'см. рекомендации';
+    document.getElementById('ap').textContent=d.apple_ready?'в диапазоне':'см. рекомендации';
+    var ul=document.getElementById('recs');ul.innerHTML='';
+    (d.recommendations||[]).forEach(function(t){var li=document.createElement('li');li.textContent=t;ul.appendChild(li);});
+    out.style.display='block';
+  }
+  z.addEventListener('click',function(){inp.click();});
+  z.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();inp.click();}});
+  inp.addEventListener('change',function(){if(inp.files[0])run(inp.files[0]);});
+  ['dragover','dragenter'].forEach(function(ev){z.addEventListener(ev,function(x){x.preventDefault();z.classList.add('over');});});
+  ['dragleave','drop'].forEach(function(ev){z.addEventListener(ev,function(x){x.preventDefault();z.classList.remove('over');});});
+  z.addEventListener('drop',function(x){var f=x.dataTransfer.files[0];if(f)run(f);});
+})();
+fetch('/api/version').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&document.getElementById('fv'))document.getElementById('fv').textContent=(d.version?'v'+d.version:'')+(d.build_date?' · '+d.build_date:'');});
+</script>
+</body>
+</html>

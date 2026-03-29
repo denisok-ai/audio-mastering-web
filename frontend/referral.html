@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TQWW30KHQ"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4TQWW30KHQ');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Реферальная программа — Magic Master</title>
+  <meta name="description" content="Пригласите друга — бонусы в токенах мастеринга. Ссылка и статистика в личном кабинете.">
+  <link rel="canonical" href="https://magicmaster.pro/referral">
+  <meta name="robots" content="index, follow">
+  <meta property="og:image" content="https://magicmaster.pro/og-image.png">
+  <script async src="/analytics/clarity.js"></script>
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#070712;--t:#eef0ff;--s:#9898b8;--a:#7c3aed;--b:rgba(255,255,255,.08);--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;}
+    nav{display:flex;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--b);}
+    nav a{color:var(--s);text-decoration:none;}
+    main{max-width:640px;margin:0 auto;padding:2rem 1.25rem;}
+    h1{font-size:1.75rem;margin-bottom:.75rem;}
+    .box{border:1px solid var(--b);border-radius:var(--r);padding:1rem;margin:1rem 0;background:rgba(255,255,255,.03);}
+    input{width:100%;padding:.6rem .75rem;border-radius:8px;border:1px solid var(--b);background:#12121c;color:var(--t);font-size:.9rem;}
+    button{margin-top:.5rem;padding:.5rem 1rem;border-radius:8px;border:none;background:var(--a);color:#fff;font-weight:600;cursor:pointer;}
+    .guest{color:var(--s);} .guest a{color:#a855f7;}
+  </style>
+</head>
+<body>
+<script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=108281088','ym');ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",accurateTrackBounce:true,trackLinks:true});</script>
+<nav><a href="/">← Главная</a><a href="/app">Приложение</a></nav>
+<main>
+  <h1>Реферальная программа</h1>
+  <p style="color:var(--s);">Вы получаете токены за друга после его <strong style="color:var(--t);">первого успешного мастеринга</strong>. Друг получает бонус при регистрации по вашей ссылке.</p>
+  <div id="guest" class="guest" style="display:none;">
+    <p><a href="/login">Войдите</a> или <a href="/register">зарегистрируйтесь</a>, чтобы получить персональную ссылку.</p>
+  </div>
+  <div id="auth" style="display:none;">
+    <div class="box">
+      <div style="font-size:.8rem;color:var(--s);margin-bottom:.35rem;">Ваша ссылка</div>
+      <input type="text" id="link" readonly>
+      <button type="button" id="copy">Копировать</button>
+    </div>
+    <div class="box">
+      <div style="font-size:.8rem;color:var(--s);">Telegram deep-link</div>
+      <input type="text" id="tlink" readonly>
+    </div>
+    <div class="box" id="stats"></div>
+  </div>
+  <p id="fv" style="margin-top:2rem;font-size:.75rem;color:#555;"></p>
+</main>
+<script>
+(function(){
+  var tok=localStorage.getItem('mm_token');
+  if(!tok){document.getElementById('guest').style.display='block';return;}
+  document.getElementById('auth').style.display='block';
+  fetch('/api/referral/my-link',{headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(d){
+    document.getElementById('link').value=d.referral_url||'';
+    document.getElementById('tlink').value=d.bot_referral_url||'';
+  }).catch(function(){});
+  fetch('/api/referral/stats',{headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.ok?r.json():null}).then(function(s){
+    if(!s)return;
+    document.getElementById('stats').innerHTML='<strong>Статистика</strong><br>Приглашено: '+s.total_invited+'<br>С наградой: '+s.total_rewarded;
+  });
+  document.getElementById('copy').addEventListener('click',function(){
+    var i=document.getElementById('link');i.select();document.execCommand('copy');
+    try{ym(108281088,'reachGoal','referral_link_copied');}catch(e){}
+  });
+})();
+fetch('/api/version').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&document.getElementById('fv'))document.getElementById('fv').textContent=(d.version?'v'+d.version:'')+(d.build_date?' · '+d.build_date:'');});
+</script>
+</body>
+</html>

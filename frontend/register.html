@@ -322,10 +322,13 @@
     submitBtn.innerHTML = '<span class="loading"></span>' + (typeof window.__t === 'function' ? window.__t('register.creating_long') : 'Создаём аккаунт…');
 
     try {
+      const refParam = new URLSearchParams(window.location.search).get('ref');
+      const payload = { email, password };
+      if (refParam && refParam.trim()) payload.ref = refParam.trim();
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(payload),
       });
       const data = await resp.json();
 

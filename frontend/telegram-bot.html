@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TQWW30KHQ"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4TQWW30KHQ');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мастеринг через Telegram — Magic Master</title>
+  <meta name="description" content="Отправьте аудио боту Magic Master — получите мастер в Telegram. WAV, MP3, FLAC.">
+  <link rel="canonical" href="https://magicmaster.pro/telegram-bot">
+  <meta property="og:image" content="https://magicmaster.pro/og-image.png">
+  <script async src="/analytics/clarity.js"></script>
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#070712;--t:#eef0ff;--s:#9898b8;--a:#7c3aed;--b:rgba(255,255,255,.08);--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.65;}
+    nav{display:flex;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--b);flex-wrap:wrap;gap:.5rem;}
+    nav a{color:var(--s);text-decoration:none;}
+    main{max-width:700px;margin:0 auto;padding:2.5rem 1.25rem;}
+    h1{font-size:2rem;margin-bottom:1rem;}
+    .cta{display:inline-block;margin-top:1rem;padding:.75rem 1.5rem;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff!important;border-radius:var(--r);font-weight:700;text-decoration:none;}
+    .steps{margin:2rem 0;}
+    .step{border-left:3px solid var(--a);padding-left:1rem;margin:1.25rem 0;color:var(--s);}
+    .step strong{color:var(--t);}
+  </style>
+</head>
+<body>
+<script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=108281088','ym');ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",accurateTrackBounce:true,trackLinks:true});</script>
+<nav><a href="/">← Главная</a><a href="/app">Веб-приложение</a></nav>
+<main>
+  <h1>Мастеринг через Telegram</h1>
+  <p style="color:var(--s);">Отправьте файл боту — получите обработанный трек в ответ. Без установки отдельного приложения.</p>
+  <a href="https://t.me/magicmasterpro_user_bot" class="cta" target="_blank" rel="noopener" onclick="try{ym(108281088,'reachGoal','cta_click',{page:'/telegram-bot'});}catch(e){}">Открыть бота →</a>
+
+  <div class="steps">
+    <div class="step"><strong>Шаг 1.</strong> Откройте бота в Telegram.</div>
+    <div class="step"><strong>Шаг 2.</strong> Отправьте аудио (WAV / MP3 / FLAC).</div>
+    <div class="step"><strong>Шаг 3.</strong> Выберите действия в меню: мастеринг, анализ, пресеты, AI-чат (по тарифу).</div>
+  </div>
+
+  <p style="color:var(--s);font-size:.9rem;">Привяжите аккаунт сайта к Telegram в профиле — так сохраняются лимиты и история.</p>
+  <p id="fv" style="margin-top:2rem;font-size:.75rem;color:#555;"></p>
+</main>
+<script>fetch('/api/version').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&document.getElementById('fv'))document.getElementById('fv').textContent=(d.version?'v'+d.version:'')+(d.build_date?' · '+d.build_date:'');});</script>
+</body>
+</html>

@@ -82,6 +82,9 @@ from .routers.misc import router as misc_router
 from .routers.ai_router import router as ai_router_module
 from .routers.auth import router as auth_router
 from .routers.mastering import router as mastering_router
+from .routers.blog import router as blog_router
+from .routers.tools import router as tools_router
+from .routers.referral import router as referral_router
 
 # Алиас для health/metrics (read-only view на jobs)
 _jobs = _jobs_store.all_jobs()
@@ -292,6 +295,9 @@ app.include_router(misc_router)
 app.include_router(ai_router_module)
 app.include_router(auth_router)
 app.include_router(mastering_router)
+app.include_router(blog_router)
+app.include_router(tools_router)
+app.include_router(referral_router)
 
 from .bot.notify_webhook_route import router as _notify_bot_webhook_router
 from .bot.webhook_route import router as _bot_webhook_router
@@ -566,6 +572,34 @@ if _frontend.is_dir():
         if not p.is_file():
             return HTMLResponse("<h1>Страница профиля недоступна</h1>", status_code=404)
         return FileResponse(str(p))
+
+    def _seo_page(name: str):
+        p = _frontend / name
+        return FileResponse(str(p)) if p.is_file() else HTMLResponse("<h1>Страница недоступна</h1>", status_code=404)
+
+    @app.get("/suno-mastering", include_in_schema=False)
+    async def page_suno_mastering():
+        return _seo_page("suno-mastering.html")
+
+    @app.get("/udio-mastering", include_in_schema=False)
+    async def page_udio_mastering():
+        return _seo_page("udio-mastering.html")
+
+    @app.get("/podcast-mastering", include_in_schema=False)
+    async def page_podcast_mastering():
+        return _seo_page("podcast-mastering.html")
+
+    @app.get("/telegram-bot", include_in_schema=False)
+    async def page_telegram_bot():
+        return _seo_page("telegram-bot.html")
+
+    @app.get("/referral", include_in_schema=False)
+    async def page_referral():
+        return _seo_page("referral.html")
+
+    @app.get("/tools/lufs-analyzer", include_in_schema=False)
+    async def page_lufs_analyzer():
+        return _seo_page("lufs-analyzer.html")
 
     @app.get("/429", include_in_schema=False)
     async def too_many_page():

@@ -16,6 +16,56 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://magicmaster.pro/suno-mastering</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/udio-mastering</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/podcast-mastering</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/telegram-bot</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/tools/lufs-analyzer</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/blog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/blog/mastering-suno-ai</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/blog/chto-takoe-lufs</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/blog/mastering-podcasta</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://magicmaster.pro/referral</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://magicmaster.pro/login</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

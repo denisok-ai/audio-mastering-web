@@ -24,12 +24,14 @@ from ..config import settings
 from .. import settings_store
 from ..database import (
     DB_AVAILABLE,
+    SessionLocal,
     deduct_tokens,
     get_db,
     get_user_tokens_balance,
     count_mastering_jobs_today,
     log_mastering_job_end,
     log_mastering_job_start,
+    process_referral_on_invitee_mastering_done,
 )
 from ..helpers import (
     allowed_file as _allowed_file,
@@ -287,6 +289,33 @@ def _maybe_notify_telegram_mastering_done(job_id: str) -> None:
         pass
 
 
+def _apply_output_branding(out_bytes: bytes, fmt: str) -> bytes:
+    try:
+        from ..metadata import embed_magic_master_branding
+
+        return embed_magic_master_branding(out_bytes, fmt)
+    except Exception:  # noqa: BLE001
+        return out_bytes
+
+
+def _after_mastering_success_hooks(job_id: str) -> None:
+    _maybe_notify_telegram_mastering_done(job_id)
+    if not DB_AVAILABLE or SessionLocal is None:
+        return
+    job = _jobs_store.all_jobs().get(job_id)
+    uid = job.get("notify_user_id") if job else None
+    if not uid:
+        return
+    try:
+        db = SessionLocal()
+        try:
+            process_referral_on_invitee_mastering_done(db, int(uid))
+        finally:
+            db.close()
+    except Exception:  # noqa: BLE001
+        pass
+
+
 # ─── Фоновые функции мастеринга ───────────────────────────────────────────────
 
 def _run_mastering_job(
@@ -322,6 +351,7 @@ def _run_mastering_job(
         job["message"] = "Экспорт файла…"
         channels = 1 if mastered.ndim == 1 else mastered.shape[1]
         out_bytes = export_audio(mastered, sr, channels, out_format.lower())
+        out_bytes = _apply_output_branding(out_bytes, out_format.lower())
         out_ext = "m4a" if out_format.lower() == "aac" else out_format.lower()
         out_name = (filename or "master").rsplit(".", 1)[0] + f"_mastered.{out_ext}"
         job["status"] = "done"
@@ -334,7 +364,7 @@ def _run_mastering_job(
             log_mastering_job_end(job_id, "done")
         except Exception:  # noqa: BLE001
             pass
-        _maybe_notify_telegram_mastering_done(job_id)
+        _after_mastering_success_hooks(job_id)
     except Exception as e:
         job["status"] = "error"
         job["progress"] = 0
@@ -492,6 +522,7 @@ def _run_mastering_job_v2(
             auto_blank_sec=max(0.0, ab),
             bitrate=bitrate,
         )
+        out_bytes = _apply_output_branding(out_bytes, out_format.lower())
         out_ext = "m4a" if out_format.lower() == "aac" else out_format.lower()
         out_name = (filename or "master").rsplit(".", 1)[0] + f"_mastered.{out_ext}"
         job["status"] = "done"
@@ -504,7 +535,7 @@ def _run_mastering_job_v2(
             log_mastering_job_end(job_id, "done")
         except Exception:  # noqa: BLE001
             pass
-        _maybe_notify_telegram_mastering_done(job_id)
+        _after_mastering_success_hooks(job_id)
     except Exception as e:
         job["status"] = "error"
         job["progress"] = 0
@@ -1378,6 +1409,27 @@ async def api_master_progress_sse(job_id: str):
             "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
         },
+    )
+
+
+@router.get("/api/master/share/{job_id}")
+async def api_master_share(job_id: str):
+    """PNG-карточка для шеринга (пока задача в памяти, до скачивания результата)."""
+    jobs = _jobs_store.all_jobs()
+    if job_id not in jobs:
+        raise HTTPException(404, "Задача не найдена")
+    job = jobs[job_id]
+    if job.get("status") != "done" or not job.get("result_bytes"):
+        raise HTTPException(400, "Результат ещё не готов")
+    from ..services.share_card import render_mastering_share_png
+
+    png = render_mastering_share_png(job)
+    if not png:
+        raise HTTPException(503, "Карточка недоступна (установите Pillow)")
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={"Cache-Control": "no-store", "Content-Disposition": 'inline; filename="magic-master-share.png"'},
     )
 
 

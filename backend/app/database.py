@@ -1,4 +1,5 @@
 """SQLite database setup, User model, and MasteringRecord model via SQLAlchemy."""
+import secrets
 import time
 from pathlib import Path
 from typing import List, Optional
@@ -58,6 +59,23 @@ if DB_AVAILABLE:
         # Telegram user bot: привязка аккаунта и язык интерфейса (ru|en)
         telegram_id: Optional[int] = Column(BigInteger, unique=True, nullable=True, index=True)
         telegram_lang: Optional[str] = Column(String(8), nullable=True)
+        # Реферальная программа: уникальный код и кто пригласил (users.id)
+        referral_code: Optional[str] = Column(String(16), unique=True, nullable=True, index=True)
+        referred_by_user_id: Optional[int] = Column(
+            Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+        )
+
+    class Referral(Base):  # type: ignore[misc]
+        """Приглашение: inviter → invitee; награда inviter после первого успешного мастеринга invitee."""
+
+        __tablename__ = "referrals"
+
+        id: int = Column(Integer, primary_key=True, index=True)
+        inviter_id: int = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+        invitee_id: int = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+        status: str = Column(String(16), nullable=False, default="pending")  # pending | rewarded
+        created_at: float = Column(Float, nullable=False, default=time.time)
+        rewarded_at: Optional[float] = Column(Float, nullable=True)
 
     class TelegramLinkCode(Base):  # type: ignore[misc]
         """Одноразовый код привязки Telegram к email (отправляется по почте)."""
@@ -230,6 +248,7 @@ if DB_AVAILABLE:
 
 else:
     User = None  # type: ignore[assignment,misc]
+    Referral = None  # type: ignore[assignment,misc]
     MasteringRecord = None  # type: ignore[assignment,misc]
     SavedPreset = None  # type: ignore[assignment,misc]
     Transaction = None  # type: ignore[assignment,misc]
@@ -280,6 +299,8 @@ def _run_migrations() -> None:
             ("tokens_balance",            "INTEGER NOT NULL DEFAULT 0"),
             ("telegram_id",               "INTEGER"),
             ("telegram_lang",             "VARCHAR(8)"),
+            ("referral_code",             "VARCHAR(16)"),
+            ("referred_by_user_id",       "INTEGER"),
         ],
         "mastering_records": [
             ("duration_sec", "REAL"),
@@ -464,7 +485,70 @@ def create_user(db, email: str, hashed_password: str, tier: str = "pro"):
     db.add(user)
     db.commit()
     db.refresh(user)
+    ensure_user_referral_code(db, user)
     return user
+
+
+def ensure_user_referral_code(db, user) -> None:
+    """Назначить уникальный referral_code, если ещё нет."""
+    if not DB_AVAILABLE or db is None or User is None or user is None:
+        return
+    if getattr(user, "referral_code", None):
+        return
+    for _ in range(32):
+        code = secrets.token_hex(4)[:8].upper()
+        exists = db.query(User).filter(User.referral_code == code).first()
+        if not exists:
+            user.referral_code = code
+            db.commit()
+            return
+
+
+def get_user_by_referral_code(db, code: str):
+    if not DB_AVAILABLE or db is None or User is None or not code:
+        return None
+    c = code.strip().upper()
+    return db.query(User).filter(User.referral_code == c).first()
+
+
+def create_pending_referral(db, inviter_id: int, invitee_id: int) -> bool:
+    if not DB_AVAILABLE or db is None or Referral is None:
+        return False
+    if inviter_id == invitee_id:
+        return False
+    exists = db.query(Referral).filter(Referral.invitee_id == invitee_id).first()
+    if exists:
+        return False
+    db.add(
+        Referral(
+            inviter_id=inviter_id,
+            invitee_id=invitee_id,
+            status="pending",
+            created_at=time.time(),
+        )
+    )
+    db.commit()
+    return True
+
+
+def process_referral_on_invitee_mastering_done(db, invitee_id: int) -> None:
+    """После успешного мастеринга: наградить пригласившего (один раз)."""
+    if not DB_AVAILABLE or db is None or Referral is None:
+        return
+    ref = (
+        db.query(Referral)
+        .filter(Referral.invitee_id == int(invitee_id), Referral.status == "pending")
+        .first()
+    )
+    if not ref:
+        return
+    from .config import settings
+
+    ref.status = "rewarded"
+    ref.rewarded_at = time.time()
+    db.commit()
+    reward = int(getattr(settings, "referral_reward_inviter", 3) or 3)
+    add_tokens(db, int(ref.inviter_id), max(1, reward))
 
 
 # --- SavedPreset (P10) ---

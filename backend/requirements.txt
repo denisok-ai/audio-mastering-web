@@ -45,6 +45,16 @@ aiogram>=3.4.0,<4.0
 # Server metrics for admin bot / anomaly monitor (optional graceful fallback without it)
 psutil>=5.9.0
 
+# Blog (Markdown + frontmatter)
+markdown>=3.5.0
+PyYAML>=6.0.0
+
+# Output file metadata (ID3 / FLAC / optional WAV)
+mutagen>=1.47.0
+
+# Share-card PNG generation
+Pillow>=10.0.0
+
 # Testing
 pytest>=7.0.0
 httpx>=0.26.0

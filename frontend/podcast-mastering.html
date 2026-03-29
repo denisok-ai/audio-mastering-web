@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TQWW30KHQ"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4TQWW30KHQ');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мастеринг подкаста онлайн — чистый звук | Magic Master</title>
+  <meta name="description" content="Шум, громкость, LUFS для Apple Podcasts и Spotify. Деноайзер и де-эссер в Pro. Без DAW.">
+  <link rel="canonical" href="https://magicmaster.pro/podcast-mastering">
+  <meta property="og:image" content="https://magicmaster.pro/og-image.png">
+  <script async src="/analytics/clarity.js"></script>
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#070712;--t:#eef0ff;--s:#9898b8;--a:#10b981;--a2:#06b6d4;--b:rgba(255,255,255,.08);--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.65;}
+    nav{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--b);}
+    nav a{color:var(--s);text-decoration:none;} nav a:hover{color:var(--t);}
+    .cta{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff!important;padding:.55rem 1.1rem;border-radius:var(--r);font-weight:600;text-decoration:none;display:inline-block;margin-top:1rem;}
+    main{max-width:760px;margin:0 auto;padding:2.5rem 1.25rem;}
+    h1{font-size:clamp(1.65rem,4vw,2.1rem);margin-bottom:1rem;}
+    .lead{color:var(--s);margin-bottom:1rem;}
+    .check{border:1px solid var(--b);border-radius:var(--r);padding:1.25rem;margin:1.5rem 0;background:rgba(255,255,255,.02);}
+    .check li{margin:.35rem 0;color:var(--s);}
+  </style>
+</head>
+<body>
+<script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=108281088','ym');ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",accurateTrackBounce:true,trackLinks:true});</script>
+<nav><a href="/"><strong>Magic Master</strong></a><span style="display:flex;gap:.75rem;"><a href="/app">Мастеринг</a><a href="/tools/lufs-analyzer">LUFS</a><a href="/blog/mastering-podcasta">Статья</a></span></nav>
+<main>
+  <h1>Мастеринг подкаста онлайн — чистый звук за минуту</h1>
+  <p class="lead">Уберите шум, выровняйте громкость между спикерами, подготовьте эпизод к Apple Podcasts (−16 LUFS) и Spotify (−14 LUFS) — без DAW.</p>
+  <a href="/app" class="cta">Обработать эпизод →</a>
+
+  <div class="check">
+    <h2 style="font-size:1.1rem;margin-bottom:.75rem;color:var(--t);">Чеклист</h2>
+    <ul style="list-style:none;padding:0;">
+      <li>□ Тихая комната или деноайзер</li>
+      <li>□ Одинаковая субъективная громкость спикеров</li>
+      <li>□ Сибилянты под контролем (де-эссер)</li>
+      <li>□ Целевой LUFS под площадку</li>
+      <li>□ True Peak не выше −1 dBTP</li>
+    </ul>
+  </div>
+
+  <p class="lead">В Pro/Studio доступны <strong style="color:var(--t);">деноайзер</strong> и <strong style="color:var(--t);">де-эссер</strong> в цепочке модулей.</p>
+  <p><a href="/telegram-bot" style="color:var(--a2);">Обработка через Telegram</a> · <a href="/pricing" style="color:var(--a2);">Тарифы</a></p>
+  <p id="fv" style="margin-top:2rem;font-size:.75rem;color:#555;"></p>
+</main>
+<script>fetch('/api/version').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&document.getElementById('fv'))document.getElementById('fv').textContent=(d.version?'v'+d.version:'')+(d.build_date?' · '+d.build_date:'');});</script>
+</body>
+</html>

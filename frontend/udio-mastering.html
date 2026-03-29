@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TQWW30KHQ"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4TQWW30KHQ');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мастеринг для Udio — релизный звук без DAW | Magic Master</title>
+  <meta name="description" content="Мастеринг треков из Udio: LUFS, True Peak, баланс. Онлайн за 30 секунд.">
+  <link rel="canonical" href="https://magicmaster.pro/udio-mastering">
+  <meta property="og:title" content="Мастеринг для Udio | Magic Master">
+  <meta property="og:image" content="https://magicmaster.pro/og-image.png">
+  <script async src="/analytics/clarity.js"></script>
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#070712;--t:#eef0ff;--s:#9898b8;--a:#6366f1;--a2:#8b5cf6;--b:rgba(255,255,255,.08);--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.65;}
+    nav{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid var(--b);}
+    nav a{color:var(--s);text-decoration:none;font-size:.9rem;} nav a:hover{color:var(--t);}
+    .cta{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff!important;padding:.55rem 1.1rem;border-radius:var(--r);font-weight:600;}
+    main{max-width:780px;margin:0 auto;padding:2.5rem 1.25rem 4rem;}
+    h1{font-size:clamp(1.7rem,4vw,2.2rem);margin-bottom:1rem;}
+    .lead{color:var(--s);margin-bottom:1.5rem;}
+    section{margin:2rem 0;}
+    h2{font-size:1.25rem;margin-bottom:.75rem;}
+    ul{padding-left:1.2rem;color:var(--s);}
+    li{margin:.4rem 0;}
+  </style>
+</head>
+<body>
+<script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=108281088','ym');ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",accurateTrackBounce:true,trackLinks:true});</script>
+<nav><a href="/"><strong>Magic Master</strong></a><span style="display:flex;gap:.75rem;flex-wrap:wrap;"><a href="/app">Мастеринг</a><a href="/suno-mastering">Suno</a><a href="/blog">Блог</a><a href="/app" class="cta">Попробовать →</a></span></nav>
+<main>
+  <h1>Мастеринг для Udio — из генерации в релизный звук</h1>
+  <p class="lead">Udio даёт другой тембральный почерк, чем Suno: иные артефакты в спектре, иногда нестабильная стерео-картина. Magic Master выравнивает громкость (LUFS), контролирует пики и подготавливает трек к стримингу.</p>
+  <a href="/app" class="cta" onclick="try{ym(108281088,'reachGoal','cta_click',{page:'/udio-mastering'});}catch(e){}">Замастерить трек из Udio →</a>
+
+  <section>
+    <h2>Особенности AI-треков Udio</h2>
+    <ul>
+      <li>Иногда заметны артефакты «дорисовки» в спектре.</li>
+      <li>Стерео-панорама и низ могут требовать аккуратной компрессии и EQ.</li>
+      <li>Интегральная громкость часто ниже целевой для Spotify (−14 LUFS).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Как это работает</h2>
+    <ol style="padding-left:1.2rem;color:var(--s);">
+      <li>Скачайте экспорт из Udio (WAV/MP3).</li>
+      <li>Откройте <a href="/app" style="color:var(--a2);">приложение</a> и выберите пресет под жанр.</li>
+      <li>Скачайте мастер — готов к дистрибуции.</li>
+    </ol>
+  </section>
+
+  <p style="margin-top:2rem;color:var(--s);font-size:.9rem;">См. также: <a href="/suno-mastering" style="color:var(--a2);">Suno</a> · <a href="/tools/lufs-analyzer" style="color:var(--a2);">LUFS-анализатор</a> · <a href="/telegram-bot" style="color:var(--a2);">Telegram-бот</a></p>
+  <p id="fv" style="margin-top:2rem;font-size:.75rem;color:#555;"></p>
+</main>
+<script>fetch('/api/version').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&document.getElementById('fv'))document.getElementById('fv').textContent=(d.version?'v'+d.version:'')+(d.build_date?' · '+d.build_date:'');});</script>
+</body>
+</html>

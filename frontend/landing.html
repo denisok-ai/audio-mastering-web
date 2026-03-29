@@ -530,6 +530,46 @@
     }
     .btn-ghost:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
 
+    /* ════════════════════════ COMPARISON (vs competitors) ════════════════════════ */
+    #comparison {
+      position: relative; z-index: 1;
+      padding: 4rem 1.5rem;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .comparison-section .section-label { text-align: center; }
+    .comparison-section .section-title { text-align: center; }
+    .comparison-section .comparison-subtitle {
+      text-align: center; color: var(--soft); max-width: 520px;
+      margin: 0 auto 2rem; font-size: 1rem; line-height: 1.55;
+    }
+    .comparison-table-wrapper {
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border); border-radius: var(--r-lg);
+      background: rgba(255,255,255,0.02);
+    }
+    .comparison-table {
+      width: 100%; min-width: 640px; border-collapse: collapse;
+    }
+    .comparison-table th, .comparison-table td {
+      padding: 1rem; text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-size: .88rem;
+    }
+    .comparison-table th { font-weight: 600; color: var(--soft); }
+    .comparison-table th.highlight, .comparison-table td.highlight {
+      background: rgba(68, 136, 255, 0.06);
+      color: var(--text); font-weight: 500;
+    }
+    .comparison-badge {
+      display: inline-block; background: #4488ff; color: #fff;
+      font-size: .65rem; padding: 2px 6px; border-radius: 4px;
+      margin-left: 4px; text-transform: uppercase; font-weight: 700;
+    }
+    .comparison-cta { text-align: center; margin-top: 2rem; }
+    @media (max-width: 768px) {
+      .comparison-table { min-width: 600px; }
+    }
+
     /* ════════════════════════ FOOTER ════════════════════════ */
     footer {
       position: relative; z-index: 1;
@@ -629,6 +669,10 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
   <div class="nav-links">
     <a href="#how" class="nav-link" data-i18n="landing.nav_how">Как работает</a>
     <a href="#features" class="nav-link" data-i18n="landing.nav_features">Возможности</a>
+    <a href="#comparison" class="nav-link" data-i18n="landing.nav_compare">Сравнение</a>
+    <a href="/blog" class="nav-link" data-i18n="landing.nav_blog">Блог</a>
+    <a href="/tools/lufs-analyzer" class="nav-link" data-i18n="landing.nav_lufs">LUFS</a>
+    <a href="/suno-mastering" class="nav-link" data-i18n="landing.nav_suno">Suno</a>
     <a href="#pricing" class="nav-link" data-i18n="landing.nav_pricing">Тарифы</a>
     <a href="#faq" class="nav-link" data-i18n="landing.nav_faq">FAQ</a>
     <span class="mm-lang-switch" aria-label="Language">
@@ -1123,6 +1167,92 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
   </div>
 </section>
 
+<!-- ═══════ COMPARISON ═══════ -->
+<section id="comparison" class="comparison-section">
+  <div class="center">
+    <div class="section-label" data-i18n="landing.compare_label">Сравнение</div>
+    <h2 class="section-title" data-i18n="landing.compare_title">Почему Magic Master?</h2>
+    <p class="comparison-subtitle" data-i18n="landing.compare_sub">Сравнение с популярными сервисами онлайн-мастеринга (по открытым данным на 2026 г.).</p>
+  </div>
+  <div class="comparison-table-wrapper">
+    <table class="comparison-table" aria-label="Сравнение сервисов мастеринга">
+      <thead>
+        <tr>
+          <th data-i18n="landing.cmp_param">Параметр</th>
+          <th class="highlight">Magic Master</th>
+          <th>LANDR</th>
+          <th>eMastered</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-i18n="landing.cmp_row_price">Цена (мес)</td>
+          <td class="highlight"><strong data-i18n="landing.cmp_mm_price">от 0 ₽</strong> <span class="comparison-badge" data-i18n="landing.cmp_beta">бета</span></td>
+          <td data-i18n="landing.cmp_landr_price">от $6–39</td>
+          <td data-i18n="landing.cmp_em_price">от $49</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_guest">Без регистрации</td>
+          <td class="highlight" data-i18n="landing.cmp_yes">✓</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+          <td data-i18n="landing.cmp_em_guest">△ загрузка</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_ru">Русский язык</td>
+          <td class="highlight" data-i18n="landing.cmp_yes">✓</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_tg">Telegram-бот</td>
+          <td class="highlight" data-i18n="landing.cmp_yes">✓</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_presets">Жанровые пресеты</td>
+          <td class="highlight" data-i18n="landing.cmp_mm_presets">✓ 8+ стилей</td>
+          <td data-i18n="landing.cmp_landr_presets">3 стиля</td>
+          <td data-i18n="landing.cmp_em_presets">Настройки</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_pro">PRO-модули</td>
+          <td class="highlight" data-i18n="landing.cmp_mm_pro">✓ Деноайзер, Reference, Dynamic EQ…</td>
+          <td data-i18n="landing.cmp_landr_pro">△ отдельно</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_lufs">Целевой LUFS</td>
+          <td class="highlight" data-i18n="landing.cmp_mm_lufs">✓ Настраиваемый</td>
+          <td data-i18n="landing.cmp_auto">Авто</td>
+          <td data-i18n="landing.cmp_auto">Авто</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_pwa">PWA</td>
+          <td class="highlight" data-i18n="landing.cmp_yes">✓</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_api">API</td>
+          <td class="highlight" data-i18n="landing.cmp_mm_api">✓ Studio</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+        </tr>
+        <tr>
+          <td data-i18n="landing.cmp_row_rub">Оплата в ₽</td>
+          <td class="highlight" data-i18n="landing.cmp_mm_rub">✓ ЮKassa</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+          <td data-i18n="landing.cmp_no">✗</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="comparison-cta">
+    <a href="/app" class="nav-cta" data-i18n="landing.compare_cta" onclick="try{ym(108281088,'reachGoal','cta_click',{page:'/',cta:'comparison_app'});}catch(e){}">Попробовать бесплатно →</a>
+  </div>
+</section>
+
 <!-- ═══════ FAQ ═══════ -->
 <section id="faq">
   <div class="center">
@@ -1208,6 +1338,11 @@ ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",
     <a href="#features" data-i18n="landing.nav_features">Возможности</a>
     <a href="#pricing" data-i18n="landing.nav_pricing">Тарифы</a>
     <a href="#how" data-i18n="landing.nav_how">Как работает</a>
+    <a href="/blog" data-i18n="landing.foot_blog">Блог</a>
+    <a href="/tools/lufs-analyzer" data-i18n="landing.foot_lufs">LUFS-анализатор</a>
+    <a href="/suno-mastering" data-i18n="landing.foot_suno">Мастеринг для Suno</a>
+    <a href="/telegram-bot" data-i18n="landing.foot_telegram">Telegram-бот</a>
+    <a href="/referral" data-i18n="landing.foot_referral">Реферальная программа</a>
   </div>
   <div class="foot-col">
     <div class="foot-col-title" data-i18n="landing.foot_col_dev">Разработка</div>

@@ -67,6 +67,13 @@ class Settings(BaseSettings):
     # P46: глобальный rate limit — запросов/минуту с одного IP для API
     global_rate_limit: int = 300
 
+    # Реферальная программа: бонусы в токенах мастеринга
+    referral_reward_inviter: int = 3   # пригласившему после первого мастеринга друга
+    referral_reward_invitee: int = 2   # приглашённому при регистрации по ссылке
+
+    # Бесплатный LUFS-анализатор: запросов в час с одного IP
+    lufs_tool_rate_per_hour: int = 20
+
     # P56: CORS — список разрешённых origins через запятую; пусто = ["*"] (обратная совместимость)
     cors_origins: str = ""
 

@@ -21,17 +21,21 @@ from ..auth import (
 )
 from ..database import (
     DB_AVAILABLE,
+    add_tokens,
     check_and_expire_subscription,
     create_api_key,
     create_mastering_record,
+    create_pending_referral,
     create_saved_preset,
     create_user,
     delete_mastering_record,
     delete_saved_preset,
+    ensure_user_referral_code,
     get_api_keys_for_user,
     get_db,
     get_saved_preset_by_id,
     get_user_by_email,
+    get_user_by_referral_code,
     get_user_history,
     get_user_presets,
     get_user_stats,
@@ -85,6 +89,7 @@ def _json_safe_float(v):
 class RegisterRequest(BaseModel):
     email: str
     password: str
+    ref: Optional[str] = None  # реферальный код пригласившего
 
     @field_validator("email")
     @classmethod
@@ -171,6 +176,21 @@ def api_auth_register(body: RegisterRequest, request: Request, db=Depends(get_db
     hashed = get_password_hash(body.password)
     need_verify = getattr(settings, "require_email_verify", False)
     user = create_user(db, body.email, hashed, tier="pro")
+
+    if DB_AVAILABLE and db is not None:
+        try:
+            ref_raw = (body.ref or "").strip().upper()
+            if ref_raw:
+                inviter = get_user_by_referral_code(db, ref_raw)
+                if inviter and inviter.id != user.id:
+                    user.referred_by_user_id = int(inviter.id)
+                    db.commit()
+                    db.refresh(user)
+                    if create_pending_referral(db, int(inviter.id), int(user.id)):
+                        reward = int(getattr(settings, "referral_reward_invitee", 2) or 2)
+                        add_tokens(db, int(user.id), max(1, reward))
+        except Exception:  # noqa: BLE001
+            pass
 
     if need_verify and DB_AVAILABLE:
         try:
