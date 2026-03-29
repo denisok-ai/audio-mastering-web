@@ -13,10 +13,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Magic Master</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
   <meta name="description" content="Профиль — Magic Master" data-i18n-content="profile.meta_desc">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #080810; --bg2: #0c0c18;
@@ -50,7 +52,17 @@
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
-    .topbar-logo { font-weight: 700; font-size: 1.05rem; color: var(--accent2); text-decoration: none; }
+    .topbar-logo {
+      display: inline-flex; align-items: center; gap: .4rem;
+      text-decoration: none;
+    }
+    .topbar-logo-mark { height: 24px; width: auto; max-width: min(300px, 55vw); display: block; flex-shrink: 0; }
+    .topbar-logo-type {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700; font-size: 1.02rem; letter-spacing: -.03em;
+      background: linear-gradient(90deg, #c4b5fd 0%, #93c5fd 45%, #67e8f9 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
     .topbar-nav { display: flex; gap: 1.2rem; align-items: center; }
     .topbar-nav a {
       color: var(--text-soft); text-decoration: none; font-size: .88rem; font-weight: 500;
@@ -193,7 +205,7 @@
 
 <!-- Topbar -->
 <header class="topbar">
-  <a href="/" class="topbar-logo">✨ Magic Master</a>
+  <a href="/" class="topbar-logo"><img class="topbar-logo-mark" src="/icons/mm-icon.png" alt="" decoding="async"/><span class="topbar-logo-type">Magic Master</span></a>
   <nav class="topbar-nav">
     <div class="mm-auth-lang" aria-label="Language">
       <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>

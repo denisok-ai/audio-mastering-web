@@ -704,13 +704,20 @@ if _frontend.is_dir():
         )
         return HTMLResponse(content=html)
 
-    # PWA: иконки правильного размера (manifest требует 192x192 и 512x512 — иначе предупреждение)
-    @app.get("/icons/icon-192.png", response_class=Response)
+    # PWA: иконки 192/512 — из frontend/icons/ при наличии, иначе заглушка.
+    # Перегенерация: frontend/icons/extract_mm_logo_lockup.py (нужен scipy в venv).
+    @app.get("/icons/icon-192.png", include_in_schema=False)
     def _icon_192():
+        p = _frontend / "icons" / "icon-192.png"
+        if p.is_file():
+            return FileResponse(str(p), media_type="image/png")
         return Response(content=_PNG_192, media_type="image/png")
 
-    @app.get("/icons/icon-512.png", response_class=Response)
+    @app.get("/icons/icon-512.png", include_in_schema=False)
     def _icon_512():
+        p = _frontend / "icons" / "icon-512.png"
+        if p.is_file():
+            return FileResponse(str(p), media_type="image/png")
         return Response(content=_PNG_512, media_type="image/png")
 
     @app.get("/og-image.png", response_class=Response, include_in_schema=False)

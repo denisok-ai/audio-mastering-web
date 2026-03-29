@@ -12,13 +12,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Регистрация — Magic Master</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
   <meta name="description" content="Регистрация Magic Master — доступ к Pro-функциям, MP3/FLAC, жанровым пресетам и цепочке модулей." data-i18n-content="register.meta_desc">
   <link rel="canonical" href="https://magicmaster.pro/register">
   <meta name="robots" content="noindex">
   <script async src="/analytics/clarity.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #080810; --bg2: #0c0c18;
@@ -67,14 +69,18 @@
       display: flex; align-items: center; justify-content: center; gap: .5rem;
       margin-bottom: 1.75rem; text-decoration: none; color: var(--text);
     }
-    .logo-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 18px var(--accent-glow);
+    .logo-mark {
+      height: 28px;
+      width: auto;
+      display: block;
+      flex-shrink: 0;
     }
-    .logo-icon svg { width: 18px; height: 18px; color: #fff; }
-    .logo-name { font-weight: 700; font-size: 1.1rem; }
+    .logo-type {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700; font-size: 1.12rem; letter-spacing: -.03em;
+      background: linear-gradient(90deg, #c4b5fd 0%, #93c5fd 45%, #67e8f9 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
 
     h1 { font-size: 1.45rem; font-weight: 700; letter-spacing: -.03em; text-align: center; margin: 0 0 .35rem; }
     .sub { font-size: .82rem; color: var(--text-soft); text-align: center; margin: 0 0 1.5rem; line-height: 1.5; }
@@ -179,12 +185,8 @@
   </a>
 
   <a href="/" class="logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-      </svg>
-    </div>
-    <span class="logo-name">Magic Master</span>
+    <img class="logo-mark" src="/icons/mm-icon.png" alt="" decoding="async"/>
+    <span class="logo-type">Magic Master</span>
   </a>
 
   <h1 data-i18n="register.h1">Создать аккаунт</h1>

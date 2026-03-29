@@ -14,9 +14,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>429 — Слишком много запросов · Magic Master</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #080810; --border: rgba(255,255,255,0.08);
@@ -54,7 +55,17 @@
     .btn:hover { opacity: .88; }
     .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-soft); }
     .btn-ghost:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); opacity: 1; }
-    .logo { font-size: .9rem; font-weight: 700; color: var(--accent2); text-decoration: none; display: inline-block; margin-bottom: 2rem; }
+    .logo {
+      display: inline-flex; align-items: center; gap: .45rem;
+      text-decoration: none; margin-bottom: 2rem;
+    }
+    .logo-mark { height: 22px; width: auto; max-width: 85vw; display: block; flex-shrink: 0; }
+    .logo-type {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700; font-size: 1.02rem; letter-spacing: -.03em;
+      background: linear-gradient(90deg, #c4b5fd 0%, #93c5fd 45%, #67e8f9 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
     .mm-auth-lang { position: fixed; top: 1rem; right: 1rem; z-index: 2; display: flex; gap: .35rem; font-size: .85rem; color: var(--text-soft); }
     .mm-auth-lang a { color: var(--text-soft); text-decoration: none; font-weight: 600; }
     .mm-auth-lang a.mm-lang-active { color: var(--text); text-decoration: underline; }
@@ -68,7 +79,7 @@
   <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
 </div>
 <div class="wrap">
-  <a href="/" class="logo">✨ Magic Master</a>
+  <a href="/" class="logo"><img class="logo-mark" src="/icons/mm-icon.png" alt="" decoding="async"/><span class="logo-type">Magic Master</span></a>
   <div style="font-size:2.5rem;margin-bottom:.5rem">🚦</div>
   <div class="code" data-i18n="err429.h1">429</div>
   <div class="title" data-i18n="err429.heading">Слишком много запросов</div>

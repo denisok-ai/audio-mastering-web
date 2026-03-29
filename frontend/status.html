@@ -13,10 +13,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Статус сервиса — Magic Master</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
   <meta name="description" content="Статус сервиса Magic Master" data-i18n-content="status.meta_desc">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #080810; --surface: rgba(16,16,28,0.95); --border: rgba(255,255,255,0.08);
@@ -38,7 +40,17 @@
     }
     .container { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 2.5rem 1.2rem 4rem; }
     .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; }
-    .logo { font-size: 1.05rem; font-weight: 700; color: var(--accent2); text-decoration: none; }
+    .logo {
+      display: inline-flex; align-items: center; gap: .45rem;
+      text-decoration: none;
+    }
+    .logo-mark { height: 24px; width: auto; max-width: min(300px, 88vw); display: block; flex-shrink: 0; }
+    .logo-type {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700; font-size: 1.02rem; letter-spacing: -.03em;
+      background: linear-gradient(90deg, #c4b5fd 0%, #93c5fd 45%, #67e8f9 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
     .last-check { font-size: .75rem; color: var(--text-dim); }
 
     /* Overall status banner */
@@ -95,7 +107,7 @@
 <div class="bg"></div>
 <div class="container">
   <div class="header">
-    <a href="/" class="logo">✨ Magic Master</a>
+    <a href="/" class="logo"><img class="logo-mark" src="/icons/mm-icon.png" alt="" decoding="async"/><span class="logo-type">Magic Master</span></a>
     <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;justify-content:flex-end">
       <div class="mm-auth-lang" aria-label="Language">
         <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>

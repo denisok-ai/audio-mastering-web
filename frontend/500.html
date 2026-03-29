@@ -14,9 +14,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>500 — Ошибка сервера · Magic Master</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #080810; --border: rgba(255,255,255,0.08);
@@ -57,7 +58,17 @@
       background: transparent; border: 1px solid var(--border); color: var(--text-soft);
     }
     .btn-ghost:hover { border-color: rgba(108,75,255,.4); color: var(--accent2); opacity: 1; }
-    .logo { font-size: .9rem; font-weight: 700; color: var(--accent2); text-decoration: none; display: inline-block; margin-bottom: 2rem; }
+    .logo {
+      display: inline-flex; align-items: center; gap: .45rem;
+      text-decoration: none; margin-bottom: 2rem;
+    }
+    .logo-mark { height: 22px; width: auto; max-width: 85vw; display: block; flex-shrink: 0; }
+    .logo-type {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700; font-size: 1.02rem; letter-spacing: -.03em;
+      background: linear-gradient(90deg, #c4b5fd 0%, #93c5fd 45%, #67e8f9 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
     .detail { font-size: .75rem; color: var(--text-soft); background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 8px; padding: .7rem 1rem; margin: 1rem auto; text-align: left; word-break: break-all; max-width: 420px; display: none; }
     .detail.show { display: block; }
     .mm-auth-lang { position: fixed; top: 1rem; right: 1rem; z-index: 2; display: flex; gap: .35rem; font-size: .85rem; color: var(--text-soft); }
@@ -73,7 +84,7 @@
   <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
 </div>
 <div class="wrap">
-  <a href="/" class="logo">✨ Magic Master</a>
+  <a href="/" class="logo"><img class="logo-mark" src="/icons/mm-icon.png" alt="" decoding="async"/><span class="logo-type">Magic Master</span></a>
   <div style="font-size:2.5rem;margin-bottom:.5rem">⚙️</div>
   <div class="code" data-i18n="err500.h1">500</div>
   <div class="title" data-i18n="err500.heading">Внутренняя ошибка сервера</div>

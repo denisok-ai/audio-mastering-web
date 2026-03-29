@@ -31,7 +31,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
-  <meta name="theme-color" content="#6c4bff">
+  <meta name="theme-color" content="#0a0e1c">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Magic Master">
@@ -39,7 +39,7 @@
   <script>window.__MAGIC_MASTER_DEBUG__=false;</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     /* ═══════════════════════ DESIGN TOKENS ═══════════════════════ */
     :root {
@@ -137,12 +137,12 @@
         linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
     }
-    html.theme-light .logo-name {
-      background: linear-gradient(135deg, var(--text) 0%, var(--text-soft) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
     html.theme-light .h-title {
       background: linear-gradient(135deg, var(--text) 25%, var(--text-soft) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    html.theme-light .logo-name {
+      background: linear-gradient(90deg, #5b21b6 0%, #2563eb 50%, #0891b2 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     html.theme-light .style-card::before { background: rgba(91,33,182,0.06); }
@@ -433,18 +433,26 @@
       display: inline-flex; align-items: center; gap: 0.55rem;
       margin-bottom: 1.1rem;
     }
-    .logo-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    .logo-mark-wrap {
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 18px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.4);
-      flex-shrink: 0;
+      line-height: 0; flex-shrink: 0;
     }
-    .logo-icon svg { width: 18px; height: 18px; color: #fff; }
+    .logo-mark {
+      height: 30px;
+      width: auto;
+      max-width: min(100%, 300px);
+      display: block;
+    }
     .logo-name {
-      font-size: 1.25rem; font-weight: 700; letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.65) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      background: linear-gradient(90deg, #a78bfa 0%, #60a5fa 45%, #22d3ee 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .logo-badge {
       font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
@@ -1978,7 +1986,8 @@
       .toast-wrap { left: .75rem; right: .75rem; bottom: max(1rem, env(safe-area-inset-bottom)); max-width: none }
     }
     @media (max-width: 360px) {
-      .logo-name { font-size: 1.1rem }
+      .logo-mark { height: 26px; max-width: 100%; }
+      .logo-name { font-size: 1.02rem; }
       .h-title { font-size: 1.3rem }
       .card { padding: .9rem .7rem }
     }
@@ -1995,12 +2004,8 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         На главную
       </a>
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-          </svg>
-        </div>
+      <div style="display:flex;align-items:center;gap:.5rem;justify-content:center;flex-wrap:wrap;">
+        <span class="logo-mark-wrap"><img class="logo-mark" src="/icons/mm-icon.png" alt="" decoding="async"/></span>
         <span class="logo-name">Magic Master</span>
         <span class="logo-badge">Pro</span>
       </div>

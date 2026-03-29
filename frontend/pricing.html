@@ -32,7 +32,7 @@
   <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #040408; --bg2: #08080f;
@@ -87,13 +87,18 @@
       text-decoration: none; color: var(--text);
     }
     .nav-logo-icon {
-      width: 30px; height: 30px; border-radius: 9px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 14px var(--accent-glow);
+      flex-shrink: 0; line-height: 0; height: 26px;
     }
-    .nav-logo-icon svg { width: 15px; height: 15px; color: #fff; }
-    .nav-logo-name { font-weight: 700; font-size: 1rem; }
+    .nav-logo-icon img { height: 22px; width: auto; display: block; }
+    .nav-logo-name {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700; font-size: 1rem; letter-spacing: -.03em;
+      background: linear-gradient(90deg, #c4b5fd 0%, #93c5fd 45%, #67e8f9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
     .nav-links { display: flex; align-items: center; gap: 1.5rem; }
     .nav-links a {
       color: var(--text-soft); text-decoration: none; font-size: .85rem;
@@ -331,11 +336,7 @@
 
 <nav>
   <a href="/" class="nav-logo">
-    <div class="nav-logo-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-      </svg>
-    </div>
+    <span class="nav-logo-icon"><img src="/icons/mm-icon.png" alt="" decoding="async"/></span>
     <span class="nav-logo-name">Magic Master</span>
   </a>
   <div class="nav-links">
