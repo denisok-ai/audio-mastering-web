@@ -1,48 +1,438 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" id="htmlRoot">
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TQWW30KHQ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4TQWW30KHQ');</script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4TQWW30KHQ');
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мастеринг через Telegram — Magic Master</title>
-  <meta name="description" content="Отправьте аудио боту Magic Master — получите мастер в Telegram. WAV, MP3, FLAC.">
+  <meta name="description" content="Отправьте аудио боту Magic Master — получите мастер в Telegram. WAV, MP3, FLAC." data-i18n-content="telegram.meta_desc">
   <link rel="canonical" href="https://magicmaster.pro/telegram-bot">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://magicmaster.pro/telegram-bot">
+  <meta property="og:title" content="Мастеринг через Telegram — Magic Master">
+  <meta property="og:description" content="Отправьте аудио боту Magic Master — получите мастер в Telegram. WAV, MP3, FLAC.">
+  <meta property="og:site_name" content="Magic Master">
+  <meta property="og:locale" content="ru_RU">
   <meta property="og:image" content="https://magicmaster.pro/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://magicmaster.pro/og-image.png">
   <script async src="/analytics/clarity.js"></script>
-  <link rel="icon" href="/icons/icon-192.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="alternate" hreflang="ru" href="https://magicmaster.pro/telegram-bot">
+  <link rel="alternate" hreflang="en" href="https://magicmaster.pro/telegram-bot?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://magicmaster.pro/telegram-bot">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+    {"@type":"ListItem","position":1,"name":"Главная","item":"https://magicmaster.pro/"},
+    {"@type":"ListItem","position":2,"name":"Telegram-бот","item":"https://magicmaster.pro/telegram-bot"}
+  ]}
+  </script>
   <style>
-    :root{--bg:#070712;--t:#eef0ff;--s:#9898b8;--a:#7c3aed;--b:rgba(255,255,255,.08);--r:12px;}
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.65;}
-    nav{display:flex;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--b);flex-wrap:wrap;gap:.5rem;}
-    nav a{color:var(--s);text-decoration:none;}
-    main{max-width:700px;margin:0 auto;padding:2.5rem 1.25rem;}
-    h1{font-size:2rem;margin-bottom:1rem;}
-    .cta{display:inline-block;margin-top:1rem;padding:.75rem 1.5rem;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff!important;border-radius:var(--r);font-weight:700;text-decoration:none;}
-    .steps{margin:2rem 0;}
-    .step{border-left:3px solid var(--a);padding-left:1rem;margin:1.25rem 0;color:var(--s);}
-    .step strong{color:var(--t);}
+    :root {
+      --bg:       #040408;
+      --surface:  rgba(10,10,18,0.96);
+      --surf2:    rgba(16,16,28,0.98);
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #eeeef8;
+      --soft:     #8888aa;
+      --dim:      #44445e;
+      --accent:   #7c3aed;
+      --acc2:     #a855f7;
+      --acc3:     #db2777;
+      --acc-glow: rgba(124,58,237,0.4);
+      --cyan:     #06b6d4;
+      --green:    #10b981;
+      --amber:    #f59e0b;
+      --red:      #ef4444;
+      --r:        12px;
+      --r-lg:     20px;
+      --r-xl:     30px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    .bg-grid {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(108,75,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108,75,255,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    .bg-glow {
+      position: fixed; pointer-events: none; z-index: 0;
+      border-radius: 50%; filter: blur(120px); opacity: 0.18;
+    }
+    .bg-glow-1 { width: 700px; height: 500px; background: var(--accent); top: -100px; left: -100px; }
+    .bg-glow-2 { width: 500px; height: 500px; background: var(--acc2); top: 30%; right: -100px; }
+    .bg-glow-3 { width: 600px; height: 300px; background: var(--cyan); bottom: 10%; left: 20%; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 64px;
+      background: rgba(6,6,16,0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; color: var(--text); }
+    .nav-logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--acc2));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px var(--acc-glow);
+    }
+    .nav-logo-icon svg { width: 16px; height: 16px; color: #fff; }
+    .nav-logo-name { font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; }
+    .nav-logo-badge {
+      font-size: .6rem; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; padding: 2px 6px; border-radius: 4px;
+      background: linear-gradient(135deg, var(--accent), var(--acc2));
+      color: #fff; margin-left: 2px;
+    }
+    .nav-links { display: flex; align-items: center; gap: .25rem; }
+    .nav-link {
+      padding: .45rem .9rem; border-radius: var(--r);
+      color: var(--soft); font-size: .9rem; text-decoration: none;
+      transition: color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+    .nav-link.active { color: var(--text); background: rgba(108,75,255,0.12); }
+    .nav-cta {
+      padding: .5rem 1.2rem; border-radius: var(--r);
+      background: linear-gradient(135deg, var(--accent), var(--acc2));
+      color: #fff; font-size: .9rem; font-weight: 600;
+      text-decoration: none; transition: opacity .15s, transform .15s;
+      box-shadow: 0 0 20px var(--acc-glow);
+    }
+    .nav-cta:hover { opacity: .9; transform: translateY(-1px); }
+    .mm-lang-switch {
+      display: inline-flex; align-items: center; gap: .35rem; margin-right: .5rem;
+      font-size: .85rem; color: var(--soft);
+    }
+    .mm-lang-switch a {
+      color: var(--soft); text-decoration: none; font-weight: 600;
+      padding: .2rem .35rem; border-radius: 6px; cursor: pointer;
+    }
+    .mm-lang-switch a:hover { color: var(--text); }
+    .mm-lang-switch a.mm-lang-active { color: var(--text); text-decoration: underline; }
+    @media (max-width: 600px) {
+      .nav-link { display: none; }
+      nav { padding: 0 1rem; }
+    }
+
+    .page-wrap { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem 2rem; }
+    .section-label {
+      display: inline-block; font-size: .72rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: .75rem;
+    }
+    .hero-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800;
+      line-height: 1.15; letter-spacing: -.02em; margin-bottom: 1rem;
+    }
+    .hero-sub { color: var(--soft); font-size: 1.05rem; line-height: 1.65; margin-bottom: 2rem; max-width: 640px; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .85rem 2rem; border-radius: var(--r);
+      background: linear-gradient(135deg, var(--accent), var(--acc2));
+      color: #fff; font-size: 1rem; font-weight: 700;
+      text-decoration: none; transition: opacity .15s, transform .15s;
+      box-shadow: 0 0 30px var(--acc-glow);
+    }
+    .btn-primary:hover { opacity: .9; transform: translateY(-2px); }
+
+    .content-section { margin-top: 3.5rem; }
+    .content-section h2 {
+      font-size: clamp(1.3rem, 3vw, 1.6rem); font-weight: 700;
+      margin-bottom: 1.25rem; letter-spacing: -.01em;
+    }
+    .grid3 { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 1.5rem;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(108,75,255,0.12); }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--acc2); }
+    .card p { font-size: .9rem; color: var(--soft); line-height: 1.55; }
+
+    .step-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--r-lg); padding: 1.5rem 1.5rem 1.5rem 1.25rem;
+      display: flex; align-items: flex-start; gap: 1.15rem;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .step-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(108,75,255,0.12); }
+    .step-num {
+      flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--acc2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 800; color: #fff;
+      box-shadow: 0 0 16px var(--acc-glow);
+    }
+    .step-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: .3rem; }
+    .step-body p { font-size: .9rem; color: var(--soft); line-height: 1.55; }
+    .steps-grid { display: flex; flex-direction: column; gap: 1rem; }
+
+    .note-block {
+      margin-top: 2rem; padding: 1.25rem 1.5rem;
+      border-radius: var(--r); border: 1px solid rgba(124,58,237,0.25);
+      background: rgba(124,58,237,0.06);
+      display: flex; align-items: flex-start; gap: .85rem;
+      font-size: .92rem; color: var(--soft); line-height: 1.6;
+    }
+    .note-icon {
+      flex-shrink: 0; width: 22px; height: 22px; color: var(--acc2); margin-top: 1px;
+    }
+    .note-block a { color: var(--acc2); text-decoration: none; }
+    .note-block a:hover { text-decoration: underline; }
+
+    .cross-links { margin-top: 2.5rem; color: var(--soft); font-size: .9rem; }
+    .cross-links a { color: var(--acc2); text-decoration: none; }
+    .cross-links a:hover { text-decoration: underline; }
+
+    .cta-banner {
+      margin-top: 4rem;
+      padding: 2.5rem 2rem;
+      border-radius: var(--r-xl);
+      background: linear-gradient(135deg, rgba(108,75,255,0.18), rgba(168,85,247,0.1), rgba(34,211,238,0.08));
+      border: 1px solid rgba(108,75,255,0.3);
+      text-align: center;
+      box-shadow: 0 0 60px rgba(108,75,255,0.15);
+    }
+    .cta-banner h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 800; margin-bottom: .6rem; }
+    .cta-banner p { color: var(--soft); margin-bottom: 1.5rem; }
+
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem 2rem;
+      display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 2rem; max-width: 980px; margin: 0 auto;
+    }
+    .foot-brand { display: flex; flex-direction: column; gap: .75rem; }
+    .foot-logo { display: flex; align-items: center; gap: .5rem; text-decoration: none; color: var(--text); }
+    .foot-logo-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: linear-gradient(135deg, var(--accent), var(--acc2));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .foot-logo-icon svg { width: 13px; height: 13px; color: #fff; }
+    .foot-logo-name { font-weight: 700; font-size: .95rem; }
+    .foot-desc { font-size: .82rem; color: var(--dim); line-height: 1.6; max-width: 220px; }
+    .foot-version { font-size: .72rem; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
+    .foot-col-title { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin-bottom: .85rem; }
+    .foot-col a {
+      display: block; font-size: .85rem; color: var(--soft);
+      text-decoration: none; margin-bottom: .55rem; transition: color .15s;
+    }
+    .foot-col a:hover { color: var(--text); }
+    .foot-bottom {
+      position: relative; z-index: 1;
+      max-width: 980px; margin: 0 auto;
+      padding: 1.25rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: .78rem; color: var(--dim);
+      flex-wrap: wrap; gap: .5rem;
+    }
+    @media (max-width: 700px) {
+      footer { grid-template-columns: 1fr 1fr; }
+      .foot-brand { grid-column: 1 / -1; }
+      .foot-bottom { flex-direction: column; text-align: center; }
+    }
+    @media (max-width: 480px) {
+      footer { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-<script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=108281088','ym');ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",accurateTrackBounce:true,trackLinks:true});</script>
-<nav><a href="/">← Главная</a><a href="/app">Веб-приложение</a></nav>
-<main>
-  <h1>Мастеринг через Telegram</h1>
-  <p style="color:var(--s);">Отправьте файл боту — получите обработанный трек в ответ. Без установки отдельного приложения.</p>
-  <a href="https://t.me/magicmasterpro_user_bot" class="cta" target="_blank" rel="noopener" onclick="try{ym(108281088,'reachGoal','cta_click',{page:'/telegram-bot'});}catch(e){}">Открыть бота →</a>
+<script type="text/javascript">
+(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+m[i].l=1*new Date();
+for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
+k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=108281088','ym');
+ym(108281088,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/108281088" style="position:absolute;left:-9999px;" alt=""/></div></noscript>
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<div class="bg-glow bg-glow-3"></div>
 
-  <div class="steps">
-    <div class="step"><strong>Шаг 1.</strong> Откройте бота в Telegram.</div>
-    <div class="step"><strong>Шаг 2.</strong> Отправьте аудио (WAV / MP3 / FLAC).</div>
-    <div class="step"><strong>Шаг 3.</strong> Выберите действия в меню: мастеринг, анализ, пресеты, AI-чат (по тарифу).</div>
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+    </div>
+    <span class="nav-logo-name">Magic Master</span>
+    <span class="nav-logo-badge">Pro</span>
+  </a>
+  <div class="nav-links">
+    <a href="/app" class="nav-link" data-i18n="landing.foot_mastering">Мастеринг</a>
+    <a href="/blog" class="nav-link" data-i18n="landing.nav_blog">Блог</a>
+    <a href="/tools/lufs-analyzer" class="nav-link" data-i18n="landing.nav_lufs">LUFS</a>
+    <a href="/suno-mastering" class="nav-link" data-i18n="landing.nav_suno">Suno</a>
+    <a href="/pricing" class="nav-link" data-i18n="landing.nav_pricing">Тарифы</a>
+    <span class="mm-lang-switch" aria-label="Language">
+      <a href="#" data-mm-lang="ru" data-i18n="common.lang_ru">RU</a>
+      <span>|</span>
+      <a href="#" data-mm-lang="en" data-i18n="common.lang_en">EN</a>
+    </span>
+    <a href="/app" class="nav-cta" data-i18n="landing.nav_cta" onclick="try{ym(108281088,'reachGoal','cta_click',{page:'/telegram-bot',cta:'nav'});}catch(e){}">Мастерить бесплатно →</a>
   </div>
+</nav>
 
-  <p style="color:var(--s);font-size:.9rem;">Привяжите аккаунт сайта к Telegram в профиле — так сохраняются лимиты и история.</p>
-  <p id="fv" style="margin-top:2rem;font-size:.75rem;color:#555;"></p>
-</main>
-<script>fetch('/api/version').then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&document.getElementById('fv'))document.getElementById('fv').textContent=(d.version?'v'+d.version:'')+(d.build_date?' · '+d.build_date:'');});</script>
+<div class="page-wrap">
+  <article>
+    <div class="section-label" data-i18n="telegram.label">Telegram-бот</div>
+    <h1 class="hero-title" data-i18n="telegram.h1">Мастеринг через Telegram</h1>
+    <p class="hero-sub" data-i18n="telegram.hero_sub">Отправьте файл боту — получите обработанный трек в ответ. Без установки отдельного приложения.</p>
+    <a href="https://t.me/magicmasterpro_user_bot" target="_blank" rel="noopener" class="btn-primary" onclick="try{ym(108281088,'reachGoal','cta_click',{page:'/telegram-bot',cta:'hero'});}catch(e){}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <span data-i18n="telegram.cta_hero">Открыть бота →</span>
+    </a>
+
+    <section class="content-section">
+      <h2 data-i18n="telegram.steps_h2">Как это работает</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3 data-i18n="telegram.step1_h">Откройте бота в Telegram</h3>
+            <p data-i18n="telegram.step1_p">Перейдите по ссылке <a href="https://t.me/magicmasterpro_user_bot" target="_blank" rel="noopener" style="color:var(--acc2)">@magicmasterpro_user_bot</a> и нажмите «Start».</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3 data-i18n="telegram.step2_h">Отправьте аудио</h3>
+            <p data-i18n="telegram.step2_p">Поддерживаются форматы WAV, MP3 и FLAC. Прикрепите файл как документ.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3 data-i18n="telegram.step3_h">Выберите действие в меню</h3>
+            <p data-i18n="telegram.step3_p">Мастеринг, анализ, пресеты, AI-чат — доступные функции зависят от тарифа.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2 data-i18n="telegram.features_h2">Возможности бота</h2>
+      <div class="grid3">
+        <div class="card">
+          <h3 data-i18n="telegram.feat1_h">Мастеринг</h3>
+          <p data-i18n="telegram.feat1_p">Полный мастеринг с EQ, компрессией, лимитером и нормализацией LUFS — как в веб-приложении.</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="telegram.feat2_h">Анализ трека</h3>
+          <p data-i18n="telegram.feat2_p">Получите LUFS, True Peak, спектр и рекомендации по улучшению звука.</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="telegram.feat3_h">AI-ассистент</h3>
+          <p data-i18n="telegram.feat3_p">Задайте вопрос по сведению или мастерингу — бот ответит с учётом вашего трека.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="note-block">
+      <svg class="note-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span data-i18n-html="telegram.note">Привяжите аккаунт сайта к Telegram в <a href="/app#profile">профиле</a>, чтобы использовать баланс тарифа в боте.</span>
+    </div>
+
+    <p class="cross-links" data-i18n-html="telegram.cross_links">Читайте также: <a href="/suno-mastering">мастеринг для Suno</a> · <a href="/tools/lufs-analyzer">LUFS-анализатор</a> · <a href="/pricing">тарифы</a></p>
+
+    <div class="cta-banner">
+      <h2 data-i18n="telegram.cta_h2">Попробуйте мастеринг в Telegram</h2>
+      <p data-i18n="telegram.cta_p">Отправьте файл — получите результат прямо в чат. WAV, MP3, FLAC.</p>
+      <a href="https://t.me/magicmasterpro_user_bot" target="_blank" rel="noopener" class="btn-primary" onclick="try{ym(108281088,'reachGoal','cta_click',{page:'/telegram-bot',cta:'bottom'});}catch(e){}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span data-i18n="telegram.cta_btn">Открыть бота в Telegram</span>
+      </a>
+    </div>
+  </article>
+</div>
+
+<footer>
+  <div class="foot-brand">
+    <a href="/" class="foot-logo">
+      <div class="foot-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+      </div>
+      <span class="foot-logo-name">Magic Master</span>
+    </a>
+    <div class="foot-desc" data-i18n="landing.foot_desc">Профессиональный мастеринг аудио прямо в браузере. Индустриальные стандарты без подписки на DAW.</div>
+    <div class="foot-version" id="footVersion"></div>
+  </div>
+  <div class="foot-col">
+    <div class="foot-col-title" data-i18n="landing.foot_col_product">Продукт</div>
+    <a href="/app" data-i18n="landing.foot_mastering">Мастеринг</a>
+    <a href="/pricing" data-i18n="landing.nav_pricing">Тарифы</a>
+    <a href="/blog" data-i18n="landing.foot_blog">Блог</a>
+    <a href="/tools/lufs-analyzer" data-i18n="landing.foot_lufs">LUFS-анализатор</a>
+    <a href="/suno-mastering" data-i18n="landing.foot_suno">Мастеринг для Suno</a>
+    <a href="/telegram-bot" data-i18n="landing.foot_telegram">Telegram-бот</a>
+    <a href="/referral" data-i18n="landing.foot_referral">Реферальная программа</a>
+  </div>
+  <div class="foot-col">
+    <div class="foot-col-title" data-i18n="landing.foot_col_dev">Разработка</div>
+    <a href="/docs" data-i18n="landing.foot_api_docs">API Документация</a>
+    <a href="/progress.html" data-i18n="landing.foot_plan_status">Статус плана</a>
+    <a href="/api/health" data-i18n="landing.foot_svc_status">Статус сервиса</a>
+    <a href="/api/version" data-i18n="landing.foot_api_ver">Версия API</a>
+  </div>
+  <div class="foot-col">
+    <div class="foot-col-title" data-i18n="landing.foot_col_support">Поддержка</div>
+    <a href="mailto:support@magicmaster.app" data-i18n="landing.foot_write_us">Написать нам</a>
+    <a href="/pricing" data-i18n="landing.foot_pricing_pay">Тарифы и оплата</a>
+  </div>
+</footer>
+<div class="foot-bottom">
+  <span data-i18n="landing.foot_bottom1">© 2026 Magic Master. Профессиональный мастеринг аудио.</span>
+  <span data-i18n="landing.foot_bottom2">Сделано с ♥ для музыкантов и продюсеров</span>
+</div>
+<div style="max-width:980px;margin:0 auto;padding:0.5rem 2rem 1rem;font-size:.68rem;color:var(--dim);text-align:center;position:relative;z-index:1;" data-i18n="landing.foot_legal">
+  Все упомянутые торговые марки и названия продуктов принадлежат их правообладателям. Magic Master не аффилирован с указанными компаниями.
+</div>
+
+<script src="/i18n.js"></script>
+<script>MagicMasterI18n.init({ pageTitleKey: 'telegram.page_title' });</script>
+<script>
+fetch('/api/version').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+  if (!d) return;
+  var el = document.getElementById('footVersion');
+  if (!el) return;
+  var v = d.version ? 'v' + d.version : '';
+  var b = d.build_date || '';
+  el.textContent = b ? (v ? v + ' · ' + b : b) : v;
+}).catch(function(){});
+</script>
 </body>
 </html>
