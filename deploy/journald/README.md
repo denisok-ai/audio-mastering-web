@@ -26,10 +26,12 @@ sudo systemctl restart systemd-journald
 
 ## Nginx
 
-Обычно ротация уже настроена пакетом `nginx` в `/etc/logrotate.d/nginx`. Проверка:
+Конфиг ротации ставит пакет `nginx` в `/etc/logrotate.d/nginx`, но **исполняемый `logrotate`** — отдельный пакет. Без него записи в `logrotate.d` не обрабатываются:
 
 ```bash
-sudo logrotate -d /etc/logrotate.d/nginx
+sudo apt-get install -y logrotate
+sudo systemctl status logrotate.timer   # ежедневный запуск
+/usr/sbin/logrotate -d /etc/logrotate.d/nginx   # проверка конфига (debug)
 ```
 
 ## Файловые логи приложения

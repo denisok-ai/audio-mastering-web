@@ -46,7 +46,7 @@ do_install() {
     if command -v python3.10 &>/dev/null && ! command -v python3.11 &>/dev/null; then
         apt-get install -y -qq python3.10-venv 2>/dev/null || true
     fi
-    apt-get install -y -qq nginx certbot python3-certbot-nginx 2>/dev/null || true
+    apt-get install -y -qq nginx certbot python3-certbot-nginx logrotate 2>/dev/null || true
 
     # Каталог приложения
     mkdir -p "$INSTALL_DIR"
