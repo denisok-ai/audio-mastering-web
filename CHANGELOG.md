@@ -9,6 +9,12 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.7.4] — 2026-03-30
+
+- **mastering_trace:** явный `StreamHandler` на stderr для `app.mastering_trace` (как у `app.bot` в `lifecycle.py`). Одного `setLevel` в lifespan недостаточно: uvicorn не вешает handler на `app.*`, root без handler — строки `mastering_trace_*` не попадали в journald.
+
+---
+
 ## [0.7.3] — 2026-03-30
 
 - **main.py lifespan:** `logging.getLogger("app.mastering_trace").setLevel(INFO)` — строки `mastering_trace` попадают в journald на prod (как у `app.bot`).

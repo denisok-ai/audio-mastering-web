@@ -16,6 +16,14 @@ from .config import settings
 # Имя логгера под пакет app.* — иначе uvicorn/journald на prod не показывают записи (не префикс app.).
 _LOG = logging.getLogger(__name__)
 
+# Uvicorn не вешает StreamHandler на app.* — записи не доходят до stderr/journald (см. app.bot.lifecycle).
+if not _LOG.handlers:
+    _h = logging.StreamHandler()
+    _h.setLevel(logging.INFO)
+    _h.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+    _LOG.addHandler(_h)
+_LOG.setLevel(logging.INFO)
+
 # Допускаем включение без перезапуска через env (как MAGIC_MASTER_DEBUG)
 _ENV_TRACE = "MAGIC_MASTER_MASTERING_TRACE"
 _ENV_LUFS = "MAGIC_MASTER_MASTERING_TRACE_LUFS_STAGES"

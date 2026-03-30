@@ -105,9 +105,8 @@ async def _lifespan(_app: FastAPI):
         notify_bot_startup,
     )
 
-    # Логи app.* в journald / stdout на уровне INFO (uvicorn по умолчанию не поднимает все app.*)
+    # Логи app.bot в journald / stderr на уровне INFO (см. также app.mastering_trace — handler в модуле)
     logging.getLogger("app.bot").setLevel(logging.INFO)
-    logging.getLogger("app.mastering_trace").setLevel(logging.INFO)
 
     await bot_startup()
     await notify_bot_startup()
