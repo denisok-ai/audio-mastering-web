@@ -242,13 +242,22 @@
       }
     }).catch(function() {});
   })();
-  // Если уже залогинен — редирект
+  // Если токен есть — проверяем через API; протухший JWT не должен мешать показать форму
   (function() {
     const token = localStorage.getItem('mm_token');
-    if (token) {
-      const redirect = new URLSearchParams(window.location.search).get('next') || '/app';
-      window.location.replace(redirect);
+    if (!token) return;
+    const redirect = new URLSearchParams(window.location.search).get('next') || '/app';
+    function clearSession() {
+      localStorage.removeItem('mm_token');
+      localStorage.removeItem('mm_user_email');
+      localStorage.removeItem('mm_user_tier');
     }
+    fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function(r) {
+        if (r.ok) window.location.replace(redirect);
+        else clearSession();
+      })
+      .catch(function() { clearSession(); });
   })();
 
   const form      = document.getElementById('loginForm');

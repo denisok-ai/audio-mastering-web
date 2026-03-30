@@ -434,3 +434,54 @@ def test_high_freq_trim_cuts_highs(mono_2sec_44k):
     # Амплитуда верхов должна уменьшиться (~0.9 от исходной)
     assert np.max(np.abs(out)) <= np.max(np.abs(high_tone)) * 0.95
     assert np.max(np.abs(out)) >= np.max(np.abs(high_tone)) * 0.8
+
+
+def test_apply_output_edge_fade_in_attacks_start():
+    from app.pipeline import apply_output_edge_fade_in
+    sr = 48000
+    x = np.ones(sr, dtype=np.float32) * 0.5
+    out = apply_output_edge_fade_in(x, sr, fade_ms=5.0)
+    assert out[0] < x[0]
+    assert np.isclose(out[-1], x[-1], rtol=1e-4)
+    n_fade = int(round(sr * 0.005))
+    assert np.all(out[n_fade : n_fade + 100] == x[n_fade : n_fade + 100])
+
+
+def test_apply_output_edge_fade_in_stereo(stereo_2sec_44k):
+    from app.pipeline import apply_output_edge_fade_in
+    audio, sr = stereo_2sec_44k
+    out = apply_output_edge_fade_in(audio, sr, fade_ms=4.0)
+    assert out.shape == audio.shape
+    assert np.isclose(out[0, 0], 0.0, atol=1e-6)
+    assert np.isclose(out[0, 1], 0.0, atol=1e-6)
+
+
+def test_apply_maximizer_lookahead_boundary_smaller_step_than_hard_splice():
+    """Кроссфейд на границе lookahead уменьшает скачок относительно «лобовой» склейки."""
+    from app.pipeline import apply_maximizer
+    sr = 48000
+    n = sr * 2
+    t = np.linspace(0, n / sr, n, dtype=np.float32)
+    x = (0.25 * np.sin(2 * np.pi * 440 * t)).astype(np.float32)
+    delay_n = int(sr * 0.006)
+    x2 = x.reshape(-1, 1)
+    delayed = np.concatenate([np.zeros((delay_n, 1), dtype=np.float32), x2[:-delay_n]], axis=0)
+    limited = apply_maximizer(delayed)
+    hard = np.concatenate([x2[:delay_n], limited[delay_n:]], axis=0).astype(np.float32)
+    from app.pipeline import apply_maximizer_lookahead
+
+    smooth = apply_maximizer_lookahead(x, sr, lookahead_ms=6.0).reshape(-1, 1)
+    if delay_n > 2:
+        step_hard = float(abs(hard[delay_n, 0] - hard[delay_n - 1, 0]))
+        step_smooth = float(abs(smooth[delay_n, 0] - smooth[delay_n - 1, 0]))
+        assert step_smooth <= step_hard + 1e-3
+
+
+def test_run_mastering_pipeline_output_fade_starts_at_zero(mono_2sec_44k):
+    """Финальный fade-in: первый сэмпл 0 (линейный ramp от нуля)."""
+    from app.pipeline import run_mastering_pipeline
+    audio, sr = mono_2sec_44k
+    audio = audio.copy()
+    audio[0] = 0.9
+    out = run_mastering_pipeline(audio, sr, target_lufs=-14.0, style="standard")
+    assert np.isclose(out[0], 0.0, atol=1e-4)

@@ -9,6 +9,17 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.7.1] — 2026-03-29
+
+### Исправления и эксплуатация
+- **Авторизация:** проверка JWT перед редиректом на `/login` и `/register`; очистка «зомби»-токена при 401 в **frontend/login.html**, **register.html**, **frontend/app.js**.
+- **Лендинг:** нейтральный CTA и блок статистики без вводящего в заблуждение «Войти»/«0» — **frontend/locales/site-ru.json**, **site-en.json**, **frontend/landing.html**.
+- **DSP:** сглаживание старта трека и границы lookahead — **backend/app/pipeline.py**; тот же output fade для v2 — **backend/app/routers/mastering.py**; тесты в **backend/tests/test_pipeline.py**.
+- **Отладка мастеринга:** флаги `MAGIC_MASTER_MASTERING_TRACE` / `MAGIC_MASTER_MASTERING_TRACE_LUFS_STAGES`, модуль **backend/app/mastering_trace.py**, трассировка этапов в pipeline/chain/роутере/боте.
+- **Деплой:** рекомендации по ротации логов (journald) — **deploy/journald/README.md**, пример **deploy/journald/99-magic-master-journal.conf**.
+
+---
+
 ## [0.7.0] — 2026-03-29
 
 ### Фаза 1: SEO-лендинги, блог, LUFS-инструмент, рефералы, брендинг экспорта

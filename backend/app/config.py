@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     semaphore_normal: int = 1     # MAGIC_MASTER_SEMAPHORE_NORMAL
     # Режим отладки: все функции без авторизации (MAGIC_MASTER_DEBUG=1 или MAGIC_MASTER_DEBUG_MODE=1)
     debug_mode: bool = Field(False, validation_alias="DEBUG")
+    # Трассировка DSP мастеринга в логах (job_id, stage, peak_db) — без отключения авторизации.
+    # В логах искать: job_id= stage= peak_db= (.env: MAGIC_MASTER_MASTERING_TRACE=1).
+    mastering_trace: bool = False
+    # Дополнительно: LUFS после каждого этапа (дороже CPU; MAGIC_MASTER_MASTERING_TRACE_LUFS_STAGES=1).
+    mastering_trace_lufs_stages: bool = False
 
     # AI agents: backend (openai | deepseek | anthropic | local), ключи и лимиты по тарифам
     ai_backend: str = "openai"
@@ -142,7 +147,14 @@ class Settings(BaseSettings):
     enable_vocal_isolation: bool = Field(False, validation_alias="ENABLE_VOCAL_ISOLATION")
     demucs_model: str = "htdemucs"
 
-    @field_validator("debug_mode", "require_email_verify", "enable_vocal_isolation", mode="before")
+    @field_validator(
+        "debug_mode",
+        "require_email_verify",
+        "enable_vocal_isolation",
+        "mastering_trace",
+        "mastering_trace_lufs_stages",
+        mode="before",
+    )
     @classmethod
     def parse_bool_flag(cls, v):
         if isinstance(v, bool):

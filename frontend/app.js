@@ -2366,6 +2366,17 @@ function logout() {
   window.location.reload();
 }
 
+/** Протухший JWT: убрать из storage и обновить UI (гость). */
+function clearStaleAuthSession() {
+  localStorage.removeItem('mm_token');
+  localStorage.removeItem('mm_user_email');
+  localStorage.removeItem('mm_user_tier');
+}
+
+function responseWasUnauthorized(res) {
+  return res && (res.status === 401 || res.status === 403);
+}
+
 /* ═══════ Тариф и лимиты (Free tier / Pro) + режим отладки ═══════ */
 let _tierInfo = { tier: 'free', remaining: 1, limit: 1, used: 0, reset_at: '' };
 let _debugMode = typeof window.__MAGIC_MASTER_DEBUG__ !== 'undefined' && window.__MAGIC_MASTER_DEBUG__ === true;
@@ -2408,7 +2419,11 @@ async function loadTierLimits() {
     }
   } catch(e) { /* ignore */ }
   try {
-    const r = await fetch(API + '/api/limits', { headers: authHeaders() });
+    let r = await fetch(API + '/api/limits', { headers: authHeaders() });
+    if (responseWasUnauthorized(r)) {
+      clearStaleAuthSession();
+      r = await fetch(API + '/api/limits', { headers: authHeaders() });
+    }
     if (!r.ok) return;
     _tierInfo = await r.json();
     if (_tierInfo.debug) _debugMode = true;
@@ -2419,7 +2434,11 @@ async function loadTierLimits() {
 async function loadAiLimits() {
   const hintText = (backend, rem) => (backend ? (rem >= 0 ? `AI: ${backend} · осталось ${rem}` : `AI: ${backend}`) : '');
   try {
-    const r = await fetch(API + '/api/ai/limits', { headers: authHeaders() });
+    let r = await fetch(API + '/api/ai/limits', { headers: authHeaders() });
+    if (responseWasUnauthorized(r)) {
+      clearStaleAuthSession();
+      r = await fetch(API + '/api/ai/limits', { headers: authHeaders() });
+    }
     if (!r.ok) return;
     const d = await r.json();
     const backend = d.ai_backend || '';

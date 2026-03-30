@@ -4,14 +4,18 @@
 # @created 2026-02-26
 
 import io
-from typing import NoReturn, Optional, Tuple
+from typing import TYPE_CHECKING, NoReturn, Optional, Tuple
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from .mastering_trace import TraceContext
 import pyloudnorm as pyln
 import soundfile as sf
 from pydub import AudioSegment
 
 from .config import settings
+from .mastering_trace import trace_stage, trace_validate_failure
 
 # numba JIT: ускоряет per-sample Python-циклы (comb/allpass reverb, envelope follower)
 # до 50–100× на крупных буферах. При отсутствии numba падаем на чистый Python.
@@ -143,6 +147,24 @@ def remove_intersample_peaks(audio: np.ndarray, headroom_db: float = 0.5) -> np.
     if peak > limit:
         audio = audio * (limit / peak)
     return np.clip(audio, -1.0, 1.0)
+
+
+def apply_output_edge_fade_in(audio: np.ndarray, sr: int, fade_ms: float = 6.0) -> np.ndarray:
+    """Линейный fade-in в начале: уменьшает щелчки от IIR/лимитера на старте трека."""
+    if fade_ms <= 0 or sr <= 0 or audio.size == 0:
+        return audio
+    n_fade = int(round(sr * (fade_ms / 1000.0)))
+    n_fade = max(2, min(n_fade, int(sr * 0.1)))
+    out = np.array(audio, dtype=np.float32, copy=True, order="C")
+    if out.ndim == 1:
+        n = min(n_fade, out.shape[0])
+        ramp = np.linspace(0.0, 1.0, n, dtype=np.float32)
+        out[:n] *= ramp
+        return out
+    n = min(n_fade, out.shape[0])
+    ramp = np.linspace(0.0, 1.0, n, dtype=np.float32).reshape(-1, 1)
+    out[:n, :] *= ramp
+    return out
 
 
 def _target_curve_iir_coeffs(sr: int):
@@ -520,6 +542,13 @@ def apply_maximizer_lookahead(audio: np.ndarray, sr: int, lookahead_ms: float = 
     ], axis=0)
     limited = apply_maximizer(delayed)
     out = np.concatenate([audio[:delay_n], limited[delay_n:]], axis=0).astype(np.float32)
+    # Сшивка без скачка на границе delay_n: короткий кроссфейд между «сырым» хвостом и limited
+    cf = min(delay_n, max(2, int(sr * 0.002)))
+    for i in range(cf):
+        idx = delay_n - cf + i
+        if 0 <= idx < out.shape[0]:
+            a = (i + 1) / float(cf)
+            out[idx, :] = (1.0 - a) * audio[idx, :] + a * limited[idx, :]
     if audio.shape[1] == 1:
         return out[:, 0]
     return out
@@ -888,18 +917,26 @@ def resample_audio(audio: np.ndarray, sr: int, target_sr: int) -> np.ndarray:
     return out
 
 
-def validate_mastered_not_silent(mastered: np.ndarray) -> None:
+def validate_mastered_not_silent(
+    mastered: np.ndarray,
+    *,
+    trace_ctx: Optional["TraceContext"] = None,
+    trace_sr: int = 44100,
+) -> None:
     """Проверка, что результат мастеринга не пустой и не тишина (защита от пустого файла при доп. обработке, задача 1.5)."""
     if mastered.size == 0:
+        trace_validate_failure(trace_ctx, mastered, "empty_buffer", trace_sr)
         raise ValueError(
             "Обработка дала тишину. Отключите часть доп. настроек (Spectral Denoiser, De-esser, "
             "Transient Designer, Parallel Compression, Dynamic EQ) и попробуйте снова."
         )
     if not np.all(np.isfinite(mastered)):
+        trace_validate_failure(trace_ctx, mastered, "nan_or_inf", trace_sr)
         raise ValueError(
             "Обработка дала недопустимые значения (NaN/Inf). Отключите Dynamic EQ или другие доп. модули и попробуйте снова."
         )
     if float(np.max(np.abs(mastered))) < 1e-5:
+        trace_validate_failure(trace_ctx, mastered, "near_silence_peak", trace_sr)
         raise ValueError(
             "Обработка дала тишину. Отключите часть доп. настроек (Spectral Denoiser, De-esser, "
             "Transient Designer, Parallel Compression, Dynamic EQ) и попробуйте снова."
@@ -1745,6 +1782,7 @@ def run_mastering_pipeline(
     reference_audio: np.ndarray | None = None,
     reference_sr: int | None = None,
     reference_strength: float = 0.8,
+    trace_ctx: Optional["TraceContext"] = None,
 ) -> np.ndarray:
     """
     Конвейер студийного мастеринга (EQ, Dynamics, Maximizer, Exciter, Imager и др.).
@@ -1767,53 +1805,78 @@ def run_mastering_pipeline(
 
     report(5, "Подготовка…")
     audio = remove_dc_offset(audio)
+    trace_stage(trace_ctx, "dc_offset", audio, sr)
     report(10, "Удаление DC-смещения")
     audio = remove_intersample_peaks(audio, headroom_db=0.5)
+    trace_stage(trace_ctx, "peak_guard_in", audio, sr)
     report(15, "Защита от пиков")
 
     if denoise_strength > 0.01:
         audio = apply_spectral_denoise(audio, sr, strength=denoise_strength)
+        trace_stage(trace_ctx, "spectral_denoise", audio, sr, denoise_strength=denoise_strength)
         report(22, f"Шумоподавление · strength={denoise_strength:.2f}")
 
     audio = apply_target_curve(audio, sr)
+    trace_stage(trace_ctx, "target_eq", audio, sr)
     report(32, "Студийный EQ")
     audio = apply_deesser(audio, sr)
+    trace_stage(trace_ctx, "deesser", audio, sr)
     report(38, "De-esser (5–9 kHz)")
     audio = apply_dynamics(audio, sr)
+    trace_stage(trace_ctx, "dynamics", audio, sr)
     report(52, "Многополосная динамика и максимайзер")
 
     if parallel_mix > 0.01:
         audio = apply_parallel_compression(audio, sr, mix=parallel_mix)
+        trace_stage(trace_ctx, "parallel_compress", audio, sr, parallel_mix=parallel_mix)
         report(57, f"Параллельная компрессия · mix={parallel_mix:.2f}")
 
     audio = normalize_lufs(audio, sr, target_lufs)
+    trace_stage(trace_ctx, "normalize_lufs", audio, sr, target_lufs=target_lufs)
     report(65, "Нормализация LUFS")
     audio = apply_final_spectral_balance(audio, sr)
+    trace_stage(trace_ctx, "final_spectral_balance", audio, sr)
     report(72, "Финальная частотная коррекция")
 
     if reference_audio is not None and reference_sr is not None:
         audio = apply_reference_match(audio, sr, reference_audio, reference_sr, strength=reference_strength)
+        trace_stage(trace_ctx, "reference_match", audio, sr, reference_strength=reference_strength)
         report(78, f"Reference mastering · strength={reference_strength:.2f}")
 
     audio = apply_style_eq(audio, sr, style)
+    trace_stage(trace_ctx, "style_eq", audio, sr, style=style)
     report(82, f"Жанровый EQ · {style}")
 
     if (abs(transient_attack - 1.0) > 0.02 or abs(transient_sustain - 1.0) > 0.02):
         audio = apply_transient_designer(audio, sr, attack_gain=transient_attack, sustain_gain=transient_sustain)
+        trace_stage(
+            trace_ctx,
+            "transient_designer",
+            audio,
+            sr,
+            transient_attack=transient_attack,
+            transient_sustain=transient_sustain,
+        )
         report(86, f"Транзиентный дизайнер · punch={transient_attack:.2f} sustain={transient_sustain:.2f}")
 
     if exciter_db > 0.05:
         audio = apply_harmonic_exciter(audio, sr, exciter_db)
+        trace_stage(trace_ctx, "harmonic_exciter", audio, sr, exciter_db=exciter_db)
         report(89, f"Гармонический эксайтер · +{exciter_db:.1f} dB")
 
     if abs(imager_width - 1.0) > 0.01:
         audio = apply_stereo_imager(audio, imager_width)
+        trace_stage(trace_ctx, "stereo_imager", audio, sr, imager_width=imager_width)
         report(92, f"Стерео-расширение · width={imager_width:.2f}")
 
     audio = remove_intersample_peaks(audio, headroom_db=0.5)
+    trace_stage(trace_ctx, "peak_guard_out", audio, sr)
     report(95, "Финальная защита пиков")
+    audio = apply_output_edge_fade_in(audio, sr, fade_ms=6.0)
+    trace_stage(trace_ctx, "output_fade_in", audio, sr)
     out = np.clip(audio, -1.0, 1.0).astype(np.float32)
     out = np.ascontiguousarray(out)
     np.nan_to_num(out, copy=False, nan=0.0, posinf=1.0, neginf=-1.0)
+    trace_stage(trace_ctx, "finalize_clip", out, sr)
     report(97, "Готово")
     return out

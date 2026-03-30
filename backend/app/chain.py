@@ -2,11 +2,15 @@
 # @description Цепочка мастеринга из конфига (v2)
 # @created 2026-02-27
 
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import numpy as np
 
+from .mastering_trace import trace_stage
 from .modules.base import BaseModule
+
+if TYPE_CHECKING:
+    from .mastering_trace import TraceContext
 from .modules.dc_offset import DCOffsetModule
 from .modules.dynamics import DynamicsModule
 from .modules.equalizer import FinalSpectralBalanceModule, StyleEQModule, TargetCurveModule
@@ -67,6 +71,7 @@ class MasteringChain:
         target_lufs: Optional[float] = None,
         style: Optional[str] = None,
         progress_callback: Optional[Callable[[int, str], None]] = None,
+        trace_ctx: Optional["TraceContext"] = None,
         **kwargs: Any,
     ) -> np.ndarray:
         """
@@ -84,8 +89,10 @@ class MasteringChain:
             if style is not None:
                 kw["style"] = style
             audio = mod.process(audio, sr, **kw)
+            trace_stage(trace_ctx, getattr(mod, "module_id", "module"), audio, sr)
         audio = np.ascontiguousarray(np.clip(audio, -1.0, 1.0).astype(np.float32))
         np.nan_to_num(audio, copy=False, nan=0.0, posinf=1.0, neginf=-1.0)
+        trace_stage(trace_ctx, "chain_finalize_clip", audio, sr)
         if progress_callback:
             progress_callback(98, "Готово")
         return audio

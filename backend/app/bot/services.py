@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any, Optional, Tuple
 
 import numpy as np
 
 from ..helpers import check_audio_magic_bytes
+from ..mastering_trace import TraceContext, trace_job_done, trace_job_error, trace_job_start
 from ..pipeline import (
     STYLE_CONFIGS,
     compute_spectrum_bars,
@@ -35,22 +37,46 @@ def run_mastering_sync(
         style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
         target_lufs = float(STYLE_CONFIGS[style_key].get("lufs", -14.0))
     style_key = style.lower() if style.lower() in STYLE_CONFIGS else "standard"
-    audio, sr = load_audio_from_bytes(data, filename or "audio.wav")
-
-    def _noop(_p: int, _m: str) -> None:
-        pass
-
-    before = measure_lufs(audio, sr)
-    mastered = run_mastering_pipeline(
-        audio, sr, target_lufs=target_lufs, style=style_key, progress_callback=_noop
+    trace_job_id = uuid.uuid4().hex[:12]
+    ctx = TraceContext.build(
+        trace_job_id,
+        filename or "audio.wav",
+        "telegram",
+        style=style_key,
+        target_lufs=target_lufs,
     )
-    after = measure_lufs(mastered, sr)
-    channels = 1 if mastered.ndim == 1 else mastered.shape[1]
-    out_bytes = export_audio(mastered, sr, channels, out_format.lower())
-    base = (filename or "track").rsplit(".", 1)[0]
-    ext = "m4a" if out_format.lower() == "aac" else out_format.lower()
-    out_name = f"{base}_mastered.{ext}"
-    return out_bytes, out_name, float(before) if before == before else None, float(after) if after == after else None
+    trace_job_start(ctx)
+    try:
+        audio, sr = load_audio_from_bytes(data, filename or "audio.wav")
+
+        def _noop(_p: int, _m: str) -> None:
+            pass
+
+        before = measure_lufs(audio, sr)
+        mastered = run_mastering_pipeline(
+            audio,
+            sr,
+            target_lufs=target_lufs,
+            style=style_key,
+            progress_callback=_noop,
+            trace_ctx=ctx,
+        )
+        after = measure_lufs(mastered, sr)
+        channels = 1 if mastered.ndim == 1 else mastered.shape[1]
+        out_bytes = export_audio(mastered, sr, channels, out_format.lower())
+        base = (filename or "track").rsplit(".", 1)[0]
+        ext = "m4a" if out_format.lower() == "aac" else out_format.lower()
+        out_name = f"{base}_mastered.{ext}"
+        trace_job_done(
+            ctx,
+            before_lufs=float(before) if before == before else None,
+            after_lufs=float(after) if after == after else None,
+            out_format=out_format.lower(),
+        )
+        return out_bytes, out_name, float(before) if before == before else None, float(after) if after == after else None
+    except Exception as e:
+        trace_job_error(ctx, e)
+        raise
 
 
 def analyze_audio_sync(data: bytes, filename: str) -> dict[str, Any]:

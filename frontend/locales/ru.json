@@ -1,6 +1,7 @@
 {
   "app.title": "Мастеринг в два клика",
   "app.subtitle": "Профессиональная нормализация LUFS · True Peak ≤ −1 dBTP · Studio EQ · TPDF Dithering",
+  "app.back_home": "На главную",
   "app.upload": "Загрузка файла",
   "app.measure": "Измерить громкость",
   "app.download_report": "Скачать отчёт",

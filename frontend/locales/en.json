@@ -1,6 +1,7 @@
 {
   "app.title": "Mastering in two clicks",
   "app.subtitle": "Professional LUFS normalization · True Peak ≤ −1 dBTP · Studio EQ · TPDF Dithering",
+  "app.back_home": "Back to home",
   "app.upload": "Upload file",
   "app.measure": "Measure loudness",
   "app.download_report": "Download report",

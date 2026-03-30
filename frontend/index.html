@@ -430,8 +430,20 @@
     /* ═══════════════════════ HEADER ═══════════════════════ */
     .header { position: relative; padding: 2.75rem 0 1.75rem; text-align: center; }
     .logo {
-      display: inline-flex; align-items: center; gap: 0.55rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.55rem;
       margin-bottom: 1.1rem;
+      width: 100%; max-width: 100%; box-sizing: border-box;
+    }
+    .logo-back {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      color: var(--text-dim); font-size: 0.78rem; text-decoration: none;
+      transition: color 0.15s;
+    }
+    .logo-back:hover { color: var(--accent); }
+    .logo-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.5rem; flex-wrap: wrap;
+      max-width: 100%;
     }
     .logo-mark-wrap {
       display: flex; align-items: center; justify-content: center;
@@ -1760,6 +1772,7 @@
     .header-top-right {
       position: absolute; top: 1rem; right: 1rem;
       display: flex; align-items: center; gap: .75rem;
+      z-index: 2;
     }
     .theme-wrap {
       display: flex; align-items: center; gap: .25rem;
@@ -1952,9 +1965,33 @@
       .chain-preset-btn { min-height: 36px; padding: .4rem .65rem }
       .btn-ab { min-width: 36px; min-height: 36px }
     }
+    /* Шапка: тема/язык в потоке сверху — без наложения на логотип (телефон и узкий планшет) */
+    @media (max-width: 768px) {
+      .header {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 1.2rem 1rem 1.5rem;
+        padding-left: max(1rem, env(safe-area-inset-left, 0));
+        padding-right: max(1rem, env(safe-area-inset-right, 0));
+      }
+      .header-top-right {
+        position: static;
+        order: -1;
+        align-self: stretch;
+        width: 100%;
+        max-width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.55rem 0.85rem;
+        margin: 0 0 0.85rem;
+        padding: 0 0 0.75rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .logo { margin-bottom: 0.75rem; margin-top: 0; }
+      .logo-back { align-self: flex-start; }
+    }
     @media (max-width: 640px) {
       .page { padding-left: env(safe-area-inset-left, 0); padding-right: env(safe-area-inset-right, 0); box-sizing: border-box }
-      .header { padding: 2rem 1rem 1.5rem }
+      .header { padding: 1.1rem 1rem 1.45rem }
       .h-title { font-size: 1.6rem }
       .h-sub { font-size: .82rem; max-width: 100% }
       .card { padding: 1.2rem 1rem; margin-left: .5rem; margin-right: .5rem; max-width: calc(100% - 1rem) }
@@ -1971,7 +2008,9 @@
       .tier-row { flex-wrap: wrap; justify-content: center }
     }
     @media (max-width: 480px) {
-      .header { padding: 1.75rem .75rem 1.25rem }
+      .header { padding: 1rem 0.75rem 1.25rem }
+      .header-top-right { gap: 0.45rem 0.55rem; padding-bottom: 0.65rem; margin-bottom: 0.65rem }
+      .theme-btn, .locale-btn { padding: 0.28rem 0.45rem; font-size: 0.75rem }
       .h-title { font-size: 1.45rem }
       .card { padding: 1rem .85rem; margin-left: .4rem; margin-right: .4rem; max-width: calc(100% - .8rem) }
       .style-grid { grid-template-columns: 1fr; gap: .4rem }
@@ -1984,6 +2023,14 @@
       .chain-preset-name { width: 100% }
       .chain-preset-select { width: 100% }
       .toast-wrap { left: .75rem; right: .75rem; bottom: max(1rem, env(safe-area-inset-bottom)); max-width: none }
+    }
+    @media (max-width: 380px) {
+      .theme-wrap > span:first-child,
+      .locale-wrap .locale-label {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
+      .theme-wrap, .locale-wrap { position: relative; }
     }
     @media (max-width: 360px) {
       .logo-mark { height: 26px; max-width: 100%; }
@@ -2000,11 +2047,11 @@
   <!-- ──── HEADER ──── -->
   <header class="header">
     <div class="logo">
-      <a href="/" class="logo-back" style="display:inline-flex;align-items:center;gap:.35rem;color:var(--text-dim);font-size:.78rem;text-decoration:none;margin-bottom:.5rem;transition:color .15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        На главную
+      <a href="/" class="logo-back">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        <span data-i18n="app.back_home">На главную</span>
       </a>
-      <div style="display:flex;align-items:center;gap:.5rem;justify-content:center;flex-wrap:wrap;">
+      <div class="logo-row">
         <span class="logo-mark-wrap"><img class="logo-mark" src="/icons/mm-icon.png" alt="" decoding="async"/></span>
         <span class="logo-name">Magic Master</span>
         <span class="logo-badge">Pro</span>

@@ -49,12 +49,21 @@ from ..deps import (
     record_usage as _record_usage,
     require_feature_batch as _require_feature_batch,
 )
+from ..mastering_trace import (
+    TraceContext,
+    trace_chain_modules,
+    trace_job_done,
+    trace_job_error,
+    trace_job_start,
+    trace_stage,
+)
 from ..pipeline import (
     DENOISE_PRESETS,
     PRESET_LUFS,
     STYLE_CONFIGS,
     apply_deesser,
     apply_dynamic_eq,
+    apply_output_edge_fade_in,
     apply_parallel_compression,
     apply_reference_match,
     apply_rumble_filter,
@@ -325,9 +334,19 @@ def _run_mastering_job(
     target_lufs: float,
     out_format: str,
     style: str = "standard",
+    user_id: Optional[int] = None,
 ) -> None:
     """Синхронный мастеринг (v1) в потоке; обновляет jobs[job_id] (progress, result или error)."""
     job = _jobs_store.all_jobs()[job_id]
+    ctx = TraceContext.build(
+        job_id,
+        filename or "wav",
+        "v1",
+        style=style,
+        user_id=user_id,
+        target_lufs=target_lufs,
+    )
+    trace_job_start(ctx)
     try:
         job["progress"] = 2
         job["message"] = "Загрузка аудио…"
@@ -336,6 +355,7 @@ def _run_mastering_job(
         job["progress"] = 4
         job["message"] = "Измерение исходного уровня…"
         job["before_lufs"] = measure_lufs(audio, sr)
+        trace_stage(ctx, "input_loaded", audio, sr)
 
         def on_progress(pct: int, msg: str) -> None:
             job["progress"] = pct
@@ -344,7 +364,12 @@ def _run_mastering_job(
         job["progress"] = 5
         job["message"] = "Мастеринг…"
         mastered = run_mastering_pipeline(
-            audio, sr, target_lufs=target_lufs, style=style, progress_callback=on_progress
+            audio,
+            sr,
+            target_lufs=target_lufs,
+            style=style,
+            progress_callback=on_progress,
+            trace_ctx=ctx,
         )
         job["after_lufs"] = measure_lufs(mastered, sr)
         job["progress"] = 98
@@ -364,6 +389,12 @@ def _run_mastering_job(
             log_mastering_job_end(job_id, "done")
         except Exception:  # noqa: BLE001
             pass
+        trace_job_done(
+            ctx,
+            before_lufs=job.get("before_lufs"),
+            after_lufs=job.get("after_lufs"),
+            out_format=out_format.lower(),
+        )
         _after_mastering_success_hooks(job_id)
     except Exception as e:
         job["status"] = "error"
@@ -375,7 +406,13 @@ def _run_mastering_job(
             log_mastering_job_end(job_id, "error")
         except Exception:  # noqa: BLE001
             pass
-        logger.error("mastering job failed job_id=%s filename=%s error=%s", job_id, filename, str(e)[:200])
+        logger.exception(
+            "mastering job failed job_id=%s path=v1 filename=%s error=%s",
+            job_id,
+            filename,
+            str(e)[:500],
+        )
+        trace_job_error(ctx, e)
         try:
             from ..notifier import notify_mastering_error
             notify_mastering_error(filename, str(e)[:200])
@@ -395,10 +432,21 @@ def _run_mastering_job_v2(
     auto_blank_sec: Optional[float] = None,
     bitrate: Optional[int] = None,
     pro_params: Optional[dict] = None,
+    user_id: Optional[int] = None,
 ) -> None:
     """Мастеринг через MasteringChain (v2) + PRO-модули. Если chain_config is None — используется default_chain."""
     job = _jobs_store.all_jobs()[job_id]
     pro_params = pro_params or {}
+    ctx = TraceContext.build(
+        job_id,
+        filename or "wav",
+        "v2",
+        style=style,
+        user_id=user_id,
+        target_lufs=target_lufs,
+        pro_params=pro_params,
+    )
+    trace_job_start(ctx)
     try:
         job["progress"] = 2
         job["message"] = "Загрузка аудио…"
@@ -470,12 +518,15 @@ def _run_mastering_job_v2(
             chain = MasteringChain.from_config(chain_config)
         else:
             chain = MasteringChain.default_chain(target_lufs=target_lufs, style=style)
+        trace_chain_modules(ctx, [getattr(m, "module_id", "?") for m in chain.modules])
+        trace_stage(ctx, "v2_pre_chain", audio, sr)
         mastered = chain.process(
             audio,
             sr,
             target_lufs=target_lufs,
             style=style,
             progress_callback=on_progress,
+            trace_ctx=ctx,
         )
 
         ta = pro_params.get("transient_attack")
@@ -490,6 +541,7 @@ def _run_mastering_job_v2(
             if _is_debug_mode():
                 peak = float(np.max(np.abs(mastered))) + 1e-12
                 job["message"] = f"Transient Designer… (peak {20 * np.log10(peak):.1f} dB)"
+            trace_stage(ctx, "v2_transient_designer", mastered, sr)
 
         parallel_mix_val = pro_params.get("parallel_mix", 0)
         if parallel_mix_val is not None and float(parallel_mix_val) > 0:
@@ -498,6 +550,7 @@ def _run_mastering_job_v2(
             if _is_debug_mode():
                 peak = float(np.max(np.abs(mastered))) + 1e-12
                 job["message"] = f"Parallel Compression… (peak {20 * np.log10(peak):.1f} dB)"
+            trace_stage(ctx, "v2_parallel_compression", mastered, sr)
 
         if pro_params.get("dynamic_eq_enabled"):
             job["message"] = "Dynamic EQ…"
@@ -505,8 +558,11 @@ def _run_mastering_job_v2(
             if _is_debug_mode():
                 peak = float(np.max(np.abs(mastered))) + 1e-12
                 job["message"] = f"Dynamic EQ… (peak {20 * np.log10(peak):.1f} dB)"
+            trace_stage(ctx, "v2_dynamic_eq", mastered, sr)
 
-        validate_mastered_not_silent(mastered)
+        mastered = apply_output_edge_fade_in(mastered, sr, fade_ms=6.0)
+        trace_stage(ctx, "v2_output_fade_in", mastered, sr)
+        validate_mastered_not_silent(mastered, trace_ctx=ctx, trace_sr=sr)
 
         job["after_lufs"] = measure_lufs(mastered, sr)
         job["progress"] = 98
@@ -535,6 +591,12 @@ def _run_mastering_job_v2(
             log_mastering_job_end(job_id, "done")
         except Exception:  # noqa: BLE001
             pass
+        trace_job_done(
+            ctx,
+            before_lufs=job.get("before_lufs"),
+            after_lufs=job.get("after_lufs"),
+            out_format=out_format.lower(),
+        )
         _after_mastering_success_hooks(job_id)
     except Exception as e:
         job["status"] = "error"
@@ -546,7 +608,13 @@ def _run_mastering_job_v2(
             log_mastering_job_end(job_id, "error")
         except Exception:  # noqa: BLE001
             pass
-        logger.error("mastering v2 job failed job_id=%s filename=%s error=%s", job_id, filename, str(e)[:200])
+        logger.exception(
+            "mastering v2 job failed job_id=%s path=v2 filename=%s error=%s",
+            job_id,
+            filename,
+            str(e)[:500],
+        )
+        trace_job_error(ctx, e)
 
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -610,8 +678,13 @@ async def api_master(
         async with sem:
             await asyncio.to_thread(
                 _run_mastering_job,
-                job_id, data, file.filename or "audio.wav",
-                target_lufs, out_format.lower(), style_key,
+                job_id,
+                data,
+                file.filename or "audio.wav",
+                target_lufs,
+                out_format.lower(),
+                style_key,
+                _user_id_from_user(user),
             )
 
     background_tasks.add_task(run_job)
@@ -736,10 +809,18 @@ async def api_master_v2(
             async with sem:
                 await asyncio.to_thread(
                     _run_mastering_job_v2,
-                    job_id, data, file.filename or "audio.wav",
-                    target_lufs, out_format.lower(), style_key,
-                    chain_config, dither_type=dither_type, auto_blank_sec=auto_blank_sec,
-                    bitrate=bitrate_val, pro_params=pro_params,
+                    job_id,
+                    data,
+                    file.filename or "audio.wav",
+                    target_lufs,
+                    out_format.lower(),
+                    style_key,
+                    chain_config,
+                    dither_type=dither_type,
+                    auto_blank_sec=auto_blank_sec,
+                    bitrate=bitrate_val,
+                    pro_params=pro_params,
+                    user_id=_user_id_from_user(user),
                 )
 
         background_tasks.add_task(run_job_v2)
@@ -905,14 +986,24 @@ async def api_v2_batch(
                 pass
             jobs_created.append({"job_id": job_id, "filename": filename})
 
+            uid = _user_id_from_user(user)
+
             async def run_one(jid: str = job_id, d: bytes = data, fname: str = filename) -> None:
                 async with batch_sem:
                     await asyncio.to_thread(
                         _run_mastering_job_v2,
-                        jid, d, fname,
-                        target_lufs, out_format.lower(), style_key,
-                        chain_config, dither_type=dt, auto_blank_sec=ab,
-                        bitrate=bitrate_val, pro_params=batch_pro_params,
+                        jid,
+                        d,
+                        fname,
+                        target_lufs,
+                        out_format.lower(),
+                        style_key,
+                        chain_config,
+                        dither_type=dt,
+                        auto_blank_sec=ab,
+                        bitrate=bitrate_val,
+                        pro_params=batch_pro_params,
+                        user_id=uid,
                     )
 
             background_tasks.add_task(run_one)
@@ -1029,9 +1120,15 @@ async def api_v2_master_auto(
             async with sem:
                 await asyncio.to_thread(
                     _run_mastering_job_v2,
-                    job_id, data, fname,
-                    target_lufs, out_format.lower(), style_key,
-                    chain_config, pro_params={},
+                    job_id,
+                    data,
+                    fname,
+                    target_lufs,
+                    out_format.lower(),
+                    style_key,
+                    chain_config,
+                    pro_params={},
+                    user_id=_user_id_from_user(user),
                 )
 
         background_tasks.add_task(run_auto_job)

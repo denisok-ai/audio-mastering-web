@@ -237,11 +237,21 @@
 <script src="/i18n.js"></script>
 <script>MagicMasterI18n.init({ pageTitleKey: 'register.page_title' });</script>
 <script>
-  // Если уже залогинен — редирект
+  // Валидная сессия — в приложение; битый токен очищаем, форму показываем
   (function() {
-    if (localStorage.getItem('mm_token')) {
-      window.location.replace('/app');
+    const token = localStorage.getItem('mm_token');
+    if (!token) return;
+    function clearSession() {
+      localStorage.removeItem('mm_token');
+      localStorage.removeItem('mm_user_email');
+      localStorage.removeItem('mm_user_tier');
     }
+    fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function(r) {
+        if (r.ok) window.location.replace('/app');
+        else clearSession();
+      })
+      .catch(function() { clearSession(); });
   })();
 
   const form      = document.getElementById('registerForm');
