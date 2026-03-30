@@ -9,6 +9,12 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.7.3] — 2026-03-30
+
+- **main.py lifespan:** `logging.getLogger("app.mastering_trace").setLevel(INFO)` — строки `mastering_trace` попадают в journald на prod (как у `app.bot`).
+
+---
+
 ## [0.7.2] — 2026-03-30
 
 ### Качество мастеринга и регрессия
