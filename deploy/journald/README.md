@@ -37,3 +37,5 @@ sudo systemctl status logrotate.timer   # ежедневный запуск
 ## Файловые логи приложения
 
 Если позже включите запись в файлы (например `/var/log/magic-master/*.log`), добавьте запись в `/etc/logrotate.d/magic-master-app` с `copytruncate` или `postrotate` для сигнала процессу.
+
+Общий чек-лист сервера (Git, бэкапы, сравнение nginx): **[doc/PRODUCTION_DRIFT.md](../../doc/PRODUCTION_DRIFT.md)**.

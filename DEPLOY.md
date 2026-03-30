@@ -254,7 +254,7 @@ Environment="MAGIC_MASTER_MAX_UPLOAD_MB=100"
    chmod +x deploy/backup_db.sh
    ```
 
-2. Укажите в скрипте путь к backend (переменная `BACKEND_DIR`) и каталог для бэкапов (`BACKUP_DIR`). По умолчанию бэкапы сохраняются в `./backups_db` в корне проекта.
+2. Укажите в скрипте путь к backend (переменная `BACKEND_DIR`) и каталог для бэкапов (`BACKUP_DIR`). По умолчанию бэкапы сохраняются в **`backups_db/`** в корне проекта (каталог в `.gitignore`). Отдельно на VPS иногда создают **`backups/`** для полных tar-архивов по cron — он тоже игнорируется Git.
 
 3. Добавьте задачу в cron (например, раз в день в 3:00):
    ```bash
@@ -303,6 +303,8 @@ cd deploy && sudo ./deploy.sh update
 
 Или из каталога репозитория на другой машине (обновление через rsync):  
 `sudo INSTALL_DIR=/opt/magic-master ./deploy.sh update` (при необходимости задайте PROJECT_ROOT).
+
+**Отклонения на сервере:** после `git pull` рабочее дерево должно быть чистым; конфиги systemd/nginx/journald лежат **вне** Git. Чек-лист и типичные конфликты — **[doc/PRODUCTION_DRIFT.md](doc/PRODUCTION_DRIFT.md)**.
 
 ### Рекомендуемые переменные окружения
 

@@ -15,6 +15,10 @@ build/
 # Database (local, do not commit)
 backend/magic_master.db
 
+# Server / cron backups (не коммитить архивы из /opt/magic-master)
+backups/
+backups_db/
+
 # Temp / mastering output
 /tmp/
 *.tmp

@@ -7,6 +7,10 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
+- **doc/PRODUCTION_DRIFT.md**: чек-лист отклонений Git на VPS, конфиги вне репозитория, stash, бэкапы, логи.
+- **.gitignore**: `backups/`, `backups_db/` — локальные архивы на сервере не засоряют `git status`.
+- **deploy/deploy.sh**: исполняемый бит в Git (как на сервере после `chmod +x`).
+
 ---
 
 ## [0.7.1] — 2026-03-29
