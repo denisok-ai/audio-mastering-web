@@ -49,7 +49,10 @@ def test_synthetic_noise_mastering_finite_and_moderate_hf(windows_short_track):
         assert out_metrics[name]["max_abs_diff"] < 1.5
 
 
-@pytest.mark.skipif(regression_wav_path() is None, reason="Нет MM_REGRESSION_WAV и нет fixtures/alors_on_danse_rem.wav")
+@pytest.mark.skipif(
+    regression_wav_path() is None,
+    reason="Нет MM_REGRESSION_WAV, нет test_output/_Alors On Danse Rem.wav и нет fixtures/*.wav",
+)
 def test_fixture_regression_windows_vs_input():
     path = regression_wav_path()
     assert path is not None

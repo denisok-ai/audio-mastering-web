@@ -20,13 +20,23 @@ DEFAULT_WINDOWS_SEC: tuple[tuple[str, float, float], ...] = (
 
 
 def regression_wav_path() -> Path | None:
-    """Путь к WAV: MM_REGRESSION_WAV или фикстура по умолчанию."""
+    """Путь к WAV: MM_REGRESSION_WAV или фикстура по умолчанию / test_output в корне репозитория."""
     env = os.environ.get("MM_REGRESSION_WAV", "").strip()
     if env:
         p = Path(env).expanduser()
         return p if p.is_file() else None
-    here = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "mastering_regression" / "alors_on_danse_rem.wav"
-    return here if here.is_file() else None
+    backend_root = Path(__file__).resolve().parent.parent.parent
+    repo_root = backend_root.parent
+    candidates = (
+        backend_root / "tests" / "fixtures" / "mastering_regression" / "alors_on_danse_rem.wav",
+        backend_root / "tests" / "fixtures" / "mastering_regression" / "_Alors On Danse Rem.wav",
+        repo_root / "test_output" / "_Alors On Danse Rem.wav",
+        repo_root / "test_output" / "alors_on_danse_rem.wav",
+    )
+    for p in candidates:
+        if p.is_file():
+            return p
+    return None
 
 
 def load_fixture_metrics_path() -> Path | None:

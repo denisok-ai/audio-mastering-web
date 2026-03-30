@@ -95,13 +95,13 @@ MULTIBAND_CROSSOVERS_HZ = (214.0, 3500.0, 10000.0)
 # По полосам: (limiter_thresh_db, comp_ratio, comp_thresh_db, gain_linear)
 # Band 1: ≤214 Hz    — без компрессии, умеренный gain
 # Band 2: 214–3500 Hz — включает presence-зону; gain повышен до 1.8 (расширена полоса)
-# Band 3: 3.5–10 kHz  — порог поднят -26→-18, ratio снижен 2.4→1.8, gain 3.2→2.0
-# Band 4: >10 kHz     — порог поднят -26.9→-20, ratio снижен 3.7→2.0, gain 3.6→1.6
+# Band 3: 3.5–10 kHz — мягче ratio/gain: меньше накрутки ВЧ и max|Δ| после суммирования полос
+# Band 4: >10 kHz — «воздух»: очень мягкая компрессия и низкий gain против шороха/звона
 MULTIBAND_CONFIG = (
     (-7.2,  1.0, -7.2,  1.5),
     (-18.5, 2.2, -18.5, 1.8),
-    (-18.0, 1.8, -18.0, 2.0),
-    (-20.0, 2.0, -20.0, 1.6),
+    (-17.0, 1.55, -17.0, 1.65),
+    (-15.0, 1.35, -15.0, 1.2),
 )
 # Максимайзер (скриншот 5): порог -2.5 dB, margin (потолок) -0.3 dB
 MAXIMIZER_THRESHOLD_DB = -2.5
@@ -370,10 +370,21 @@ def _merge_bands(bands: list, n_channels: int) -> np.ndarray:
     return out.astype(np.float32)
 
 
-def _compress_band_pedalboard(band: np.ndarray, sr: int, threshold_db: float, ratio: float, lim_db: float, gain: float) -> np.ndarray:
+def _compress_band_pedalboard(
+    band: np.ndarray,
+    sr: int,
+    threshold_db: float,
+    ratio: float,
+    lim_db: float,
+    gain: float,
+    *,
+    attack_ms: float = 10.0,
+    release_ms: float = 80.0,
+) -> np.ndarray:
     """
     Компрессия одной полосы через pedalboard.Compressor (JUCE-based, прозрачный).
     Параметры attack/release выбраны для мастеринга: мягкая атака, быстрое отпускание.
+    Верхние полосы — длиннее attack/release против zipper/ВЧ-шума.
     Возвращает band после компрессии + лимитера + gain.
     """
     try:
@@ -389,8 +400,8 @@ def _compress_band_pedalboard(band: np.ndarray, sr: int, threshold_db: float, ra
     comp = pedalboard.Compressor(
         threshold_db=float(threshold_db),
         ratio=float(max(ratio, 1.0)),
-        attack_ms=10.0,
-        release_ms=80.0,
+        attack_ms=float(attack_ms),
+        release_ms=float(release_ms),
     )
     board = pedalboard.Pedalboard([comp])
     pb_output = board(pb_input, float(sr))
@@ -437,8 +448,16 @@ def apply_multiband_dynamics(
     for i in range(4):
         lim_db, comp_ratio, comp_db, gain = MULTIBAND_CONFIG[i]
         ratio = ratios_override[i] if ratios_override else comp_ratio
+        if i >= 3:
+            atk_ms, rel_ms = 18.0, 180.0
+        elif i == 2:
+            atk_ms, rel_ms = 12.0, 130.0
+        else:
+            atk_ms, rel_ms = 10.0, 80.0
         if use_pedalboard and ratio >= 1.0:
-            pb_result = _compress_band_pedalboard(bands[i], sr, comp_db, ratio, lim_db, gain)
+            pb_result = _compress_band_pedalboard(
+                bands[i], sr, comp_db, ratio, lim_db, gain, attack_ms=atk_ms, release_ms=rel_ms
+            )
             if pb_result is not None:
                 if bands[i].ndim == 1 and pb_result.ndim == 2:
                     pb_result = pb_result[:, 0]

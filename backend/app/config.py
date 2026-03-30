@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     semaphore_normal: int = 1     # MAGIC_MASTER_SEMAPHORE_NORMAL
     # Режим отладки: все функции без авторизации (MAGIC_MASTER_DEBUG=1 или MAGIC_MASTER_DEBUG_MODE=1)
     debug_mode: bool = Field(False, validation_alias="DEBUG")
+    # Временная отладка: снять лимиты мастеринга (Free IP / токены Pro / дневной cap) — только пока включено.
+    # .env: MAGIC_MASTER_MASTERING_DEBUG_SKIP_LIMITS=1. Не оставлять на публичном проде.
+    mastering_debug_skip_limits: bool = False
     # Трассировка DSP мастеринга в логах (job_id, stage, peak_db) — без отключения авторизации.
     # В логах искать: job_id= stage= peak_db= (.env: MAGIC_MASTER_MASTERING_TRACE=1).
     mastering_trace: bool = False
@@ -151,6 +154,7 @@ class Settings(BaseSettings):
         "debug_mode",
         "require_email_verify",
         "enable_vocal_isolation",
+        "mastering_debug_skip_limits",
         "mastering_trace",
         "mastering_trace_lufs_stages",
         mode="before",

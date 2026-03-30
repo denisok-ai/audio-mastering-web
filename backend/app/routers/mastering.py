@@ -135,9 +135,25 @@ def _is_debug_mode() -> bool:
     return os.environ.get("MAGIC_MASTER_DEBUG", "").strip().lower() in ("1", "true", "yes", "on")
 
 
+def _mastering_limits_disabled() -> bool:
+    """Отладка мастеринга: без недельного лимита Free, без списания токенов и дневного cap Pro/Studio."""
+    if _is_debug_mode():
+        return True
+    if getattr(settings, "mastering_debug_skip_limits", False):
+        return True
+    return os.environ.get("MAGIC_MASTER_MASTERING_DEBUG_SKIP_LIMITS", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def _check_mastering_rate_limit(user, request: Request) -> None:
     """Поднимает 429 если гость исчерпал недельный лимит (Free: 1 мастеринг в неделю). В режиме отладки лимит не проверяется."""
-    if not user and not _is_debug_mode():
+    if _mastering_limits_disabled():
+        return
+    if not user:
         ip = _get_client_ip(request)
         limit_info = _check_rate_limit(ip)
         if not limit_info["ok"]:
@@ -150,6 +166,8 @@ def _check_mastering_rate_limit(user, request: Request) -> None:
 
 def _check_and_deduct_paid_tier(user, db) -> None:
     """Pro/Studio: проверяет баланс токенов и дневной лимит, списывает 1 токен. 429 при превышении."""
+    if _mastering_limits_disabled():
+        return
     if not user or not db or not DB_AVAILABLE:
         return
     tier = (user.get("tier") or "").lower()
@@ -177,6 +195,8 @@ def _check_and_deduct_paid_tier(user, db) -> None:
 
 def _check_and_deduct_paid_tier_batch(user, db, n_files: int) -> None:
     """Pro/Studio при пакетной обработке: проверяет токены и дневной лимит, списывает n_files токенов."""
+    if _mastering_limits_disabled():
+        return
     if not user or not db or not DB_AVAILABLE or n_files <= 0:
         return
     tier = (user.get("tier") or "").lower()
@@ -652,7 +672,7 @@ async def api_master(
     except Exception as e:
         raise HTTPException(400, f"Не удалось прочитать аудио: {e}")
 
-    if not user and not _is_debug_mode():
+    if not user and not _mastering_limits_disabled():
         _record_usage(_get_client_ip(request))
 
     _prune()
@@ -752,7 +772,7 @@ async def api_master_v2(
             except json.JSONDecodeError as e:
                 raise HTTPException(400, f"Неверный JSON в config: {e}") from e
 
-        if not user and not _is_debug_mode():
+        if not user and not _mastering_limits_disabled():
             _record_usage(_get_client_ip(request))
 
         _prune()
@@ -886,17 +906,18 @@ async def api_v2_batch(
             bitrate_val = None
 
         is_pro = user or _is_debug_mode()
-        if not is_pro:
-            ip = _get_client_ip(request)
-            limit_info = _check_rate_limit(ip)
-            if limit_info["remaining"] < len(files):
-                raise HTTPException(
-                    429,
-                    f"Недостаточно лимита. Осталось {limit_info['remaining']} мастеринг(ов) в неделю, файлов — {len(files)}. "
-                    f"Сброс: {limit_info['reset_at']}.",
-                )
-        else:
-            _check_and_deduct_paid_tier_batch(user, db, len(files))
+        if not _mastering_limits_disabled():
+            if not is_pro:
+                ip = _get_client_ip(request)
+                limit_info = _check_rate_limit(ip)
+                if limit_info["remaining"] < len(files):
+                    raise HTTPException(
+                        429,
+                        f"Недостаточно лимита. Осталось {limit_info['remaining']} мастеринг(ов) в неделю, файлов — {len(files)}. "
+                        f"Сброс: {limit_info['reset_at']}.",
+                    )
+            else:
+                _check_and_deduct_paid_tier_batch(user, db, len(files))
 
         if target_lufs is None:
             target_lufs = settings_store.get_setting_float("default_target_lufs", -14.0)
@@ -922,7 +943,7 @@ async def api_v2_batch(
                 raise HTTPException(400, f"Не удалось прочитать аудио {f.filename}: {e}") from e
             payloads.append((data, f.filename or "audio.wav"))
 
-        if not is_pro:
+        if not is_pro and not _mastering_limits_disabled():
             for _ in range(len(payloads)):
                 _record_usage(_get_client_ip(request))
 
@@ -1089,7 +1110,7 @@ async def api_v2_master_auto(
         target_lufs = max(-24, min(-6, target_lufs))
         chain_config = rec.get("chain_config")
 
-        if not user and not _is_debug_mode():
+        if not user and not _mastering_limits_disabled():
             _record_usage(_get_client_ip(request))
         ai_module.record_ai_usage(ident)
 

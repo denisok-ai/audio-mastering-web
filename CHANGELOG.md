@@ -9,6 +9,14 @@ Format: `[Phase] Brief description — files changed`.
 
 ---
 
+## [0.7.5] — 2026-03-30
+
+- **Отладка мастеринга:** `MAGIC_MASTER_MASTERING_DEBUG_SKIP_LIMITS=1` — без недельного лимита Free, без списания токенов и дневного cap Pro/Studio; гостевой `record_usage` не вызывается. Не оставлять на публичном проде.
+- **Многополосная динамика:** мягче полосы 3–4 (порог/ratio/gain), у верхних полос pedalboard — длиннее attack/release против ВЧ-артефактов.
+- **regression_wav_path:** автопоиск `test_output/_Alors On Danse Rem.wav`; **MASTERING_REGRESSION.md** — раздел про skip limits.
+
+---
+
 ## [0.7.4] — 2026-03-30
 
 - **mastering_trace:** явный `StreamHandler` на stderr для `app.mastering_trace` (как у `app.bot` в `lifecycle.py`). Одного `setLevel` в lifespan недостаточно: uvicorn не вешает handler на `app.*`, root без handler — строки `mastering_trace_*` не попадали в journald.
