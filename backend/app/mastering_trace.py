@@ -13,7 +13,8 @@ import numpy as np
 
 from .config import settings
 
-_LOG = logging.getLogger("magicmaster.mastering")
+# Имя логгера под пакет app.* — иначе uvicorn/journald на prod не показывают записи (не префикс app.).
+_LOG = logging.getLogger(__name__)
 
 # Допускаем включение без перезапуска через env (как MAGIC_MASTER_DEBUG)
 _ENV_TRACE = "MAGIC_MASTER_MASTERING_TRACE"

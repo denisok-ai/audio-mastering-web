@@ -1185,8 +1185,8 @@ def apply_deesser(
     ratio: float = 3.0,
     freq_lo: float = 5000.0,
     freq_hi: float = 9000.0,
-    attack_ms: float = 1.0,
-    release_ms: float = 50.0,
+    attack_ms: float = 4.0,
+    release_ms: float = 85.0,
 ) -> np.ndarray:
     """
     De-esser: частотно-зависимый компрессор для устранения сибилянтности в полосе 5–9 кГц.
@@ -1195,7 +1195,8 @@ def apply_deesser(
     threshold_db: порог срабатывания относительно 0 dBFS (по умолчанию -6 dB).
     ratio: степень сжатия (по умолчанию 3:1).
     freq_lo/freq_hi: границы полосы sibilance (Гц).
-    attack_ms/release_ms: времена атаки и отпускания огибающей (мс).
+    attack_ms/release_ms: времена атаки и отпускания огибающей (мс). Значения 4/85 мс и сглаживание
+    множителя уменьшают ВЧ-«зерно» и щелчки на вокале и плотных миксах (регрессия шумов по окнам).
     """
     from scipy import signal as sg
 
@@ -1228,6 +1229,13 @@ def apply_deesser(
         )
         gain_mult = np.where(env > 1e-10, gain_reduction / (env + 1e-12), 1.0)
         gain_mult = np.clip(gain_mult, 0.35, 1.0).astype(np.float32)
+        # Сглаживание ~1.5 ms: меньше zipper/noise-модуляции на сибилянтности
+        k = max(3, int(sr * 0.0015))
+        if k % 2 == 0:
+            k += 1
+        ker = np.ones(k, dtype=np.float32) / float(k)
+        gain_mult = np.convolve(gain_mult, ker, mode="same").astype(np.float32)
+        gain_mult = np.clip(gain_mult, 0.35, 1.0)
 
         reduced_band = sidechain * gain_mult
         out[:, ch] = x - sidechain + reduced_band

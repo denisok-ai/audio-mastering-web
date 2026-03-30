@@ -1,0 +1,9 @@
+{
+  "comment": "Скопируйте в expected_metrics.json и подстройте пороги после калибровки на эталонном мастере.",
+  "max_hf_rms_ratio_vs_input": {
+    "intro": 25.0,
+    "mid_75_90": 25.0,
+    "late_154_160": 25.0
+  },
+  "max_final_abs_diff": 0.85
+}

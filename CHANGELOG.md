@@ -7,9 +7,15 @@ Format: `[Phase] Brief description — files changed`.
 
 ## [Unreleased]
 
-- **doc/PRODUCTION_DRIFT.md**: чек-лист отклонений Git на VPS, конфиги вне репозитория, stash, бэкапы, логи.
-- **.gitignore**: `backups/`, `backups_db/` — локальные архивы на сервере не засоряют `git status`.
-- **deploy/deploy.sh**: исполняемый бит в Git (как на сервере после `chmod +x`).
+---
+
+## [0.7.2] — 2026-03-30
+
+### Качество мастеринга и регрессия
+- **mastering_trace:** логгер `app.mastering_trace` вместо `magicmaster.mastering` — строки `mastering_trace` видны в journald/uvicorn на prod.
+- **De-esser:** более плавные attack/release по умолчанию и сглаживание gain ~1.5 ms (меньше ВЧ-артефактов на v1-пайплайне).
+- **app/qa/mastering_regression.py**, **tests/test_mastering_regression_windows.py**: метрики по временным окнам, прогон v2 default chain по стадиям; синтетический тест; опционально WAV через `MM_REGRESSION_WAV` / `tests/fixtures/mastering_regression/`.
+- **doc/MASTERING_REGRESSION.md**, **tests/fixtures/mastering_regression/README.md**, **expected_metrics.json.example**.
 
 ---
 

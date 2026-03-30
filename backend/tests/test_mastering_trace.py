@@ -16,7 +16,7 @@ def mono_2sec_44k():
 
 def test_trace_stage_logs_when_env_enabled(caplog, monkeypatch):
     monkeypatch.setenv("MAGIC_MASTER_MASTERING_TRACE", "1")
-    caplog.set_level(logging.INFO, logger="magicmaster.mastering")
+    caplog.set_level(logging.INFO, logger="app.mastering_trace")
 
     from app.mastering_trace import TraceContext, trace_stage
 
@@ -31,7 +31,7 @@ def test_trace_stage_logs_when_env_enabled(caplog, monkeypatch):
 
 def test_run_mastering_pipeline_emits_trace_stages(caplog, monkeypatch, mono_2sec_44k):
     monkeypatch.setenv("MAGIC_MASTER_MASTERING_TRACE", "1")
-    caplog.set_level(logging.INFO, logger="magicmaster.mastering")
+    caplog.set_level(logging.INFO, logger="app.mastering_trace")
 
     from app.mastering_trace import TraceContext
     from app.pipeline import run_mastering_pipeline

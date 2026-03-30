@@ -304,7 +304,7 @@ cd deploy && sudo ./deploy.sh update
 Или из каталога репозитория на другой машине (обновление через rsync):  
 `sudo INSTALL_DIR=/opt/magic-master ./deploy.sh update` (при необходимости задайте PROJECT_ROOT).
 
-**Отклонения на сервере:** после `git pull` рабочее дерево должно быть чистым; конфиги systemd/nginx/journald лежат **вне** Git. Чек-лист и типичные конфликты — **[doc/PRODUCTION_DRIFT.md](doc/PRODUCTION_DRIFT.md)**.
+**Отклонения на сервере:** после `git pull` рабочее дерево должно быть чистым; конфиги systemd/nginx/journald лежат **вне** Git. Чек-лист и типичные конфликты — **[doc/PRODUCTION_DRIFT.md](doc/PRODUCTION_DRIFT.md)**. Логи мастеринга (`MAGIC_MASTER_MASTERING_TRACE`) и регрессия качества — **[doc/MASTERING_REGRESSION.md](doc/MASTERING_REGRESSION.md)**.
 
 ### Рекомендуемые переменные окружения
 
